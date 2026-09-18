@@ -33,6 +33,16 @@ Controls enforced in code (`scorecard.py`, `reporting/report.py`):
 | Disclaimer on every report, twice | `render_markdown` | `test_report_always_carries_the_disclaimer` |
 | No phrase asserting credit will be granted | report wording | `test_every_mention_of_zusage_is_negated_or_descriptive` |
 
+**The free self-serve check raises this question more sharply** than one-to-one
+advice: an automated indication shown to many companies at scale is closer to
+"distributed" than a report an advisor hands over. The controls: the quick
+check shows an indicative band and the weaknesses, never a probability or an
+approval prediction, carries the disclaimer, and the full report is released
+by a person. Have a lawyer review the quick check's wording before launch.
+
+AI is used to read documents and explain results, never to score -- see
+[ai-and-data-protection.md](ai-and-data-protection.md).
+
 **If anyone later proposes replacing the rules engine with a trained model,
 that decision has to be taken with legal advice, not as a technical upgrade.**
 The explainability is not an implementation detail; it is the compliance posture

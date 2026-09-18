@@ -95,6 +95,25 @@ CASE-03    Gastro Rheinblick GmbH       E        3.6  ->     7.7 E     substanzi
 CASE-06    Hoffmann Medizintechnik      A       97.4  ->    97.4 A     bereits finanzierbar
 ```
 
+## Products
+
+| Tier | Price (indicative) | What happens |
+|---|---|---|
+| **Credit check** | free | Company uploads its annual accounts, the reader (local rules or Claude) proposes the figures, the company confirms them, answers ~12 questions, and gets an instant readiness band + top 3 weaknesses with a plain-language explanation |
+| **Full report** | EUR 390 | Complete questionnaire and documents, full diagnostic, reviewed and released by an advisor |
+| **Advisory** | from EUR 1,500 | Calls, Steuerberater sign-off, support up to the bank meeting |
+
+**AI reads and explains; transparent rules decide.** See
+[docs/ai-and-data-protection.md](docs/ai-and-data-protection.md). By default the
+local reader is used and no data leaves the machine. To use Claude:
+
+```bash
+pip install "credit-readiness[ai]"          # anthropic SDK
+set CRA_AI_PROVIDER=anthropic                # plus Anthropic credentials (ANTHROPIC_API_KEY)
+```
+
+Only do this after the data processing agreement with the provider is in place.
+
 ## What it does
 
 **Intake** (see [docs/inputs-outputs.md](docs/inputs-outputs.md) for every input and output):
@@ -156,6 +175,7 @@ src/credit_readiness/
 ├── routing.py       lender-type matching                    [REGULATORY]
 ├── benchmarks.py    sector medians                          [PLACEHOLDER DATA]
 ├── engine.py        orchestrator -> DiagnosticResult
+├── ai/              document reading (rules | Claude), explanations, guardrails, audit log
 ├── intake/          questionnaires, document catalogue, case assembly
 ├── ingest/          json_intake (canonical), datev (SKR04), bank_csv
 ├── casefile.py      CaseStore interface + local folder store   [SWAP FOR DATABASE]

@@ -80,7 +80,8 @@ STATIC = Path(__file__).resolve().parent / "static"
 MAX_BODY = int(MAX_UPLOAD_BYTES * 1.4) + 64 * 1024     # base64 overhead
 COOKIE = "cra_session"
 
-PAGES = {"/": "index.html", "/investors": "investors.html", "/app": "app.html"}
+PAGES = {"/": "index.html", "/investors": "investors.html", "/app": "app.html",
+         "/sicherheit": "sicherheit.html", "/security": "sicherheit.html"}
 
 # What each role may upload, by document source.
 UPLOAD_SOURCES = {
@@ -112,6 +113,12 @@ _ROUTE_TABLE = [
     ("POST", rf"/api/cases/{_CASE}/letters", "letters"),
     ("POST", rf"/api/cases/{_CASE}/release", "release"),
     ("POST", rf"/api/cases/{_CASE}/outcome", "outcome"),
+    ("POST", rf"/api/cases/{_CASE}/extract", "extract"),
+    ("PUT", rf"/api/cases/{_CASE}/figures", "figures"),
+    ("POST", rf"/api/cases/{_CASE}/quickcheck", "quickcheck"),
+    ("POST", rf"/api/cases/{_CASE}/order", "order"),
+    ("POST", rf"/api/cases/{_CASE}/explain", "explain"),
+    ("DELETE", r"/api/account", "delete_account"),
     ("GET", rf"/api/cases/{_CASE}/artifacts/(?P<name>[a-z0-9_\-]+\.(?:md|html|json|csv))", "artifact"),
     ("GET", r"/forms/(?P<form>unternehmen|steuerberater|unterlagen)\.html", "form"),
 ]
@@ -137,6 +144,9 @@ def meta_payload(demo: bool = False) -> dict:
         "lenders": [{"key": lp.key, "name": lp.name} for lp in LENDERS],
         "max_upload_mb": MAX_UPLOAD_BYTES // (1024 * 1024),
         "demo": demo,
+        "ai": _ai_info(),
+        "figure_fields": _figure_fields(),
+        "products": {k: {"de": v[0], "en": v[1], "price_eur": v[2]} for k, v in wf.PRODUCTS.items()},
     }
     if demo:
         from ..demo import DEMO_HINTS, DEMO_PASSWORD, DEMO_USERS
@@ -146,6 +156,18 @@ def meta_payload(demo: bool = False) -> dict:
             for e, n, r, _ in DEMO_USERS
         ]
     return payload
+
+
+def _ai_info() -> dict:
+    from ..ai import get_provider
+    info = get_provider().info
+    return {"key": info.key, "label": info.label, "external": info.external, "model": info.model}
+
+
+def _figure_fields() -> list[dict]:
+    from ..ai.extraction import FIELDS
+    return [{"key": f.key, "statement": f.statement, "label_de": f.label_de, "label_en": f.label_en}
+            for f in FIELDS]
 
 
 def view_for(principal: Principal, ov: dict) -> dict:
@@ -164,6 +186,8 @@ def view_for(principal: Principal, ov: dict) -> dict:
     if principal.role == ROLE_STEUERBERATER:
         allowed = allowed | STB_ARTIFACTS
         v["raw_answers"] = {"steuerberater": ov["raw_answers"]["steuerberater"]}
+        v["quick_check"] = v["extraction"] = v["figures_confirmed"] = None
+        v["orders"] = []
     else:
         v["raw_answers"] = {"unternehmen": ov["raw_answers"]["unternehmen"]}
     v["artifacts"] = [a for a in ov["artifacts"] if a in allowed]
@@ -496,6 +520,64 @@ class Handler(BaseHTTPRequestHandler):
         with self.lock:
             row = wf.record_outcome(self.store, cid, body)
         self._json(200, {"row": row, "overview": self._overview(principal, cid)})
+
+    # ------------------------------------------------------ quick check / AI
+    def h_extract(self, principal, cid: str) -> None:
+        self._case(principal, cid)
+        self._require(principal, ROLE_BERATER, ROLE_UNTERNEHMEN)
+        body = self._obj()
+        with self.lock:
+            res = wf.extract_figures(self.store, cid, body.get("doc_id"), actor=principal.email)
+        self._json(200, {"extraction": res, "overview": self._overview(principal, cid)})
+
+    def h_figures(self, principal, cid: str) -> None:
+        self._case(principal, cid)
+        self._require(principal, ROLE_BERATER, ROLE_UNTERNEHMEN)
+        body = self._obj()
+        with self.lock:
+            rec = wf.confirm_figures(self.store, cid, body, principal.email)
+        self._json(200, {"confirmed": rec, "overview": self._overview(principal, cid)})
+
+    def h_quickcheck(self, principal, cid: str) -> None:
+        self._case(principal, cid)
+        self._require(principal, ROLE_BERATER, ROLE_UNTERNEHMEN)
+        with self.lock:
+            res = wf.run_quick_check(self.store, cid, today=self.today)
+        res["overview"] = self._overview(principal, cid)
+        self._json(200, res)
+
+    def h_order(self, principal, cid: str) -> None:
+        self._case(principal, cid)
+        self._require(principal, ROLE_BERATER, ROLE_UNTERNEHMEN)
+        body = self._obj()
+        with self.lock:
+            wf.place_order(self.store, cid, str(body.get("product", "")), principal.email,
+                           str(body.get("note", "")))
+        self._json(200, self._overview(principal, cid))
+
+    def h_explain(self, principal, cid: str) -> None:
+        self._case(principal, cid)
+        body = self._obj()
+        which = "report" if body.get("which") == "report" else "quick"
+        if which == "quick" and principal.role == ROLE_STEUERBERATER:
+            raise ApiError(HTTPStatus.FORBIDDEN, "Dafuer fehlt die Berechtigung")
+        if which == "report" and not principal.is_berater:
+            if not self.store.get_meta(cid).get("report_released"):
+                raise ApiError(HTTPStatus.NOT_FOUND, "Noch nicht verfuegbar")
+        question = body.get("question")
+        res = wf.explain_result(self.store, cid, str(body.get("lang", "de")),
+                                str(question)[:600] if question else None, which, principal.email)
+        self._json(200, res)
+
+    def h_delete_account(self, principal) -> None:
+        self._require(principal, ROLE_UNTERNEHMEN)
+        body = self._obj()
+        if body.get("confirm") != "LOESCHEN":
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Bitte zur Bestaetigung LOESCHEN eingeben")
+        with self.lock:
+            deleted = wf.delete_client_data(self.store, self.users, principal.email)
+        self.sessions.destroy(self._token())
+        self._json(200, {"deleted_cases": deleted}, self._cookie_header("", 0))
 
     def h_artifact(self, principal, cid: str, name: str) -> None:
         self._case(principal, cid)

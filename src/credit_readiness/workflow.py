@@ -136,6 +136,10 @@ def case_overview(store: CaseStore, case_id: str, today: Optional[date] = None) 
             AUDIENCE_STEUERBERATER: section_progress(AUDIENCE_STEUERBERATER, stb_raw),
         },
         "report_released": bool(meta.get("report_released")),
+        "quick_check": json.loads(store.read_artifact(case_id, QUICK_CHECK) or "null"),
+        "extraction": json.loads(store.read_artifact(case_id, EXTRACTION) or "null"),
+        "figures_confirmed": json.loads(store.read_artifact(case_id, "figures_confirmed.json") or "null"),
+        "orders": meta.get("orders") or [],
         "submitted_at": meta.get("submitted_at"),
         "members": meta.get("members") or {},
     }
@@ -351,3 +355,197 @@ def record_outcome(store: CaseStore, case_id: str, fields: dict[str, Any]) -> di
     if outcome != "PENDING":
         store.set_stage(case_id, "abgeschlossen", f"Ergebnis: {outcome}")
     return row
+
+
+# ---------------------------------------------------------------------------
+# Quick check (free tier): read annual accounts -> confirm -> instant result
+# ---------------------------------------------------------------------------
+
+EXTRACTION = "extraction.json"
+QUICK_CHECK = "quickcheck.json"
+
+PRODUCTS = {
+    # key: (German label, English label, indicative price in EUR)
+    "quick": ("Schnell-Check", "Quick check", 0),
+    "report": ("Vollstaendiger Bericht", "Full report", 390),
+    "advisor": ("Beratung mit Berater", "Advisor support", 1500),
+}
+
+
+def extract_figures(store: CaseStore, case_id: str, doc_id: Optional[str] = None,
+                    provider=None, actor: str = "") -> dict:
+    """Read the latest annual accounts and store the PROPOSED figures.
+
+    Nothing here feeds the engine. The proposal waits for the company to
+    confirm it (`confirm_figures`).
+    """
+    from .ai import AIError, get_provider, log_ai_use
+
+    provider = provider or get_provider()
+    docs = [d for d in store.list_documents(case_id) if d["doc_type"] == "jahresabschluesse"]
+    if doc_id:
+        docs = [d for d in docs if d["doc_id"] == doc_id]
+    if not docs:
+        raise CaseStoreError("Bitte zuerst einen Jahresabschluss hochladen")
+    doc = sorted(docs, key=lambda d: d["uploaded_at"])[-1]
+
+    if provider.info.external:
+        sme = check_answers(get_questionnaire(AUDIENCE_UNTERNEHMEN),
+                            store.load_answers(case_id, AUDIENCE_UNTERNEHMEN)).values
+        if sme.get("ki_einwilligung") is not True:
+            raise CaseStoreError(
+                "Fuer die KI-Auslesung fehlt die Einwilligung des Unternehmens. "
+                "Bitte Einwilligung erteilen oder die Zahlen manuell eintragen.")
+
+    data = store.read_document(case_id, doc["doc_id"])
+    try:
+        result = provider.extract(data, doc["filename"])
+    except AIError as exc:
+        log_ai_use(store, case_id, provider, "auslesung", False, str(exc), data, actor)
+        raise CaseStoreError(str(exc)) from exc
+    log_ai_use(store, case_id, provider, "auslesung", True,
+               f"{len(result.fields)} Positionen", data, actor)
+
+    out = result.as_dict()
+    out["doc_id"] = doc["doc_id"]
+    out["filename"] = doc["filename"]
+    store.write_artifact(case_id, EXTRACTION, json.dumps(out, indent=2, ensure_ascii=False))
+    return out
+
+
+def confirm_figures(store: CaseStore, case_id: str, payload: dict, actor: str) -> dict:
+    """The human step: the company confirms (and corrects) the figures."""
+    from datetime import datetime, timezone
+
+    from .ai import check_figures, parse_confirmed
+    from .intake.assemble import CONFIRMED_FIGURES
+
+    figures, period_end, months = parse_confirmed(payload)
+    checks = check_figures(figures, months)
+    extraction = json.loads(store.read_artifact(case_id, EXTRACTION) or "{}")
+    proposed = {k: v.get("value") for k, v in (extraction.get("fields") or {}).items()}
+    corrected = sorted(k for k, v in figures.items()
+                       if proposed.get(k) is not None and abs(proposed[k] - v) > 0.5)
+    record = {
+        "figures": figures,
+        "period_end": period_end.isoformat(),
+        "period_months": months,
+        "confirmed_by": actor,
+        "confirmed_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "method": extraction.get("method", "manuell"),
+        "method_label": extraction.get("provider_label", "manuelle Eingabe"),
+        "source_doc": extraction.get("filename"),
+        "corrected_fields": corrected,
+        "checks": checks,
+    }
+    store.write_artifact(case_id, CONFIRMED_FIGURES, json.dumps(record, indent=2, ensure_ascii=False))
+    return record
+
+
+def run_quick_check(store: CaseStore, case_id: str, today: Optional[date] = None) -> dict:
+    """Instant, automated result: band + the three weightiest findings.
+
+    Deliberately partial. No simulation, no lender routing, no full report:
+    those are in the full report, which a person reviews before release.
+    """
+    from datetime import datetime, timezone
+
+    asm = assemble_case(store, case_id, today=today)
+    if not asm.ready:
+        return {"ok": False, "stage": "assembly", "blocking": asm.blocking}
+    case = load_case(asm.payload)
+    try:
+        result = run_diagnostic(case, strict=True)
+    except ValidationError as exc:
+        return {"ok": False, "stage": "validation", "blocking": [str(i) for i in exc.issues]}
+    s = result_summary(result)
+    order = {"kritisch": 0, "wesentlich": 1}
+    ranked = sorted(s["findings"], key=lambda f: order.get(f["severity"], 2))
+    quick = {
+        "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "band": s["band"],
+        "band_interpretation": s["band_interpretation"],
+        "coverage": s["coverage"],
+        "verdict": s["verdict"],
+        "engageable": s["engageable"],
+        "top_findings": ranked[:3],
+        "more_findings": max(0, len(ranked) - 3),
+        "key_ratios": {k: s["key_ratios"][k] for k in
+                       ("eigenkapitalquote", "kapitaldienstfaehigkeit_inkl_neu", "ebit_marge")},
+        "data_notes": asm.notes,
+        "disclaimer": s["disclaimer"],
+    }
+    store.write_artifact(case_id, QUICK_CHECK, json.dumps(quick, indent=2, ensure_ascii=False))
+    store.update_meta(case_id, quick_check_at=quick["generated_at"])
+    return {"ok": True, "quick_check": quick}
+
+
+def place_order(store: CaseStore, case_id: str, product: str, actor: str, note: str = "") -> dict:
+    """Record an order for the next tier. Invoiced until a payment provider is connected.
+
+    An order is a binding request the advisor confirms and invoices; Stripe,
+    Mollie or similar plug in here later.
+    """
+    from datetime import datetime, timezone
+
+    if product not in ("report", "advisor"):
+        raise CaseStoreError("Unbekanntes Produkt")
+    meta = store.get_meta(case_id)
+    orders = list(meta.get("orders") or [])
+    if any(o["product"] == product for o in orders):
+        raise CaseStoreError("Bereits bestellt")
+    orders.append({
+        "product": product,
+        "price_eur": PRODUCTS[product][2],
+        "status": "bestellt",
+        "payment": "Rechnung",
+        "note": (note or "")[:500],
+        "by": actor,
+        "at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    })
+    store.update_meta(case_id, orders=orders)
+    if STAGE_IDS.index(store.get_meta(case_id)["stage"]) < STAGE_IDS.index("unterlagen_angefordert"):
+        store.set_stage(case_id, "unterlagen_angefordert", f"Bestellt: {PRODUCTS[product][0]}")
+    return store.get_meta(case_id)
+
+
+def explain_result(store: CaseStore, case_id: str, lang: str, question: Optional[str],
+                   which: str, actor: str, provider=None) -> dict:
+    """Plain-language explanation of a quick check or a released report."""
+    from .ai import explain, get_provider, log_ai_use
+
+    provider = provider or get_provider()
+    name = QUICK_CHECK if which == "quick" else "summary.json"
+    raw = store.read_artifact(case_id, name)
+    if not raw:
+        raise CaseStoreError("Noch kein Ergebnis vorhanden")
+    summary = json.loads(raw)
+    if which == "quick":
+        summary = {**summary, "findings": summary.get("top_findings", [])}
+
+    def log(purpose, ok, detail):
+        log_ai_use(store, case_id, provider, purpose, ok, detail,
+                   (question or "").encode("utf-8"), actor)
+
+    return explain(provider, summary, "en" if lang == "en" else "de", question, log=log)
+
+
+def delete_client_data(store: CaseStore, users, email: str) -> list[str]:
+    """Art. 17 GDPR: erase the company's cases and its account.
+
+    Cases the company is a member of are deleted completely, documents
+    included. The outcome log keeps its pseudonymous row (case id, sector,
+    figures -- no names or documents); docs/ai-and-data-protection.md explains
+    why and how it is removed on explicit request.
+    """
+    import shutil
+
+    from .auth import ROLE_UNTERNEHMEN
+
+    deleted = []
+    for meta in store.list_cases():
+        if email in (meta.get("members") or {}).get(ROLE_UNTERNEHMEN, []):
+            shutil.rmtree(store.root / meta["case_id"])
+            deleted.append(meta["case_id"])
+    users.delete(email)
+    return deleted

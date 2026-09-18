@@ -150,6 +150,12 @@ class UserStore:
             users[key]["password_hash"] = hash_password(password)
             self._save(users)
 
+    def delete(self, email: str) -> None:
+        with self._lock:
+            users = self._load()
+            users.pop((email or "").strip().lower(), None)
+            self._save(users)
+
     def authenticate(self, email: str, password: str) -> Optional[Principal]:
         u = self.get(email)
         # Hash even for unknown users, so response time does not reveal

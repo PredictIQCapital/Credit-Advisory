@@ -224,7 +224,6 @@ def placeholder_pdf(text: str) -> bytes:
 PDFS = {
     "handelsregisterauszug.pdf": "Handelsregisterauszug - FIKTIVES BEISPIEL",
     "bwa_2026_04.pdf": "BWA April 2026 - FIKTIVES BEISPIEL",
-    "jahresabschluss_2025.pdf": "Jahresabschluss 2025 - FIKTIVES BEISPIEL",
     "jahresabschluss_2024.pdf": "Jahresabschluss 2024 - FIKTIVES BEISPIEL",
     "kreditvertrag_tilgungsdarlehen.pdf": "Kreditvertrag - FIKTIVES BEISPIEL",
     "kreditvertrag_kontokorrent.pdf": "Kontokorrentvertrag - FIKTIVES BEISPIEL",
@@ -242,6 +241,12 @@ def main() -> None:
     (OUT / "kontoumsaetze_kontokorrent.csv").write_bytes(kontoumsaetze().encode("cp1252"))
     for name, text in PDFS.items():
         (OUT / name).write_bytes(placeholder_pdf(text))
+    # A real, machine-readable annual financial statement for the quick check.
+    import sys as _sys
+    _sys.path.insert(0, str(ROOT / "src"))
+    from credit_readiness.demo import annual_accounts_pdf
+    case01 = json.loads((ROOT / "data" / "samples" / "case_01_mueller_praezisionstechnik.json").read_text(encoding="utf-8"))
+    (OUT / "jahresabschluss_2025.pdf").write_bytes(annual_accounts_pdf(case01))
     for p in sorted(OUT.iterdir()):
         print(f"geschrieben: {p.name}")
 

@@ -24,10 +24,12 @@ not added -- adding it would silently unbalance the balance sheet.
 from __future__ import annotations
 
 import dataclasses
+import json
 from dataclasses import dataclass, field
 from datetime import date
 from typing import Any, Optional
 
+from ..ai.extraction import to_statements
 from ..ingest.bank_csv import BankAnalysis, BankCsvError, analyse_bank_csv
 from ..ingest.datev import DatevMappingError, parse_datev_susa
 from ..formatting import de
@@ -54,6 +56,8 @@ SRC_STB = "Steuerberater"
 SRC_SME = "Unternehmen (Selbstauskunft)"
 SRC_SUSA = "DATEV-SuSa"
 SRC_DEFAULT = "Standardannahme"
+SRC_CONFIRMED = "Jahresabschluss (ausgelesen, vom Unternehmen bestaetigt)"
+CONFIRMED_FIGURES = "figures_confirmed.json"
 
 
 @dataclass
@@ -150,6 +154,26 @@ def build_payload(
             "collateralised": bool(row.get("besichert")),
         })
     prov["facilities"] = SRC_SME if facilities else SRC_DEFAULT
+    bank_debt = bs.verb_kreditinstitute_kurz + bs.verb_kreditinstitute_lang
+    if not facilities and bank_debt > 0 and sme.get("tilgung_gesamt_jahr") is not None:
+        # Quick-check path: no loan list yet. Debt service = interest actually
+        # paid (P&L) + the repayments the company states. Transparent estimate,
+        # flagged as such -- the full engagement replaces it with the loan list.
+        rate = gu.zinsaufwand / bank_debt if gu.zinsaufwand > 0 else 0.05
+        facilities.append({
+            "lender": "Summe Bankdarlehen (Schaetzung)",
+            "facility_type": "Tilgungsdarlehen",
+            "original_amount": bank_debt,
+            "outstanding": bank_debt,
+            "interest_rate": min(max(rate, 0.0), 0.25),
+            "annual_principal_repayment": sme["tilgung_gesamt_jahr"],
+            "maturity_year": None,
+            "collateralised": False,
+        })
+        prov["facilities"] = "Schaetzung: Zinsaufwand laut GuV + Tilgung laut Unternehmen"
+        notes.append(
+            "Kapitaldienst geschaetzt aus Zinsaufwand (GuV) und angegebener Jahrestilgung. "
+            "Die Darlehensliste im vollstaendigen Fragebogen macht ihn exakt.")
 
     # -------------------------------------------------------- balance sheet
     balance = _dc_to_dict(bs)
@@ -328,15 +352,17 @@ def assemble_case(store, case_id: str, today: Optional[date] = None) -> Assembly
             "auf der Selbstauskunft des Unternehmens."
         )
 
+    docs = store.list_documents(case_id)
+    has_susa = any(d["doc_type"] == "susa_aktuell" for d in docs)
+    confirmed_raw = store.read_artifact(case_id, CONFIRMED_FIGURES)
     kontenrahmen = stb.get("kontenrahmen") or "SKR04"
-    if kontenrahmen != "SKR04":
+    if kontenrahmen != "SKR04" and (has_susa or not confirmed_raw):
         asm.blocking.append(
             f"Kontenrahmen laut Steuerberater: {kontenrahmen}. Automatisch eingelesen "
             "wird derzeit nur SKR04 -- SuSa manuell erfassen oder Mapping kalibrieren."
         )
 
     # --- documents -------------------------------------------------------
-    docs = store.list_documents(case_id)
 
     def _parse_susa(doc_type: str):
         entry = next((d for d in docs if d["doc_type"] == doc_type), None)
@@ -369,13 +395,25 @@ def assemble_case(store, case_id: str, today: Optional[date] = None) -> Assembly
     if kontenrahmen == "SKR04":
         current = _parse_susa("susa_aktuell")
         prior = _parse_susa("susa_vorjahr")
-        if current is None and not any(d["doc_type"] == "susa_aktuell" for d in docs):
-            asm.blocking.append(
-                "Die Summen- und Saldenliste des aktuellen Geschaeftsjahres (DATEV-CSV) "
-                "fehlt. Sie ist die Grundlage aller Kennzahlen."
-            )
         if prior is None and not any(d["doc_type"] == "susa_vorjahr" for d in docs):
             asm.notes.append("Keine Vorjahres-SuSa -- Trendaussagen entfallen.")
+
+    # No trial balance: fall back to figures read from the annual accounts --
+    # only ever the CONFIRMED ones. The DATEV export, when present, always wins.
+    figures_source = SRC_SUSA
+    if current is None and not has_susa and confirmed_raw:
+        conf = json.loads(confirmed_raw)
+        current = to_statements(conf["figures"], date.fromisoformat(conf["period_end"]),
+                                int(conf.get("period_months") or 12))
+        figures_source = SRC_CONFIRMED
+        asm.notes.append(
+            f"Zahlen aus dem Jahresabschluss ({conf.get('method_label') or 'ausgelesen'}), "
+            f"vom Unternehmen bestaetigt am {str(conf.get('confirmed_at', ''))[:10]}. "
+            "Eine DATEV-Saldenliste wuerde sie ersetzen.")
+    if current is None and not has_susa:
+        asm.blocking.append(
+            "Es fehlen die Zahlen: entweder die Summen- und Saldenliste (DATEV-CSV) oder "
+            "ein hochgeladener und bestaetigter Jahresabschluss.")
 
     limit = sme.get("kontokorrent_limit")
     for entry in (d for d in docs if d["doc_type"] == "kontoumsaetze"):
@@ -394,6 +432,7 @@ def assemble_case(store, case_id: str, today: Optional[date] = None) -> Assembly
     payload, prov, notes = build_payload(
         case_id, sme, stb, current, prior, asm.bank, today=today,
     )
+    prov["balance_sheet"] = figures_source
     asm.payload, asm.provenance = payload, prov
     asm.notes.extend(notes)
     return asm

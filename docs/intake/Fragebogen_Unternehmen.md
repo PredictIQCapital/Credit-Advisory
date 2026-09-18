@@ -137,6 +137,14 @@ ______________________________ Tage
 
 ______________________________ EUR
 
+**Summe der jaehrlichen Tilgungen aller Bankdarlehen (Schaetzung)**
+
+*Nur noetig, solange die Darlehensliste oben nicht ausgefuellt ist.*
+
+______________________________ EUR
+
+> Warum wir fragen: Zusammen mit dem Zinsaufwand aus dem Jahresabschluss ergibt das Ihren Kapitaldienst -- auch fuer den Schnell-Check.
+
 ## 4. Gesellschafter
 
 Gesellschafterdarlehen werden von Banken je nach Vertragsgestaltung als Eigen- oder als Fremdkapital gewertet.
@@ -208,6 +216,14 @@ Ohne diese Angaben koennen wir nicht arbeiten.
 **Ich willige in die Verarbeitung der uebermittelten Daten zum Zweck der Kreditfaehigkeitsanalyse ein.** **(Pflicht)**
 
 [ ] ja   [ ] nein
+
+**Ich willige ein, dass hochgeladene Jahresabschluesse zur automatischen Auslesung an einen KI-Dienstleister uebermittelt werden.**
+
+*Freiwillig. Ohne Einwilligung lesen wir lokal aus oder Sie tragen die Zahlen selbst ein.*
+
+[ ] ja   [ ] nein
+
+> Warum wir fragen: Die KI liest nur Zahlen aus; bewertet wird ausschliesslich mit transparenten Regeln. Jede ausgelesene Zahl bestaetigen Sie, bevor sie verwendet wird.
 
 **Wir duerfen Ihren Steuerberater direkt kontaktieren.**
 

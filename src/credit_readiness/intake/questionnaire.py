@@ -234,6 +234,11 @@ FRAGEBOGEN_UNTERNEHMEN = Questionnaire(
                              "Darlehen leicht behebbar."),
                 Question("leasing_verpflichtungen", "Summe laufender Leasingverpflichtungen",
                          "money", unit="EUR"),
+                Question("tilgung_gesamt_jahr", "Summe der jaehrlichen Tilgungen aller Bankdarlehen (Schaetzung)",
+                         "money", unit="EUR",
+                         help="Nur noetig, solange die Darlehensliste oben nicht ausgefuellt ist.",
+                         why="Zusammen mit dem Zinsaufwand aus dem Jahresabschluss ergibt das Ihren "
+                             "Kapitaldienst -- auch fuer den Schnell-Check."),
             ),
         ),
         Section(
@@ -289,6 +294,11 @@ FRAGEBOGEN_UNTERNEHMEN = Questionnaire(
                 Question("datenschutz_einwilligung", "Ich willige in die Verarbeitung der "
                          "uebermittelten Daten zum Zweck der Kreditfaehigkeitsanalyse ein.",
                          "bool", required=True),
+                Question("ki_einwilligung", "Ich willige ein, dass hochgeladene Jahresabschluesse zur "
+                         "automatischen Auslesung an einen KI-Dienstleister uebermittelt werden.", "bool",
+                         help="Freiwillig. Ohne Einwilligung lesen wir lokal aus oder Sie tragen die Zahlen selbst ein.",
+                         why="Die KI liest nur Zahlen aus; bewertet wird ausschliesslich mit transparenten "
+                             "Regeln. Jede ausgelesene Zahl bestaetigen Sie, bevor sie verwendet wird."),
                 Question("steuerberater_kontakt_erlaubt", "Wir duerfen Ihren Steuerberater "
                          "direkt kontaktieren.", "bool",
                          why="Jede Umgliederung braucht die Freigabe Ihres Steuerberaters."),

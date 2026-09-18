@@ -3,19 +3,65 @@
 << /Type /Catalog /Pages 2 0 R >>
 endobj
 2 0 obj
-<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+<< /Type /Pages /Kids [5 0 R] /Count 1 >>
 endobj
 3 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding >>
 endobj
 4 0 obj
-<< /Length 71 >>
+<< /Length 4399 >>
 stream
-BT /F1 14 Tf 60 780 Td (Jahresabschluss 2025 - FIKTIVES BEISPIEL) Tj ET
+BT /F1 9 Tf 40 800 Td (Mueller Praezisionstechnik GmbH) Tj ET
+BT /F1 9 Tf 40 788 Td (Jahresabschluss zum 31.12.2025  -  FIKTIVES BEISPIEL) Tj ET
+BT /F1 9 Tf 40 776 Td () Tj ET
+BT /F1 9 Tf 40 764 Td (BILANZ) Tj ET
+BT /F1 9 Tf 40 752 Td (AKTIVA                                                    EUR) Tj ET
+BT /F1 9 Tf 40 740 Td (A. Anlagevermoegen) Tj ET
+BT /F1 9 Tf 40 728 Td (I. Immaterielle Vermögensgegenstände                             60.000,00) Tj ET
+BT /F1 9 Tf 40 716 Td (II. Sachanlagen                                               2.100.000,00) Tj ET
+BT /F1 9 Tf 40 704 Td (III. Finanzanlagen                                                    0,00) Tj ET
+BT /F1 9 Tf 40 692 Td (B. Umlaufvermoegen) Tj ET
+BT /F1 9 Tf 40 680 Td (I. Vorräte                                                      780.000,00) Tj ET
+BT /F1 9 Tf 40 668 Td (II. 1. Forderungen aus Lieferungen und Leistungen             1.150.000,00) Tj ET
+BT /F1 9 Tf 40 656 Td (II. 2. Sonstige Vermögensgegenstände                             90.000,00) Tj ET
+BT /F1 9 Tf 40 644 Td (III. Wertpapiere                                                      0,00) Tj ET
+BT /F1 9 Tf 40 632 Td (IV. Kassenbestand, Guthaben bei Kreditinstituten                180.000,00) Tj ET
+BT /F1 9 Tf 40 620 Td (C. Rechnungsabgrenzungsposten                                    25.000,00) Tj ET
+BT /F1 9 Tf 40 608 Td () Tj ET
+BT /F1 9 Tf 40 596 Td (PASSIVA                                                   EUR) Tj ET
+BT /F1 9 Tf 40 584 Td (A. Eigenkapital) Tj ET
+BT /F1 9 Tf 40 572 Td (I. Gezeichnetes Kapital                                          25.000,00) Tj ET
+BT /F1 9 Tf 40 560 Td (II. Kapitalrücklage                                                   0,00) Tj ET
+BT /F1 9 Tf 40 548 Td (III. Gewinnrücklagen                                             95.000,00) Tj ET
+BT /F1 9 Tf 40 536 Td (IV. Gewinnvortrag                                                95.000,00) Tj ET
+BT /F1 9 Tf 40 524 Td (V. Jahresüberschuss                                             230.000,00) Tj ET
+BT /F1 9 Tf 40 512 Td (B. Rueckstellungen) Tj ET
+BT /F1 9 Tf 40 500 Td (1. Rückstellungen für Pensionen                                       0,00) Tj ET
+BT /F1 9 Tf 40 488 Td (2. Sonstige Rückstellungen                                      350.000,00) Tj ET
+BT /F1 9 Tf 40 476 Td (C. Verbindlichkeiten) Tj ET
+BT /F1 9 Tf 40 464 Td (1. Verbindlichkeiten gegenüber Kreditinstituten               1.670.000,00) Tj ET
+BT /F1 9 Tf 40 452 Td (   davon mit einer Restlaufzeit bis zu einem Jahr               420.000,00) Tj ET
+BT /F1 9 Tf 40 440 Td (2. Verbindlichkeiten aus Lieferungen und Leistungen             680.000,00) Tj ET
+BT /F1 9 Tf 40 428 Td (3. Verbindlichkeiten gegenüber Gesellschaftern                  600.000,00) Tj ET
+BT /F1 9 Tf 40 416 Td (4. Sonstige Verbindlichkeiten                                   640.000,00) Tj ET
+BT /F1 9 Tf 40 404 Td (   davon mit einer Restlaufzeit bis zu einem Jahr               240.000,00) Tj ET
+BT /F1 9 Tf 40 392 Td (D. Rechnungsabgrenzungsposten                                         0,00) Tj ET
+BT /F1 9 Tf 40 380 Td () Tj ET
+BT /F1 9 Tf 40 368 Td (GEWINN- UND VERLUSTRECHNUNG                                           2025              2024) Tj ET
+BT /F1 9 Tf 40 356 Td (1. Umsatzerlöse                                               8.200.000,00      7.650.000,00) Tj ET
+BT /F1 9 Tf 40 344 Td (2. Erhöhung oder Verminderung des Bestands                            0,00) Tj ET
+BT /F1 9 Tf 40 332 Td (3. Sonstige betriebliche Erträge                                 45.000,00) Tj ET
+BT /F1 9 Tf 40 320 Td (4. Materialaufwand                                            4.180.000,00      3.920.000,00) Tj ET
+BT /F1 9 Tf 40 308 Td (5. Personalaufwand                                            2.650.000,00      2.480.000,00) Tj ET
+BT /F1 9 Tf 40 296 Td (6. Abschreibungen                                               245.000,00        238.000,00) Tj ET
+BT /F1 9 Tf 40 284 Td (7. Sonstige betriebliche Aufwendungen                           790.000,00        745.000,00) Tj ET
+BT /F1 9 Tf 40 272 Td (8. Sonstige Zinsen und ähnliche Erträge                               0,00) Tj ET
+BT /F1 9 Tf 40 260 Td (9. Zinsen und ähnliche Aufwendungen                              95.000,00         88.000,00) Tj ET
+BT /F1 9 Tf 40 248 Td (10. Steuern vom Einkommen und vom Ertrag                         55.000,00) Tj ET
 endstream
 endobj
 5 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 3 0 R >> >> >>
 endobj
 xref
 0 6
@@ -23,10 +69,10 @@ xref
 0000000009 00000 n 
 0000000058 00000 n 
 0000000115 00000 n 
-0000000241 00000 n 
-0000000362 00000 n 
+0000000210 00000 n 
+0000004660 00000 n 
 trailer
 << /Size 6 /Root 1 0 R >>
 startxref
-432
+4786
 %%EOF

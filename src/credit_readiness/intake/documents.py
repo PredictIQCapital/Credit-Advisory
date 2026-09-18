@@ -9,10 +9,11 @@ Two kinds of document, deliberately distinguished:
   * PARSED documents feed numbers into the engine (DATEV SuSa, bank CSV).
     Their format is strict because a misread number becomes a wrong diagnosis.
   * EVIDENCE documents (PDFs) are stored for the advisor to read and for the
-    lender package. The engine never reads numbers out of a PDF -- OCR of a
-    scanned balance sheet is exactly the "confident, wrong" failure mode the
-    validation layer exists to prevent. A PDF counts towards completeness,
-    never towards a ratio.
+    lender package. One exception, with a safeguard: the latest annual
+    accounts can be READ (rules or AI, see credit_readiness.ai) to PROPOSE
+    figures for the quick check -- but a proposal only becomes an input after
+    the company has reviewed and confirmed every figure, and the consistency
+    checks pass. An unconfirmed PDF never reaches a ratio.
 """
 
 from __future__ import annotations
@@ -140,10 +141,11 @@ DOCUMENT_TYPES: tuple[DocumentType, ...] = (
         title="Jahresabschluesse der letzten 2-3 Jahre",
         source=SOURCE_STEUERBERATER,
         requirement=REQUIRED,
-        formats=("pdf",),
+        formats=("pdf", "png", "jpg", "jpeg"),
         multiple=True,
         min_count=2,
-        description="Bilanz, GuV und ggf. Anhang, je Geschaeftsjahr eine Datei.",
+        description="Bilanz, GuV und ggf. Anhang, je Geschaeftsjahr eine Datei. Der juengste "
+                    "Abschluss wird fuer den Schnell-Check automatisch ausgelesen.",
         why="Grundlage jeder Kreditentscheidung; Pflichtbestandteil des Kreditantrags.",
     ),
     DocumentType(

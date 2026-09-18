@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "credit-readiness"
-version = "0.2.0"
+version = "0.3.0"
 description = "Rules-and-ratios credit readiness diagnostic for German/Austrian SMEs"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -12,6 +12,8 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
+ai = ["anthropic>=1.0"]
+pdf = ["pymupdf>=1.24"]
 
 [project.scripts]
 credit-readiness = "credit_readiness.cli:main"

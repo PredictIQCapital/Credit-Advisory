@@ -22,7 +22,7 @@ Nur zwei Dokumenttypen werden automatisch ausgewertet: die DATEV-Summen- und Sal
 | [ ] | **Summen- und Saldenliste, aktuelles Geschaeftsjahr (DATEV-Export)** (wird automatisch ausgewertet) | Pflicht | CSV | Die Hauptquelle fuer alle Bilanz- und GuV-Kennzahlen. Wird automatisch eingelesen und auf Plausibilitaet geprueft. |
 | [ ] | **Summen- und Saldenliste, Vorjahr (DATEV-Export)** (wird automatisch ausgewertet) | empfohlen | CSV | Ermoeglicht Trendaussagen (Umsatzentwicklung). Ein Umsatzrueckgang bei negativer Marge ist ein Befund, den nur der Vorjahresvergleich zeigt. |
 | [ ] | **Aktuelle BWA** | Pflicht | PDF, CSV | Banken verlangen eine aktuelle BWA; ihr Alter wird als Qualitaet des internen Reportings gelesen. |
-| [ ] | **Jahresabschluesse der letzten 2-3 Jahre** | Pflicht (mind. 2) | PDF | Grundlage jeder Kreditentscheidung; Pflichtbestandteil des Kreditantrags. |
+| [ ] | **Jahresabschluesse der letzten 2-3 Jahre** | Pflicht (mind. 2) | PDF, PNG, JPG, JPEG | Grundlage jeder Kreditentscheidung; Pflichtbestandteil des Kreditantrags. |
 | [ ] | **Steuerkontoauszug oder Bescheinigung in Steuersachen** | empfohlen | PDF | Belegt, dass keine Steuerrueckstaende bestehen -- fuer Banken ein K.-o.-Kriterium. |
 | [ ] | **Stundungs- oder Ratenzahlungsvereinbarung mit dem Finanzamt** | bedingt: erforderlich, wenn Steuerrueckstaende bestehen | PDF | Ohne sie ist ein Kreditantrag bei bestehenden Rueckstaenden praktisch aussichtslos. |
 | [ ] | **Planrechnung (Plan-GuV, Liquiditaetsplan, Planbilanz)** | bedingt: erforderlich ab 100.000 EUR Finanzierungsvolumen | PDF, XLSX, CSV | Ab rund 100.000 EUR erwarten Banken einen Blick nach vorn, nicht nur zurueck. |
