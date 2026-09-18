@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+import os
+
+# Password hashing at production strength would make the suite slow; stored
+# hashes carry their own iteration count, so this changes nothing else.
+os.environ.setdefault("CRA_PBKDF2_ITERATIONS", "1000")
+
 from datetime import date
 from pathlib import Path
 

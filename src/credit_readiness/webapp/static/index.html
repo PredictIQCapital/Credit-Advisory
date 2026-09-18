@@ -1,52 +1,258 @@
 <!doctype html>
-<html lang="de">
+<html lang="de" data-lang="de">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Credit Readiness Portal</title>
+  <title>Credit Readiness – Finanzierungsfähigkeit für den Mittelstand</title>
+  <meta name="description" content="Wir lesen Ihre Zahlen so, wie das Rating-Modell Ihrer Bank es tut – und zeigen, was vor dem nächsten Kreditantrag behebbar ist.">
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/site.css">
+  <script src="/site.js"></script>
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">Credit Readiness <span>Portal</span></div>
-    <div class="topbar-right">
-      <span class="badge badge-local" title="Laeuft nur auf diesem Rechner">lokal</span>
-      <a href="/forms/unternehmen.html" target="_blank" rel="noopener">Fragebogen Unternehmen (Druck)</a>
-      <a href="/forms/steuerberater.html" target="_blank" rel="noopener">Fragebogen Steuerberater (Druck)</a>
-      <a href="/forms/unterlagen.html" target="_blank" rel="noopener">Unterlagenliste (Druck)</a>
+
+<nav class="nav">
+  <div class="wrap nav-inner">
+    <a class="logo" href="/">
+      <svg class="logo-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#0d2440"/><rect x="7" y="17" width="4" height="8" rx="1.5" fill="#6fd3b7"/><rect x="14" y="12" width="4" height="13" rx="1.5" fill="#39b894"/><rect x="21" y="7" width="4" height="18" rx="1.5" fill="#0b8f73"/></svg>
+      <span>Credit Readiness<small>Advisory</small></span>
+    </a>
+    <div class="nav-links">
+      <a href="#how"><span lang="de">So funktioniert's</span><span lang="en">How it works</span></a>
+      <a href="#result"><span lang="de">Ihr Ergebnis</span><span lang="en">What you get</span></a>
+      <a href="#pricing"><span lang="de">Preise</span><span lang="en">Pricing</span></a>
+      <a href="/investors"><span lang="de">Für Investoren</span><span lang="en">Investors</span></a>
     </div>
-  </header>
-
-  <div class="layout">
-    <aside class="sidebar">
-      <form id="new-case-form" class="new-case">
-        <label for="new-case-name">Neuer Fall</label>
-        <div class="row">
-          <input id="new-case-name" type="text" placeholder="Firmenname" autocomplete="off" required>
-          <button type="submit">Anlegen</button>
-        </div>
-      </form>
-      <div class="sidebar-title">Faelle</div>
-      <ul id="case-list" class="case-list"></ul>
-    </aside>
-
-    <main id="main" class="main">
-      <section class="empty-state">
-        <h1>Willkommen</h1>
-        <p>Legen Sie links einen Fall an oder waehlen Sie einen bestehenden aus.</p>
-        <ol>
-          <li>Fragebogen des Unternehmens ausfuellen (oder ausgefuellt uebernehmen)</li>
-          <li>Unterlagen hochladen &ndash; die DATEV-SuSa und Kontoumsaetze werden automatisch ausgewertet</li>
-          <li>Anforderungsschreiben fuer fehlende Unterlagen erzeugen</li>
-          <li>Diagnostik erstellen, Massnahmen mit dem Steuerberater abstimmen</li>
-          <li>Ergebnis protokollieren &ndash; jeder Fall verbessert die Datengrundlage</li>
-        </ol>
-      </section>
-    </main>
+    <div class="nav-right">
+      <div class="lang-toggle" role="group" aria-label="Sprache / Language"><button data-lang="de">DE</button><button data-lang="en">EN</button></div>
+      <a class="btn btn-ghost btn-sm hide-sm" href="/app#login"><span lang="de">Anmelden</span><span lang="en">Log in</span></a>
+      <a class="btn btn-primary btn-sm" href="/app#register"><span lang="de">Analyse starten</span><span lang="en">Start analysis</span></a>
+    </div>
   </div>
+</nav>
 
-  <div id="toast" class="toast" hidden></div>
-  <script src="/app.js"></script>
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow"><span lang="de">Für den Mittelstand in Deutschland &amp; Österreich</span><span lang="en">For SMEs in Germany &amp; Austria</span></span>
+      <h1>
+        <span lang="de">Kredit abgelehnt? Oft liegt es an der <span class="accent">Darstellung</span> – nicht an Ihrem Unternehmen.</span>
+        <span lang="en">Loan rejected? Often it's the <span class="accent">presentation</span> – not your business.</span>
+      </h1>
+      <p class="lead">
+        <span lang="de">Wir lesen Ihre Zahlen so, wie das Rating-Modell Ihrer Bank es tut. Sie sehen genau, welche Faktoren Sie unter die Genehmigungsschwelle drücken – und was davon behebbar ist, bevor Sie erneut anfragen.</span>
+        <span lang="en">We read your numbers the way your bank's rating model does. You see exactly which factors push you below the approval line – and which of them can be fixed before you apply again.</span>
+      </p>
+      <div class="hero-ctas">
+        <a class="btn btn-primary btn-lg" href="/app#register"><span lang="de">Kostenlos Konto anlegen</span><span lang="en">Create a free account</span></a>
+        <a class="btn btn-ghost btn-lg" href="/app#login"><span lang="de">Demo ansehen</span><span lang="en">See the demo</span></a>
+      </div>
+      <ul class="checks">
+        <li><span lang="de">15 Minuten Fragebogen</span><span lang="en">15-minute questionnaire</span></li>
+        <li><span lang="de">DATEV-Export genügt</span><span lang="en">A DATEV export is enough</span></li>
+        <li><span lang="de">Ihr Steuerberater bleibt eingebunden</span><span lang="en">Your tax advisor stays involved</span></li>
+        <li><span lang="de">Keine Provision von Banken</span><span lang="en">No commission from banks</span></li>
+      </ul>
+    </div>
+
+    <div class="mock" aria-label="Beispielergebnis">
+      <div class="mock-head">
+        <div>
+          <div class="mock-title"><span lang="de">Ihr Ergebnis</span><span lang="en">Your result</span></div>
+          <div class="small muted">Beispiel GmbH · <span lang="de">Maschinenbau, 45 Mitarbeiter</span><span lang="en">Engineering, 45 employees</span></div>
+        </div>
+        <span class="pill ok"><span lang="de">behebbar</span><span lang="en">fixable</span></span>
+      </div>
+      <div class="bands">
+        <div class="band-box before"><div class="lbl"><span lang="de">heute</span><span lang="en">today</span></div><div class="val">C</div><div class="small muted"><span lang="de">Grenzfall</span><span lang="en">Borderline</span></div></div>
+        <div class="arrow">→</div>
+        <div class="band-box after"><div class="lbl"><span lang="de">nach Maßnahmen</span><span lang="en">after fixes</span></div><div class="val">A</div><div class="small muted"><span lang="de">finanzierbar</span><span lang="en">bankable</span></div></div>
+      </div>
+      <div class="small muted" style="margin-bottom:4px"><span lang="de">Wirtschaftliche Eigenkapitalquote</span><span lang="en">Economic equity ratio</span></div>
+      <div class="meter"><span style="width:42%"></span></div>
+      <div class="small" style="display:flex;justify-content:space-between;margin-bottom:10px"><span><span lang="de">10,1 %</span><span lang="en">10.1%</span></span><strong style="color:var(--teal)"><span lang="de">→ 23,8 %</span><span lang="en">→ 23.8%</span></strong></div>
+      <div class="finding"><span class="dot ok"></span><div><b><span lang="de">Gesellschafterdarlehen ohne Rangrücktritt</span><span lang="en">Shareholder loan without subordination</span></b><span class="muted"><span lang="de">Wird als Fremdkapital gewertet. Behebbar in ca. 2 Wochen – ohne frisches Kapital.</span><span lang="en">Counted as debt. Fixable in about 2 weeks – without new capital.</span></span></div></div>
+      <div class="finding"><span class="dot warn"></span><div><b><span lang="de">Kontokorrent dauerhaft ausgeschöpft</span><span lang="en">Overdraft permanently maxed out</span></b><span class="muted"><span lang="de">Warnsignal für jede Bank. Umschuldung in ein passendes Darlehen.</span><span lang="en">A red flag for every bank. Refinance into a matching loan.</span></span></div></div>
+      <div class="finding"><span class="dot ok"></span><div><b><span lang="de">Passender Weg: KfW mit Haftungsfreistellung</span><span lang="en">Best route: KfW loan with liability release</span></b><span class="muted"><span lang="de">Schließt die Besicherungslücke über die Hausbank.</span><span lang="en">Closes the collateral gap via your main bank.</span></span></div></div>
+    </div>
+  </div>
+</header>
+
+<section class="block dark">
+  <div class="wrap">
+    <div class="grid-3">
+      <div>
+        <div class="stat"><span lang="de">40,5 %</span><span lang="en">40.5%</span></div>
+        <p><span lang="de">der Mittelständler in Kreditverhandlungen berichten von restriktiven Banken – ein Rekordwert.</span><span lang="en">of German mid-sized firms in credit talks report restrictive banks – a record high.</span></p>
+        <div class="source">KfW Research, 7. Juli 2026 (Q2 2026)</div>
+      </div>
+      <div>
+        <div class="stat"><span lang="de">14 %</span><span lang="en">14%</span></div>
+        <p><span lang="de">der kreditsuchenden KMU stoßen auf erhebliche Hindernisse – abgelehnt, gekürzt oder entmutigt.</span><span lang="en">of SMEs seeking credit face significant obstacles – rejected, cut back or discouraged.</span></p>
+        <div class="source">ECB SAFE, via Journal of Small Business Strategy, 2025</div>
+      </div>
+      <div>
+        <div class="stat"><span lang="de">Selten</span><span lang="en">Rarely</span></div>
+        <p><span lang="de">sagt die Hausbank genau, <em>welcher</em> Faktor den Ausschlag gab. Genau das machen wir sichtbar.</span><span lang="en">does the bank tell you exactly <em>which</em> factor tipped the decision. That is what we make visible.</span></p>
+        <div class="source"><span lang="de">Unser Ansatz</span><span lang="en">Our approach</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="how">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow"><span lang="de">So funktioniert's</span><span lang="en">How it works</span></span>
+      <h2><span lang="de">In vier Schritten zur klaren Antwort</span><span lang="en">Four steps to a clear answer</span></h2>
+      <p class="lead"><span lang="de">Sie brauchen keine neuen Unterlagen – nur die, die Ihr Steuerberater ohnehin hat.</span><span lang="en">You need no new paperwork – only what your tax advisor already has.</span></p>
+    </div>
+    <div class="grid-4">
+      <div class="card shadow">
+        <div class="step-num">1</div>
+        <h3><span lang="de">Konto anlegen &amp; Fragebogen</span><span lang="en">Account &amp; questionnaire</span></h3>
+        <p class="muted"><span lang="de">Rund 15 Minuten: Ihr Vorhaben, bestehende Kredite, Gesellschafterdarlehen. Bei jeder Frage steht, warum wir sie stellen.</span><span lang="en">About 15 minutes: your project, current loans, shareholder loans. Every question says why we ask it.</span></p>
+      </div>
+      <div class="card shadow">
+        <div class="step-num">2</div>
+        <h3><span lang="de">Unterlagen hochladen</span><span lang="en">Upload documents</span></h3>
+        <p class="muted"><span lang="de">DATEV-Export und Kontoumsätze werden automatisch ausgewertet. Ihren Steuerberater laden Sie mit einem Klick ein.</span><span lang="en">DATEV export and bank statements are read automatically. Invite your tax advisor with one click.</span></p>
+      </div>
+      <div class="card shadow">
+        <div class="step-num">3</div>
+        <h3><span lang="de">Analyse wie die Bank</span><span lang="en">Analysis like the bank</span></h3>
+        <p class="muted"><span lang="de">Eigenkapitalquote, Kapitaldienstfähigkeit, Verschuldung, Zahlungsverhalten – jede Zahl nachvollziehbar, kein Black-Box-Score.</span><span lang="en">Equity ratio, debt service capacity, leverage, payment behaviour – every figure traceable, no black-box score.</span></p>
+      </div>
+      <div class="card shadow">
+        <div class="step-num">4</div>
+        <h3><span lang="de">Bericht &amp; Maßnahmen</span><span lang="en">Report &amp; action plan</span></h3>
+        <p class="muted"><span lang="de">Was behebbar ist, in welcher Reihenfolge, wie lange es dauert – und welcher Kreditgebertyp danach passt.</span><span lang="en">What is fixable, in which order, how long it takes – and which kind of lender fits afterwards.</span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block alt" id="result">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow"><span lang="de">Ihr Ergebnis</span><span lang="en">What you get</span></span>
+      <h2><span lang="de">Keine Note. Eine Handlungsanleitung.</span><span lang="en">Not a grade. A plan of action.</span></h2>
+    </div>
+    <div class="grid-3">
+      <div class="card">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19h16M7 16V9M12 16V5M17 16v-4"/></svg></div>
+        <h3><span lang="de">Was Sie am meisten kostet</span><span lang="en">What costs you most</span></h3>
+        <p class="muted"><span lang="de">Alle Schwachstellen nach ihrem Gewicht im Bankrating sortiert – oben steht, was zuerst angegangen werden sollte.</span><span lang="en">Every weakness ranked by its weight in a bank rating – the top one is what to tackle first.</span></p>
+      </div>
+      <div class="card">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg></div>
+        <h3><span lang="de">Behebbar oder nicht</span><span lang="en">Fixable or not</span></h3>
+        <p class="muted"><span lang="de">Darstellung, Unterlagen, falsches Produkt, fehlende Sicherheit – oder echtes Kreditrisiko. Wir trennen das klar.</span><span lang="en">Presentation, paperwork, wrong product, missing collateral – or genuine credit risk. We separate them clearly.</span></p>
+      </div>
+      <div class="card">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h13M12 6l6 6-6 6"/></svg></div>
+        <h3><span lang="de">Vorher / nachher</span><span lang="en">Before / after</span></h3>
+        <p class="muted"><span lang="de">Wir rechnen durch, wie sich Ihre Kennzahlen nach jeder Maßnahme verändern – bevor Sie etwas umsetzen.</span><span lang="en">We calculate how your ratios change after each measure – before you implement anything.</span></p>
+      </div>
+      <div class="card">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6"/></svg></div>
+        <h3><span lang="de">Der passende Kreditgeber</span><span lang="en">The right kind of lender</span></h3>
+        <p class="muted"><span lang="de">Hausbank, KfW-Programm, Bürgschaftsbank, Factoring, Leasing oder Mezzanine – je nachdem, was Ihr Profil trägt.</span><span lang="en">Main bank, KfW programme, guarantee bank, factoring, leasing or mezzanine – whatever your profile supports.</span></p>
+      </div>
+      <div class="card">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5M14.5 15.5c3 0 6 1.5 6 4.5"/></svg></div>
+        <h3><span lang="de">Mit Ihrem Steuerberater</span><span lang="en">With your tax advisor</span></h3>
+        <p class="muted"><span lang="de">Keine Umgliederung ohne seine Freigabe. Er bekommt eine eigene Ansicht und eine Abstimmungsvorlage.</span><span lang="en">No reclassification without their approval. They get their own view and a sign-off sheet.</span></p>
+      </div>
+      <div class="card">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4z"/></svg></div>
+        <h3><span lang="de">Auch ein ehrliches Nein</span><span lang="en">An honest no, too</span></h3>
+        <p class="muted"><span lang="de">Liegt das Problem in der Substanz, sagen wir es – und raten von einem Antrag ab, der nur eine weitere Ablehnung erzeugt.</span><span lang="en">If the problem is substance, we say so – and advise against an application that would only produce another rejection.</span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="pricing">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow"><span lang="de">Preise</span><span lang="en">Pricing</span></span>
+      <h2><span lang="de">Sie zahlen für die Analyse – nicht für einen Abschluss.</span><span lang="en">You pay for the analysis – not for a deal.</span></h2>
+      <p class="lead"><span lang="de">Wir nehmen kein Geld von Banken. So bleibt unsere Empfehlung unabhängig.</span><span lang="en">We take no money from banks. That keeps our recommendation independent.</span></p>
+    </div>
+    <div class="grid-2" style="max-width:900px;margin:0 auto">
+      <div class="card shadow">
+        <span class="pill info"><span lang="de">Kern</span><span lang="en">Core</span></span>
+        <h3 style="margin-top:12px"><span lang="de">Kreditfähigkeits-Diagnostik</span><span lang="en">Credit readiness diagnostic</span></h3>
+        <div class="price"><span lang="de">ab 1.500 €</span><span lang="en">from €1,500</span> <small><span lang="de">Festpreis</span><span lang="en">fixed fee</span></small></div>
+        <ul class="feature-list">
+          <li><span lang="de">Vollständige Analyse wie das Bankrating</span><span lang="en">Full analysis like a bank rating</span></li>
+          <li><span lang="de">Maßnahmenplan mit Vorher/Nachher</span><span lang="en">Action plan with before/after</span></li>
+          <li><span lang="de">Empfehlung des Kreditgebertyps</span><span lang="en">Recommended lender type</span></li>
+          <li><span lang="de">Abstimmung mit Ihrem Steuerberater</span><span lang="en">Sign-off with your tax advisor</span></li>
+          <li><span lang="de">Unabhängig vom späteren Ergebnis</span><span lang="en">Regardless of the later outcome</span></li>
+        </ul>
+      </div>
+      <div class="card">
+        <span class="pill"><span lang="de">Optional</span><span lang="en">Optional</span></span>
+        <h3 style="margin-top:12px"><span lang="de">Begleitung bis zur Finanzierung</span><span lang="en">Support through to financing</span></h3>
+        <div class="price" style="font-size:30px"><span lang="de">auf Anfrage</span><span lang="en">on request</span></div>
+        <ul class="feature-list">
+          <li><span lang="de">Unterlagenpaket für den Kreditgeber</span><span lang="en">Document pack for the lender</span></li>
+          <li><span lang="de">Vorbereitung des Bankgesprächs</span><span lang="en">Preparation of the bank meeting</span></li>
+          <li><span lang="de">Förderprogramme und Bürgschaften</span><span lang="en">Public programmes and guarantees</span></li>
+        </ul>
+        <p class="small muted" style="margin-top:14px"><span lang="de">Richtwerte. Konditionen im individuellen Angebot.</span><span lang="en">Indicative figures. Terms in your individual offer.</span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block alt">
+  <div class="wrap" style="max-width:820px">
+    <div class="section-head">
+      <span class="eyebrow">FAQ</span>
+      <h2><span lang="de">Häufige Fragen</span><span lang="en">Common questions</span></h2>
+    </div>
+    <div class="faq">
+      <details><summary><span lang="de">Ist das ein Rating?</span><span lang="en">Is this a credit rating?</span></summary>
+        <p><span lang="de">Nein. Wir geben eine richtungsweisende Einschätzung auf Basis bekannter Analysepraxis – keine Bonitätsnote, keine Ausfallwahrscheinlichkeit und keine Zusage. Die Kreditentscheidung trifft allein der Kreditgeber.</span><span lang="en">No. We give a directional assessment based on established credit-analysis practice – no credit grade, no default probability and no promise. Only the lender decides.</span></p></details>
+      <details><summary><span lang="de">Welche Unterlagen brauche ich?</span><span lang="en">Which documents do I need?</span></summary>
+        <p><span lang="de">Die Summen- und Saldenliste als DATEV-Export, die aktuelle BWA, die letzten zwei bis drei Jahresabschlüsse, Ihre Kreditverträge und einen Handelsregisterauszug. Ideal sind zusätzlich 6–12 Monate Kontoumsätze. Das meiste hat Ihr Steuerberater.</span><span lang="en">The trial balance as a DATEV export, the current management report (BWA), the last two to three annual accounts, your loan agreements and a register extract. Ideally also 6–12 months of bank transactions. Your tax advisor has most of it.</span></p></details>
+      <details><summary><span lang="de">Was passiert mit meinen Daten?</span><span lang="en">What happens to my data?</span></summary>
+        <p><span lang="de">Wir verarbeiten sie nur mit Ihrer ausdrücklichen Einwilligung und nur für die Analyse. Sie sehen jederzeit, welche Unterlagen vorliegen, und können eigene Uploads entfernen.</span><span lang="en">We process it only with your explicit consent and only for the analysis. You always see which documents we hold and can remove your own uploads.</span></p></details>
+      <details><summary><span lang="de">Und wenn mein Unternehmen wirklich nicht kreditfähig ist?</span><span lang="en">And if my company really isn't creditworthy?</span></summary>
+        <p><span lang="de">Dann sagen wir es Ihnen – mit Begründung. Ein Antrag in diesem Zustand erzeugt eine dokumentierte Ablehnung, die spätere Anträge belastet. Stattdessen zeigen wir, was sich operativ ändern müsste.</span><span lang="en">Then we tell you – with reasons. An application in that state creates a documented rejection that weighs on later ones. Instead we show what would need to change operationally.</span></p></details>
+    </div>
+  </div>
+</section>
+
+<section class="block">
+  <div class="wrap">
+    <div class="cta-band">
+      <div>
+        <h2><span lang="de">Wissen, woran es liegt – vor dem nächsten Antrag.</span><span lang="en">Know what's holding you back – before the next application.</span></h2>
+        <p style="margin:0;color:#c9d6e6"><span lang="de">Konto anlegen, Fragebogen ausfüllen, Unterlagen hochladen. Wir melden uns mit Ihrem Ergebnis.</span><span lang="en">Create an account, fill in the questionnaire, upload documents. We come back with your result.</span></p>
+      </div>
+      <a class="btn btn-primary btn-lg" href="/app#register"><span lang="de">Jetzt starten</span><span lang="en">Get started</span></a>
+    </div>
+  </div>
+</section>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="foot">
+      <div>
+        <a class="logo" href="/"><svg class="logo-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#0d2440"/><rect x="7" y="17" width="4" height="8" rx="1.5" fill="#6fd3b7"/><rect x="14" y="12" width="4" height="13" rx="1.5" fill="#39b894"/><rect x="21" y="7" width="4" height="18" rx="1.5" fill="#0b8f73"/></svg><span>Credit Readiness</span></a>
+      </div>
+      <div style="display:flex;gap:22px;flex-wrap:wrap">
+        <a href="/app#login"><span lang="de">Anmelden</span><span lang="en">Log in</span></a>
+        <a href="/investors"><span lang="de">Für Investoren</span><span lang="en">Investors</span></a>
+        <a href="/forms/unterlagen.html" target="_blank" rel="noopener"><span lang="de">Unterlagenliste</span><span lang="en">Document checklist</span></a>
+      </div>
+    </div>
+    <p class="disclaimer"><span lang="de">Richtungsweisende Einschätzung der Kreditfähigkeit auf Basis öffentlich bekannter Analysepraxis. Kein Rating, keine Ausfallwahrscheinlichkeit, keine Zusage oder Prognose einer Kreditentscheidung. Jede Kreditentscheidung trifft ausschließlich der jeweilige Kreditgeber. Beispielergebnisse auf dieser Seite sind fiktiv.</span><span lang="en">Directional assessment of creditworthiness based on publicly known analysis practice. Not a rating, no default probability, no promise or prediction of a credit decision. Every credit decision is made solely by the lender. Example results on this page are fictional.</span></p>
+  </div>
+</footer>
 </body>
 </html>

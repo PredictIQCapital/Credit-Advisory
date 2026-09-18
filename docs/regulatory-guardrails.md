@@ -77,16 +77,23 @@ required. That boundary must not be crossed for convenience.
 
 ### The local portal, and what hosting it would take
 
-`python -m credit_readiness serve` starts a portal bound to `127.0.0.1`. It has
-no login, stores files unencrypted in `data/clients/`, and is meant for exactly
-one situation: the founder working through client files on their own laptop
-with full-disk encryption (BitLocker) switched on.
+`python -m credit_readiness serve` starts the website and portal bound to
+`127.0.0.1`. It has accounts with three roles (advisor, company, tax advisor)
+and enforces who may see and change what, but it stores files unencrypted in
+`data/clients/` and is meant for one situation: the founder working through
+client files on their own laptop with full-disk encryption (BitLocker) on.
 
 What is already in place:
 
 | Control | Where |
 |---|---|
 | GDPR consent is a hard gate: no consent, no analysis | `intake/assemble.py` |
+| Passwords hashed with PBKDF2-SHA256 (600k iterations, per-user salt) | `auth.py` |
+| Sessions: random 256-bit tokens, HttpOnly + SameSite=Strict cookie, 8h sliding expiry | `auth.py`, `webapp/server.py` |
+| Temporary lockout after repeated failed logins | `auth.py` |
+| Role/permission matrix enforced server-side on every request; other clients' cases answer 404 | `webapp/server.py` |
+| Client sees the report only after the advisor releases it; internal files never | `webapp/server.py`, `workflow.release_report` |
+| Members can delete only their own uploads | `webapp/server.py` |
 | Cross-site write requests rejected (Origin check) | `webapp/server.py` |
 | Strict Content-Security-Policy, no inline script, `nosniff`, `no-referrer` | `webapp/server.py` |
 | Case IDs, document IDs, artifact names whitelisted; filenames sanitised | `casefile.py` |
@@ -96,7 +103,8 @@ What is already in place:
 | Client data never committed | `.gitignore` |
 
 What hosting additionally requires, **before** the first real client file goes
-online: authentication with per-client access, TLS, encryption at rest,
+online: e-mail invitations and password reset (instead of one-time passwords
+shown on screen), optional two-factor login, TLS, encryption at rest,
 Frankfurt-region hosting, a DPA with the hosting and database providers, audit
 logging, retention and deletion rules per document class, and rate limiting.
 The `CaseStore` interface is where the database and object storage plug in.

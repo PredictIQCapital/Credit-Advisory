@@ -27,7 +27,10 @@ from .intake.documents import (
 from .intake.questionnaire import (
     AUDIENCE_STEUERBERATER,
     AUDIENCE_UNTERNEHMEN,
+    AnswerError,
+    _visible,
     check_answers,
+    coerce,
     get_questionnaire,
 )
 from .reporting.html import markdown_to_html
@@ -60,6 +63,36 @@ def _answer_stats(questionnaire, check) -> dict:
         "errors": len(check.errors),
         "complete": check.complete,
     }
+
+
+def section_progress(audience: str, raw_answers: dict) -> list[dict]:
+    """Per-section completeness, for the step tracker of the guided flow."""
+    q = get_questionnaire(audience)
+    out = []
+    for s in q.sections:
+        required = answered_required = answered = total = 0
+        for question in s.questions:
+            if not _visible(question, raw_answers):
+                continue
+            total += 1
+            try:
+                value = coerce(question, raw_answers.get(question.id))
+            except AnswerError:
+                value = None
+            if value not in (None, []):
+                answered += 1
+            if question.required:
+                required += 1
+                if value is not None:
+                    answered_required += 1
+        out.append({
+            "id": s.id, "title": s.title, "required": required,
+            "answered_required": answered_required, "answered": answered, "total": total,
+            # A section with no required questions counts as done once anything
+            # in it is answered -- an untouched section is never "complete".
+            "complete": answered_required == required and answered > 0,
+        })
+    return out
 
 
 def case_overview(store: CaseStore, case_id: str, today: Optional[date] = None) -> dict:
@@ -98,7 +131,120 @@ def case_overview(store: CaseStore, case_id: str, today: Optional[date] = None) 
         "assembly_notes": asm.notes,
         "latest_summary": json.loads(summary_txt) if summary_txt else None,
         "artifacts": store.list_artifacts(case_id),
+        "sections": {
+            AUDIENCE_UNTERNEHMEN: section_progress(AUDIENCE_UNTERNEHMEN, sme_raw),
+            AUDIENCE_STEUERBERATER: section_progress(AUDIENCE_STEUERBERATER, stb_raw),
+        },
+        "report_released": bool(meta.get("report_released")),
+        "submitted_at": meta.get("submitted_at"),
+        "members": meta.get("members") or {},
     }
+
+
+# ---------------------------------------------------------------------------
+# Multi-party operations (portal with accounts)
+# ---------------------------------------------------------------------------
+
+
+def register_client(store: CaseStore, users, company_name: str, name: str, email: str,
+                    password: str) -> tuple[Any, dict]:
+    """Self-registration of an SME: account + case + pre-filled contact answers."""
+    from .auth import ROLE_UNTERNEHMEN
+
+    if not (company_name or "").strip():
+        raise CaseStoreError("Firmenname fehlt")
+    principal = users.create(email, name, ROLE_UNTERNEHMEN, password)
+    meta = store.create_case(company_name)
+    store.update_meta(meta["case_id"], members={ROLE_UNTERNEHMEN: [principal.email]})
+    store.save_answers(meta["case_id"], AUDIENCE_UNTERNEHMEN, {
+        "firmenname": company_name.strip(),
+        "ansprechpartner": principal.name,
+        "ansprechpartner_email": principal.email,
+    })
+    return principal, store.get_meta(meta["case_id"])
+
+
+def add_member(store: CaseStore, case_id: str, role: str, email: str) -> dict:
+    meta = store.get_meta(case_id)
+    members = {k: list(v) for k, v in (meta.get("members") or {}).items()}
+    lst = members.setdefault(role, [])
+    if email not in lst:
+        lst.append(email)
+    return store.update_meta(case_id, members=members)
+
+
+def invite_member(store: CaseStore, users, case_id: str, role: str, email: str,
+                  name: str = "") -> dict:
+    """Give a client or its tax advisor access to this one case.
+
+    If the person has no account yet, one is created with a one-time password
+    that the inviter passes on. A hosted version sends an invitation e-mail
+    with a set-password link instead; the portal says so where it shows the
+    password.
+    """
+    import secrets
+
+    from .auth import ROLE_STEUERBERATER, ROLE_UNTERNEHMEN, AuthError, normalise_email
+
+    if role not in (ROLE_UNTERNEHMEN, ROLE_STEUERBERATER):
+        raise AuthError("Einladen koennen wir nur Unternehmen und Steuerberater")
+    email = normalise_email(email)
+    existing = users.get(email)
+    temp_password = None
+    if existing:
+        if existing["role"] != role:
+            raise AuthError("Diese E-Mail gehoert zu einem Konto mit anderer Rolle")
+    else:
+        temp_password = secrets.token_urlsafe(9)
+        users.create(email, name or email, role, temp_password)
+    add_member(store, case_id, role, email)
+    answers = store.load_answers(case_id, AUDIENCE_UNTERNEHMEN)
+    if role == ROLE_STEUERBERATER:
+        answers.setdefault("steuerberater_email", email)
+        if name:
+            answers.setdefault("steuerberater_kanzlei", name)
+    else:
+        answers.setdefault("ansprechpartner_email", email)
+        if name:
+            answers.setdefault("ansprechpartner", name)
+    store.save_answers(case_id, AUDIENCE_UNTERNEHMEN, answers)
+    if STAGE_IDS.index(store.get_meta(case_id)["stage"]) < STAGE_IDS.index("unterlagen_angefordert"):
+        store.set_stage(case_id, "unterlagen_angefordert", f"Eingeladen: {email}")
+    return {"email": email, "role": role, "created": temp_password is not None,
+            "temp_password": temp_password}
+
+
+def invite_steuerberater(store: CaseStore, users, case_id: str, email: str, name: str = "") -> dict:
+    from .auth import ROLE_STEUERBERATER
+    return invite_member(store, users, case_id, ROLE_STEUERBERATER, email, name)
+
+
+def submit_case(store: CaseStore, case_id: str, today: Optional[date] = None) -> dict:
+    """The client says 'done'. The advisor takes over from here."""
+    from datetime import datetime, timezone
+
+    ov = case_overview(store, case_id, today=today)
+    if ov["missing_answers"][AUDIENCE_UNTERNEHMEN] or ov["answer_errors"][AUDIENCE_UNTERNEHMEN]:
+        raise CaseStoreError("Bitte zuerst alle Pflichtangaben im Fragebogen ergaenzen")
+    store.update_meta(case_id, submitted_at=datetime.now(timezone.utc).isoformat(timespec="seconds"))
+    target = "unterlagen_vollstaendig" if ov["documents_complete"] else "unterlagen_angefordert"
+    if STAGE_IDS.index(store.get_meta(case_id)["stage"]) < STAGE_IDS.index(target):
+        store.set_stage(case_id, target, "Vom Unternehmen eingereicht")
+    return case_overview(store, case_id, today=today)
+
+
+def release_report(store: CaseStore, case_id: str, released: bool = True) -> dict:
+    """Make the report visible to the client -- only after the advisor has read it.
+
+    The blueprint's model is a human advisor translating every flag; the client
+    never sees raw engine output that no person has reviewed.
+    """
+    if released and not store.read_artifact(case_id, "summary.json"):
+        raise CaseStoreError("Es gibt noch keine Analyse, die freigegeben werden koennte")
+    meta = store.update_meta(case_id, report_released=bool(released))
+    if released and STAGE_IDS.index(meta["stage"]) < STAGE_IDS.index("massnahmen_in_umsetzung"):
+        store.set_stage(case_id, "massnahmen_in_umsetzung", "Bericht an das Unternehmen freigegeben")
+    return store.get_meta(case_id)
 
 
 def run_case_diagnostic(

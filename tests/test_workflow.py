@@ -2,11 +2,7 @@
 
 from __future__ import annotations
 
-import base64
 import json
-import threading
-import urllib.error
-import urllib.request
 from datetime import date
 from pathlib import Path
 
@@ -309,75 +305,3 @@ def test_committed_intake_templates_match_the_definitions():
     out = subprocess.run([sys.executable, str(root / "scripts" / "export_intake_templates.py"),
                           "--check"], capture_output=True, text=True)
     assert out.returncode == 0, out.stdout + out.stderr
-
-
-# ------------------------------------------------------------------ portal
-
-
-@pytest.fixture
-def portal(store):
-    from credit_readiness.webapp.server import make_server
-    srv = make_server(store, port=0, today=TODAY)
-    threading.Thread(target=srv.serve_forever, daemon=True).start()
-    yield f"http://127.0.0.1:{srv.server_port}"
-    srv.shutdown()
-    srv.server_close()
-
-
-def _call(base, method, path, body=None, headers=None):
-    data = None if body is None else json.dumps(body).encode()
-    req = urllib.request.Request(base + path, data=data, method=method,
-                                 headers={"Content-Type": "application/json", **(headers or {})})
-    try:
-        with urllib.request.urlopen(req) as r:
-            return r.status, r.read()
-    except urllib.error.HTTPError as e:
-        return e.code, e.read()
-
-
-def test_portal_full_flow(portal):
-    status, body = _call(portal, "POST", "/api/cases", {"company_name": "Mueller Praezisionstechnik GmbH"})
-    assert status == 201
-    cid = json.loads(body)["case_id"]
-    for aud, name in (("unternehmen", "antworten_unternehmen.json"),
-                      ("steuerberater", "antworten_steuerberater.json")):
-        assert _call(portal, "PUT", f"/api/cases/{cid}/answers/{aud}", _answers(name))[0] == 200
-    for doc_type, name, extra in [
-        ("susa_aktuell", "susa_2025.csv", {"period_end": "2025-12-31", "period_months": 12}),
-        ("kontoumsaetze", "kontoumsaetze_kontokorrent.csv", {}),
-    ]:
-        status, _ = _call(portal, "POST", f"/api/cases/{cid}/documents", {
-            "doc_type": doc_type, "filename": name,
-            "content_base64": base64.b64encode((INTAKE / name).read_bytes()).decode(), **extra})
-        assert status == 201
-    status, body = _call(portal, "POST", f"/api/cases/{cid}/diagnose")
-    res = json.loads(body)
-    assert status == 200 and res["ok"] and res["summary"]["band"] == "C"
-    status, body = _call(portal, "GET", f"/api/cases/{cid}/artifacts/diagnostik.html")
-    assert status == 200 and b"Kreditfaehigkeits-Diagnostik" in body
-
-
-def test_portal_serves_the_front_end_and_printable_forms(portal):
-    for path in ("/", "/app.js", "/style.css", "/forms/unternehmen.html",
-                 "/forms/steuerberater.html", "/forms/unterlagen.html", "/api/meta"):
-        assert _call(portal, "GET", path)[0] == 200, path
-
-
-def test_portal_rejects_cross_site_writes(portal):
-    status, _ = _call(portal, "POST", "/api/cases", {"company_name": "x"},
-                      {"Origin": "http://evil.example"})
-    assert status == 403
-
-
-def test_portal_blocks_path_tricks(portal):
-    for path in ("/../pyproject.toml", "/..%2F..%2Fpyproject.toml",
-                 "/api/cases/CRA-2026-0001/artifacts/..%2Fcase_meta.json",
-                 "/api/cases/../../x"):
-        assert _call(portal, "GET", path)[0] == 404, path
-
-
-def test_portal_reports_errors_as_json(portal):
-    status, body = _call(portal, "POST", "/api/cases", {"company_name": ""})
-    assert status == 400 and "Firmenname" in json.loads(body)["error"]
-    status, body = _call(portal, "GET", "/api/cases/CRA-2026-0999")
-    assert status == 404

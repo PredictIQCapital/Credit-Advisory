@@ -15,4 +15,5 @@ output/*.json
 
 # Client data never enters version control.
 data/clients/
+data/demo/
 *_client_*.json

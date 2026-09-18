@@ -6,7 +6,9 @@
 
 Intake and engagement workflow:
 
-    python -m credit_readiness serve --open                  local client portal
+    python -m credit_readiness serve --open                  website + portal
+    python -m credit_readiness serve --demo --open           same, with fictional demo data
+    python -m credit_readiness user add me@firma.de "Name" --password ...   advisor account
     python -m credit_readiness questionnaire unternehmen      printable questionnaire
     python -m credit_readiness documents                      document checklist
     python -m credit_readiness bank konto.csv --limit 500000  analyse bank export
@@ -29,6 +31,7 @@ from .ingest.json_intake import load_case_file
 from .reporting.report import render_markdown
 from .reporting.summary import result_summary
 from . import workflow as wf
+from .auth import ROLE_BERATER, ROLES, AuthError, UserStore
 from .casefile import OUTCOMES, CaseStoreError, LocalCaseStore
 from .ingest.bank_csv import BankCsvError, analyse_bank_csv
 from .intake.documents import DOCUMENT_TYPES
@@ -202,7 +205,23 @@ def main(argv: list[str] | None = None) -> int:
     p_serve.add_argument("--port", type=int, default=8765)
     p_serve.add_argument("--data-dir", help="Ablage (Standard: data/clients)")
     p_serve.add_argument("--open", action="store_true", help="Browser oeffnen")
+    p_serve.add_argument("--demo", action="store_true",
+                         help="Demo mit fiktiven Unternehmen (Ablage data/demo)")
     p_serve.set_defaults(func=cmd_serve)
+
+    p_user = sub.add_parser("user", help="Konten verwalten")
+    p_user.add_argument("--data-dir", help="Ablage (Standard: data/clients)")
+    us = p_user.add_subparsers(dest="user_command", required=True)
+    u = us.add_parser("add", help="Konto anlegen")
+    u.add_argument("email")
+    u.add_argument("name")
+    u.add_argument("--role", choices=ROLES, default=ROLE_BERATER)
+    u.add_argument("--password", required=True)
+    u = us.add_parser("list", help="Konten auflisten")
+    u = us.add_parser("passwd", help="Passwort setzen")
+    u.add_argument("email")
+    u.add_argument("--password", required=True)
+    p_user.set_defaults(func=cmd_user)
 
     p_q = sub.add_parser("questionnaire", help="Fragebogen ausgeben")
     p_q.add_argument("audience", choices=AUDIENCES)
@@ -273,7 +292,26 @@ def _write_or_print(text: str, out: str | None) -> None:
 def cmd_serve(args: argparse.Namespace) -> int:
     from .webapp.server import serve
 
-    serve(host=args.host, port=args.port, data_dir=args.data_dir, open_browser=args.open)
+    serve(host=args.host, port=args.port, data_dir=args.data_dir, open_browser=args.open,
+          demo=args.demo)
+    return 0
+
+
+def cmd_user(args: argparse.Namespace) -> int:
+    users = UserStore(LocalCaseStore(args.data_dir).root)
+    try:
+        if args.user_command == "add":
+            p = users.create(args.email, args.name, args.role, args.password)
+            print(f"Konto angelegt: {p.email} ({p.role})")
+        elif args.user_command == "passwd":
+            users.set_password(args.email, args.password)
+            print("Passwort geaendert")
+        else:
+            for u in users.list():
+                print(f"{u['role']:<14} {u['email']:<36} {u['name']}")
+    except AuthError as exc:
+        print(f"Fehler: {exc}", file=sys.stderr)
+        return 2
     return 0
 
 
