@@ -1,0 +1,84 @@
+{
+  "case_id": "CASE-02",
+  "profile": {
+    "name": "Nordlicht Handel GmbH & Co. KG",
+    "legal_form": "GmbH & Co. KG",
+    "sector": "Grosshandel",
+    "employees": 28,
+    "founded_year": 2014,
+    "city": "Bremen"
+  },
+  "balance_sheet": {
+    "period_end": "2025-12-31",
+    "sachanlagen": 420000,
+    "vorraete": 1850000,
+    "forderungen_ll": 2240000,
+    "liquide_mittel": 60000,
+    "sonstige_vermoegensgegenstaende": 70000,
+    "gezeichnetes_kapital": 50000,
+    "gewinnruecklagen": 220000,
+    "gewinnvortrag": 130000,
+    "jahresueberschuss": 116000,
+    "rueckstellungen": 145000,
+    "verb_kreditinstitute_kurz": 1480000,
+    "verb_kreditinstitute_lang": 320000,
+    "verb_ll": 1690000,
+    "sonstige_verbindlichkeiten_kurz": 489000,
+    "kontokorrent_limit": 1500000,
+    "kontokorrent_inanspruchnahme": 1460000
+  },
+  "income_statement": {
+    "period_end": "2025-12-31",
+    "period_months": 12,
+    "umsatzerloese": 11400000,
+    "materialaufwand": 8950000,
+    "personalaufwand": 1420000,
+    "abschreibungen": 95000,
+    "sonstige_betriebliche_aufwendungen": 640000,
+    "zinsaufwand": 148000,
+    "steuern": 31000
+  },
+  "prior_year_income": {
+    "period_end": "2024-12-31",
+    "umsatzerloese": 10900000,
+    "materialaufwand": 8520000,
+    "personalaufwand": 1360000,
+    "abschreibungen": 92000,
+    "sonstige_betriebliche_aufwendungen": 610000,
+    "zinsaufwand": 121000
+  },
+  "facilities": [
+    {
+      "lender": "Volksbank Bremen",
+      "facility_type": "Kontokorrent",
+      "original_amount": 1500000,
+      "outstanding": 1460000,
+      "interest_rate": 0.089,
+      "annual_principal_repayment": 0
+    },
+    {
+      "lender": "Volksbank Bremen",
+      "facility_type": "Tilgungsdarlehen",
+      "original_amount": 500000,
+      "outstanding": 320000,
+      "interest_rate": 0.052,
+      "annual_principal_repayment": 65000,
+      "maturity_year": 2029
+    }
+  ],
+  "behavior": {
+    "bwa_age_months": 2,
+    "bwa_frequency": "monatlich",
+    "creditreform_bonitaetsindex": 289,
+    "days_beyond_terms": 14,
+    "overdraft_days_at_limit_12m": 210,
+    "has_planning_forecast": false
+  },
+  "request": {
+    "amount": 600000,
+    "purpose": "Betriebsmittel",
+    "tenor_years": 5,
+    "collateral_available": 150000,
+    "urgency_weeks": 12
+  }
+}

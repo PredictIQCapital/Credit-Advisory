@@ -1,0 +1,80 @@
+{
+  "case_id": "CASE-06",
+  "profile": {
+    "name": "Hoffmann Medizintechnik GmbH",
+    "legal_form": "GmbH",
+    "sector": "Verarbeitendes Gewerbe",
+    "employees": 78,
+    "founded_year": 1998,
+    "city": "Tuttlingen"
+  },
+  "balance_sheet": {
+    "period_end": "2025-12-31",
+    "sachanlagen": 3200000,
+    "immaterielle_vermoegensgegenstaende": 140000,
+    "finanzanlagen": 260000,
+    "vorraete": 1180000,
+    "forderungen_ll": 1340000,
+    "liquide_mittel": 1850000,
+    "gezeichnetes_kapital": 200000,
+    "kapitalruecklage": 400000,
+    "gewinnruecklagen": 2763000,
+    "gewinnvortrag": 610000,
+    "jahresueberschuss": 967000,
+    "rueckstellungen": 690000,
+    "verb_kreditinstitute_kurz": 120000,
+    "verb_kreditinstitute_lang": 1340000,
+    "verb_ll": 690000,
+    "sonstige_verbindlichkeiten_kurz": 190000,
+    "kontokorrent_limit": 800000,
+    "kontokorrent_inanspruchnahme": 0
+  },
+  "income_statement": {
+    "period_end": "2025-12-31",
+    "period_months": 12,
+    "umsatzerloese": 14600000,
+    "sonstige_betriebliche_ertraege": 85000,
+    "materialaufwand": 6100000,
+    "personalaufwand": 5180000,
+    "abschreibungen": 480000,
+    "sonstige_betriebliche_aufwendungen": 1580000,
+    "zinsaufwand": 68000,
+    "steuern": 310000
+  },
+  "prior_year_income": {
+    "period_end": "2024-12-31",
+    "umsatzerloese": 13900000,
+    "materialaufwand": 5840000,
+    "personalaufwand": 4950000,
+    "abschreibungen": 465000,
+    "sonstige_betriebliche_aufwendungen": 1510000,
+    "zinsaufwand": 71000
+  },
+  "facilities": [
+    {
+      "lender": "Kreissparkasse Tuttlingen",
+      "facility_type": "Tilgungsdarlehen",
+      "original_amount": 2500000,
+      "outstanding": 1340000,
+      "interest_rate": 0.041,
+      "annual_principal_repayment": 220000,
+      "maturity_year": 2031,
+      "collateralised": true
+    }
+  ],
+  "behavior": {
+    "bwa_age_months": 1,
+    "bwa_frequency": "monatlich",
+    "creditreform_bonitaetsindex": 168,
+    "days_beyond_terms": 0,
+    "overdraft_days_at_limit_12m": 0,
+    "has_planning_forecast": true
+  },
+  "request": {
+    "amount": 1500000,
+    "purpose": "Investition",
+    "tenor_years": 8,
+    "collateral_available": 1400000,
+    "urgency_weeks": 26
+  }
+}

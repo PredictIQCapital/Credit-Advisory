@@ -1,0 +1,92 @@
+{
+  "case_id": "CASE-01",
+  "profile": {
+    "name": "Mueller Praezisionstechnik GmbH",
+    "legal_form": "GmbH",
+    "sector": "Verarbeitendes Gewerbe",
+    "employees": 45,
+    "founded_year": 2009,
+    "city": "Schwaebisch Gmuend"
+  },
+  "balance_sheet": {
+    "period_end": "2025-12-31",
+    "immaterielle_vermoegensgegenstaende": 60000,
+    "sachanlagen": 2100000,
+    "vorraete": 780000,
+    "forderungen_ll": 1150000,
+    "sonstige_vermoegensgegenstaende": 90000,
+    "liquide_mittel": 180000,
+    "aktive_rap": 25000,
+    "gezeichnetes_kapital": 25000,
+    "gewinnruecklagen": 95000,
+    "gewinnvortrag": 95000,
+    "jahresueberschuss": 230000,
+    "rueckstellungen": 350000,
+    "verb_kreditinstitute_kurz": 420000,
+    "verb_kreditinstitute_lang": 1250000,
+    "verb_ll": 680000,
+    "sonstige_verbindlichkeiten_kurz": 240000,
+    "sonstige_verbindlichkeiten_lang": 400000,
+    "gesellschafterdarlehen": 600000,
+    "gesellschafterdarlehen_rangruecktritt": false,
+    "kontokorrent_limit": 500000,
+    "kontokorrent_inanspruchnahme": 420000
+  },
+  "income_statement": {
+    "period_end": "2025-12-31",
+    "period_months": 12,
+    "umsatzerloese": 8200000,
+    "sonstige_betriebliche_ertraege": 45000,
+    "materialaufwand": 4180000,
+    "personalaufwand": 2650000,
+    "abschreibungen": 245000,
+    "sonstige_betriebliche_aufwendungen": 790000,
+    "zinsaufwand": 95000,
+    "steuern": 55000
+  },
+  "prior_year_income": {
+    "period_end": "2024-12-31",
+    "umsatzerloese": 7650000,
+    "materialaufwand": 3920000,
+    "personalaufwand": 2480000,
+    "abschreibungen": 238000,
+    "sonstige_betriebliche_aufwendungen": 745000,
+    "zinsaufwand": 88000
+  },
+  "facilities": [
+    {
+      "lender": "Sparkasse Ostalb",
+      "facility_type": "Tilgungsdarlehen",
+      "original_amount": 2000000,
+      "outstanding": 1250000,
+      "interest_rate": 0.048,
+      "annual_principal_repayment": 180000,
+      "maturity_year": 2032,
+      "collateralised": true
+    },
+    {
+      "lender": "Sparkasse Ostalb",
+      "facility_type": "Kontokorrent",
+      "original_amount": 500000,
+      "outstanding": 420000,
+      "interest_rate": 0.095,
+      "annual_principal_repayment": 0
+    }
+  ],
+  "behavior": {
+    "bwa_age_months": 5,
+    "bwa_frequency": "quartalsweise",
+    "creditreform_bonitaetsindex": 248,
+    "days_beyond_terms": 6,
+    "overdraft_days_at_limit_12m": 95,
+    "jahresabschluss_age_months": 8,
+    "has_planning_forecast": false
+  },
+  "request": {
+    "amount": 750000,
+    "purpose": "Investition",
+    "tenor_years": 7,
+    "collateral_available": 400000,
+    "urgency_weeks": 16
+  }
+}

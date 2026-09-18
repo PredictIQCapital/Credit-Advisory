@@ -1,0 +1,108 @@
+# Regulatory Guardrails
+
+**Status: engineering guidance, not legal advice.** Every item marked OPEN needs a
+paid consultation with a German commercial lawyer before the first paying client.
+The blueprint says this too; it is repeated here because the code enforces some of
+these boundaries and a future contributor needs to know why.
+
+## The line we are staying on
+
+This business sells **advisory triage**. It does not sell ratings, and it does not
+lend. Three regimes sit nearby, and we stay outside all three by design.
+
+### 1. Banking licence — 32 KWG
+
+**Not applicable, and must stay that way.** A licence is required for lending or
+deposit-taking on the company's own balance sheet. This business never touches a
+client's loan capital. Nothing in the roadmap should change that.
+
+### 2. Credit rating agency — EU CRA Regulation (1060/2009)
+
+**Deliberately avoided.** A credit rating is an opinion on creditworthiness issued
+using an established and defined ranking system, published or distributed by
+subscription. Issuing those is a BaFin-supervised activity.
+
+Controls enforced in code (`scorecard.py`, `reporting/report.py`):
+
+| Control | Where | Test |
+|---|---|---|
+| No output labelled a rating, score in notches, or PD | `Band.interpretation` | `test_report_never_claims_approval` |
+| Vocabulary is "Readiness-Band", "indikativ", "richtungsweisend" | `engine.DISCLAIMER` | `test_report_always_carries_the_disclaimer` |
+| Every factor exposes value, weight, breakpoints, points lost | `FactorScore` | `test_ranked_weaknesses_ordered_by_points_lost` |
+| No machine-learned component; piecewise-linear only | `scorecard.interpolate` | — |
+| Disclaimer on every report, twice | `render_markdown` | `test_report_always_carries_the_disclaimer` |
+| No phrase asserting credit will be granted | report wording | `test_every_mention_of_zusage_is_negated_or_descriptive` |
+
+**If anyone later proposes replacing the rules engine with a trained model,
+that decision has to be taken with legal advice, not as a technical upgrade.**
+The explainability is not an implementation detail; it is the compliance posture
+and the client trust mechanism at once.
+
+### 3. Credit brokering — 34c GewO (Kreditvermittlung)
+
+**OPEN — the single most important question to resolve before invoicing.**
+
+The blueprint's own read: a flat advisory fee earned regardless of outcome is
+plausibly outside 34c; a success fee tied to placing a loan plausibly falls
+inside it, requiring Gewerbeamt registration, a Führungszeugnis, and professional
+liability insurance — weeks, not months.
+
+The architecture is built so this decision can be made late without a rewrite:
+
+- `routing.py` ranks **lender types**, never named institutions, and produces a
+  recommendation rather than a placement.
+- The diagnostic is a standalone, separately priced product. A client can pay for
+  it, fix their own file, and never use a placement service.
+
+If the success-fee model is adopted, `routing.py` is where the regulatory surface
+changes, and the module docstring says so.
+
+## GDPR — not optional
+
+The data handled here is financial, sometimes distress-adjacent, and always
+commercially sensitive.
+
+| Requirement | Implementation |
+|---|---|
+| EU hosting | Frankfurt region; no US sub-processors without an assessment |
+| Encryption | at rest and in transit |
+| Data processing agreements | with **every** vendor, including the open-banking aggregator |
+| Documented legal basis | per client, in the engagement letter |
+| Retention limits | defined per document class before first intake |
+| Client data out of version control | enforced in `.gitignore` (`data/clients/`) |
+
+Open-banking access is rented from a licensed PSD2 account-information provider
+(finAPI, Tink or comparable) precisely so that no BaFin/ZAG licence of our own is
+required. That boundary must not be crossed for convenience.
+
+## Liability
+
+`remediation.py` attaches a caveat to every recommendation, and flags which need
+Steuerberater or legal sign-off. This is not decoration:
+
+- **R01 (Rangrücktritt)** carries insolvency and tax consequences. It must never
+  be recommended unilaterally. The code marks it `requires_steuerberater=True`
+  and `requires_legal=True`, and the report prints both.
+- Ratio reclassification or restatement always needs the client's own accountant
+  to sign off. That is also what makes Steuerberater a referral channel rather
+  than only a compliance step.
+
+Before the first paying client: professional liability insurance in force, and an
+engagement letter that scopes explicitly what is and is not promised.
+
+## The honest-decline rule
+
+`R08` classifies substantive weakness as `GENUINE_RISK` and refuses to simulate it
+away. `classify()` lets one substantive finding outrank any number of cosmetic
+ones.
+
+This is a commercial control as much as an ethical one. Polishing the presentation
+of a distressed borrower produces a better-looking rejection, damages the client,
+and poisons the outcome dataset that is supposed to become the moat. Declining
+those engagements is the product working correctly.
+
+## Austria
+
+Everything above is researched for **Germany only**. Austrian market sizing and
+regulatory specifics have not been checked with the same rigour and must not be
+assumed to mirror Germany — see the blueprint's own risk list.

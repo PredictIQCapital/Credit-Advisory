@@ -1,0 +1,77 @@
+{
+  "case_id": "CASE-04",
+  "profile": {
+    "name": "Datenwerk Consulting GmbH",
+    "legal_form": "GmbH",
+    "sector": "Information und Kommunikation",
+    "employees": 52,
+    "founded_year": 2016,
+    "city": "Leipzig"
+  },
+  "balance_sheet": {
+    "period_end": "2025-12-31",
+    "immaterielle_vermoegensgegenstaende": 95000,
+    "sachanlagen": 210000,
+    "forderungen_ll": 1420000,
+    "sonstige_vermoegensgegenstaende": 85000,
+    "liquide_mittel": 640000,
+    "gezeichnetes_kapital": 50000,
+    "kapitalruecklage": 150000,
+    "gewinnruecklagen": 320000,
+    "gewinnvortrag": 260000,
+    "jahresueberschuss": 485000,
+    "rueckstellungen": 285000,
+    "verb_kreditinstitute_kurz": 0,
+    "verb_kreditinstitute_lang": 180000,
+    "verb_ll": 340000,
+    "sonstige_verbindlichkeiten_kurz": 380000,
+    "kontokorrent_limit": 300000,
+    "kontokorrent_inanspruchnahme": 0
+  },
+  "income_statement": {
+    "period_end": "2025-12-31",
+    "period_months": 12,
+    "umsatzerloese": 7850000,
+    "materialaufwand": 1180000,
+    "personalaufwand": 5100000,
+    "abschreibungen": 105000,
+    "sonstige_betriebliche_aufwendungen": 820000,
+    "zinsaufwand": 12000,
+    "steuern": 148000
+  },
+  "prior_year_income": {
+    "period_end": "2024-12-31",
+    "umsatzerloese": 6420000,
+    "materialaufwand": 980000,
+    "personalaufwand": 4280000,
+    "abschreibungen": 98000,
+    "sonstige_betriebliche_aufwendungen": 690000,
+    "zinsaufwand": 14000
+  },
+  "facilities": [
+    {
+      "lender": "Sparkasse Leipzig",
+      "facility_type": "Tilgungsdarlehen",
+      "original_amount": 300000,
+      "outstanding": 180000,
+      "interest_rate": 0.045,
+      "annual_principal_repayment": 60000,
+      "maturity_year": 2029
+    }
+  ],
+  "behavior": {
+    "bwa_age_months": 2,
+    "bwa_frequency": "monatlich",
+    "creditreform_bonitaetsindex": 195,
+    "days_beyond_terms": 2,
+    "overdraft_days_at_limit_12m": 0,
+    "has_planning_forecast": true
+  },
+  "request": {
+    "amount": 1200000,
+    "purpose": "Wachstum",
+    "tenor_years": 6,
+    "collateral_available": 180000,
+    "urgency_weeks": 20
+  }
+}

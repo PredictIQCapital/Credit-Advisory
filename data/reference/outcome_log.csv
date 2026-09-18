@@ -1,0 +1,2 @@
+case_id,date_engaged,sector,employees,revenue_eur,band_before,score_before,verdict,findings,remediation_applied,band_after,score_after,lender_type_routed,outcome,facility_amount_eur,rate_pct,weeks_to_decision,notes
+EXAMPLE-00,2026-01-15,Verarbeitendes Gewerbe,45,8200000,C,64.5,behebbar-Struktur,R01;R04;R05,R01;R04,A,83.4,kfw_haftungsfreistellung,PENDING,750000,,,"Beispielzeile - loeschen vor erstem echten Mandat"

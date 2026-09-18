@@ -1,0 +1,85 @@
+{
+  "case_id": "CASE-03",
+  "profile": {
+    "name": "Gastro Rheinblick GmbH",
+    "legal_form": "GmbH",
+    "sector": "Gastgewerbe",
+    "employees": 34,
+    "founded_year": 2017,
+    "city": "Koeln"
+  },
+  "balance_sheet": {
+    "period_end": "2025-12-31",
+    "sachanlagen": 1450000,
+    "immaterielle_vermoegensgegenstaende": 180000,
+    "vorraete": 85000,
+    "forderungen_ll": 45000,
+    "liquide_mittel": 22000,
+    "gezeichnetes_kapital": 25000,
+    "gewinnvortrag": -137000,
+    "jahresueberschuss": -458000,
+    "rueckstellungen": 120000,
+    "verb_kreditinstitute_kurz": 380000,
+    "verb_kreditinstitute_lang": 1180000,
+    "verb_ll": 295000,
+    "sonstige_verbindlichkeiten_kurz": 377000,
+    "kontokorrent_limit": 400000,
+    "kontokorrent_inanspruchnahme": 380000
+  },
+  "income_statement": {
+    "period_end": "2025-12-31",
+    "period_months": 12,
+    "umsatzerloese": 2980000,
+    "materialaufwand": 1090000,
+    "personalaufwand": 1520000,
+    "abschreibungen": 210000,
+    "sonstige_betriebliche_aufwendungen": 520000,
+    "zinsaufwand": 98000,
+    "steuern": 0
+  },
+  "prior_year_income": {
+    "period_end": "2024-12-31",
+    "umsatzerloese": 3780000,
+    "materialaufwand": 1310000,
+    "personalaufwand": 1680000,
+    "abschreibungen": 215000,
+    "sonstige_betriebliche_aufwendungen": 545000,
+    "zinsaufwand": 92000
+  },
+  "facilities": [
+    {
+      "lender": "Kreissparkasse Koeln",
+      "facility_type": "Tilgungsdarlehen",
+      "original_amount": 1600000,
+      "outstanding": 1180000,
+      "interest_rate": 0.051,
+      "annual_principal_repayment": 145000,
+      "maturity_year": 2033
+    },
+    {
+      "lender": "Kreissparkasse Koeln",
+      "facility_type": "Kontokorrent",
+      "original_amount": 400000,
+      "outstanding": 380000,
+      "interest_rate": 0.102,
+      "annual_principal_repayment": 0
+    }
+  ],
+  "behavior": {
+    "bwa_age_months": 7,
+    "bwa_frequency": "quartalsweise",
+    "creditreform_bonitaetsindex": 384,
+    "days_beyond_terms": 28,
+    "returned_direct_debits_12m": 3,
+    "overdraft_days_at_limit_12m": 265,
+    "tax_arrears": true,
+    "has_planning_forecast": false
+  },
+  "request": {
+    "amount": 350000,
+    "purpose": "Betriebsmittel",
+    "tenor_years": 5,
+    "collateral_available": 40000,
+    "urgency_weeks": 6
+  }
+}

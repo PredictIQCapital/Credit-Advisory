@@ -1,0 +1,86 @@
+{
+  "case_id": "CASE-05",
+  "profile": {
+    "name": "Ihrig Sanitaer- und Heizungstechnik GmbH",
+    "legal_form": "GmbH",
+    "sector": "Baugewerbe",
+    "employees": 22,
+    "founded_year": 2005,
+    "city": "Kassel"
+  },
+  "balance_sheet": {
+    "period_end": "2025-12-31",
+    "sachanlagen": 1000000,
+    "vorraete": 240000,
+    "forderungen_ll": 520000,
+    "liquide_mittel": 310000,
+    "gezeichnetes_kapital": 25000,
+    "gewinnruecklagen": 232000,
+    "gewinnvortrag": 140000,
+    "jahresueberschuss": 96000,
+    "rueckstellungen": 165000,
+    "verb_kreditinstitute_kurz": 90000,
+    "verb_kreditinstitute_lang": 560000,
+    "verb_ll": 322000,
+    "sonstige_verbindlichkeiten_kurz": 120000,
+    "gesellschafterdarlehen": 320000,
+    "gesellschafterdarlehen_rangruecktritt": false,
+    "kontokorrent_limit": 250000,
+    "kontokorrent_inanspruchnahme": 90000
+  },
+  "income_statement": {
+    "period_end": "2025-12-31",
+    "period_months": 12,
+    "umsatzerloese": 3640000,
+    "materialaufwand": 1580000,
+    "personalaufwand": 1480000,
+    "abschreibungen": 92000,
+    "sonstige_betriebliche_aufwendungen": 330000,
+    "zinsaufwand": 34000,
+    "steuern": 28000
+  },
+  "prior_year_income": {
+    "period_end": "2024-12-31",
+    "umsatzerloese": 3480000,
+    "materialaufwand": 1510000,
+    "personalaufwand": 1420000,
+    "abschreibungen": 90000,
+    "sonstige_betriebliche_aufwendungen": 318000,
+    "zinsaufwand": 36000
+  },
+  "facilities": [
+    {
+      "lender": "Kasseler Sparkasse",
+      "facility_type": "Tilgungsdarlehen",
+      "original_amount": 800000,
+      "outstanding": 560000,
+      "interest_rate": 0.044,
+      "annual_principal_repayment": 80000,
+      "maturity_year": 2032
+    },
+    {
+      "lender": "Kasseler Sparkasse",
+      "facility_type": "Kontokorrent",
+      "original_amount": 250000,
+      "outstanding": 90000,
+      "interest_rate": 0.091,
+      "annual_principal_repayment": 0
+    }
+  ],
+  "behavior": {
+    "bwa_age_months": 9,
+    "bwa_frequency": "jaehrlich",
+    "creditreform_bonitaetsindex": 262,
+    "days_beyond_terms": 4,
+    "overdraft_days_at_limit_12m": 0,
+    "jahresabschluss_age_months": 14,
+    "has_planning_forecast": false
+  },
+  "request": {
+    "amount": 400000,
+    "purpose": "Investition",
+    "tenor_years": 8,
+    "collateral_available": 350000,
+    "urgency_weeks": 20
+  }
+}
