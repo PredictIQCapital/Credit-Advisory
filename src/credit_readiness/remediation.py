@@ -27,6 +27,7 @@ from typing import Callable, Optional
 from .models import ClientCase
 from .ratios import RatioSet, compute_ratios
 from .scorecard import ScorecardResult, evaluate
+from .formatting import de
 
 
 class FixCategory(str, Enum):
@@ -95,10 +96,10 @@ def _rule_rangruecktritt(case: ClientCase, r: RatioSet, s: ScorecardResult) -> O
         category=FixCategory.PRESENTATION,
         severity="kritisch" if (r.eigenkapitalquote or 0) < 0.10 else "wesentlich",
         observation=(
-            f"Gesellschafterdarlehen von {bs.gesellschafterdarlehen:,.0f} EUR wird "
+            f"Gesellschafterdarlehen von {de(bs.gesellschafterdarlehen)} EUR wird "
             f"mangels Rangruecktritt als Fremdkapital gewertet. Die wirtschaftliche "
-            f"Eigenkapitalquote liegt dadurch bei {(r.eigenkapitalquote or 0)*100:.1f}% "
-            f"statt bei rund {((r.eigenkapitalquote or 0) + uplift)*100:.1f}%."
+            f"Eigenkapitalquote liegt dadurch bei {de((r.eigenkapitalquote or 0)*100, 1)}% "
+            f"statt bei rund {de(((r.eigenkapitalquote or 0) + uplift)*100, 1)}%."
         ),
         remediation=(
             "Qualifizierten Rangruecktritt schriftlich vereinbaren und der Bank "
@@ -135,7 +136,7 @@ def _rule_stale_bwa(case: ClientCase, r: RatioSet, s: ScorecardResult) -> Option
         category=FixCategory.DOCUMENTATION,
         severity="wesentlich" if b.bwa_age_months > 6 else "gering",
         observation=(
-            f"Die juengste BWA ist {b.bwa_age_months:.0f} Monate alt "
+            f"Die juengste BWA ist {de(b.bwa_age_months)} Monate alt "
             f"(Frequenz: {b.bwa_frequency}). Kreditgeber werten eine veraltete BWA "
             f"regelmaessig als Hinweis auf schwaches internes Reporting und legen "
             f"im Zweifel konservativere Annahmen zugrunde."
@@ -165,7 +166,7 @@ def _rule_missing_forecast(case: ClientCase, r: RatioSet, s: ScorecardResult) ->
         category=FixCategory.DOCUMENTATION,
         severity="wesentlich",
         observation=(
-            f"Fuer ein Finanzierungsvolumen von {case.request.amount:,.0f} EUR liegt "
+            f"Fuer ein Finanzierungsvolumen von {de(case.request.amount)} EUR liegt "
             "keine Planrechnung vor. Ohne Plan-GuV, Liquiditaets- und Bilanzplanung "
             "kann der Kreditgeber die Kapitaldienstfaehigkeit nur rueckwaerts "
             "gewandt beurteilen."
@@ -209,15 +210,15 @@ def _rule_kontokorrent_dauerinanspruchnahme(
         category=FixCategory.PRODUCT_FIT,
         severity="kritisch" if util > 0.95 else "wesentlich",
         observation=(
-            f"Der Kontokorrent ist zu {util*100:.0f}% ausgeschoepft "
-            f"({drawn:,.0f} von {bs.kontokorrent_limit:,.0f} EUR), an "
+            f"Der Kontokorrent ist zu {de(util*100)}% ausgeschoepft "
+            f"({de(drawn)} von {de(bs.kontokorrent_limit)} EUR), an "
             f"{case.behavior.overdraft_days_at_limit_12m} Tagen der letzten 12 Monate "
             "am Limit. Der Kontokorrent finanziert damit faktisch Anlagevermoegen "
             "oder dauerhaftes Working Capital -- das teuerste denkbare Instrument "
             "dafuer, und fuer die Bank ein Warnsignal."
         ),
         remediation=(
-            f"Rund {term_out:,.0f} EUR der Dauerinanspruchnahme in ein "
+            f"Rund {de(term_out)} EUR der Dauerinanspruchnahme in ein "
             "Tilgungsdarlehen mit passender Laufzeit umschulden. Das senkt die "
             "Zinslast, stellt die Betriebsmittellinie als echte Reserve wieder her "
             "und beseitigt das Warnsignal, ohne die Gesamtverschuldung zu erhoehen."
@@ -262,12 +263,12 @@ def _rule_factoring(case: ClientCase, r: RatioSet, s: ScorecardResult) -> Option
         category=FixCategory.PRODUCT_FIT,
         severity="wesentlich",
         observation=(
-            f"Die Debitorenlaufzeit betraegt {dso:.0f} Tage bei einem "
-            f"Forderungsbestand von {bs.forderungen_ll:,.0f} EUR. Das Unternehmen "
+            f"Die Debitorenlaufzeit betraegt {de(dso)} Tage bei einem "
+            f"Forderungsbestand von {de(bs.forderungen_ll)} EUR. Das Unternehmen "
             "finanziert seine Kunden ueber die eigene Kreditlinie vor."
         ),
         remediation=(
-            f"Factoring pruefen: rund {released:,.0f} EUR koennten kurzfristig "
+            f"Factoring pruefen: rund {de(released)} EUR koennten kurzfristig "
             "liquidisiert und zur Rueckfuehrung der kurzfristigen Bankverbindlichkeiten "
             "eingesetzt werden. Reduziert den Kreditbedarf, statt ihn zu finanzieren."
         ),
@@ -305,8 +306,8 @@ def _rule_fristenkongruenz(case: ClientCase, r: RatioSet, s: ScorecardResult) ->
         category=FixCategory.PRODUCT_FIT,
         severity="wesentlich",
         observation=(
-            f"Der Anlagendeckungsgrad II liegt bei {adg*100:.0f}%. Rund "
-            f"{gap:,.0f} EUR des Anlagevermoegens sind kurzfristig finanziert. "
+            f"Der Anlagendeckungsgrad II liegt bei {de(adg*100)}%. Rund "
+            f"{de(gap)} EUR des Anlagevermoegens sind kurzfristig finanziert. "
             "Das erzeugt strukturellen Refinanzierungsdruck, den die Bank sieht."
         ),
         remediation=(
@@ -338,10 +339,10 @@ def _rule_collateral_gap(case: ClientCase, r: RatioSet, s: ScorecardResult) -> O
         category=FixCategory.COLLATERAL,
         severity="wesentlich",
         observation=(
-            f"Die Kapitaldienstfaehigkeit liegt mit {dscr:.2f}x im tragfaehigen "
+            f"Die Kapitaldienstfaehigkeit liegt mit {de(dscr, 2)}x im tragfaehigen "
             f"Bereich, die verfuegbaren Sicherheiten decken aber nur "
-            f"{coverage*100:.0f}% des Finanzierungsvolumens von "
-            f"{req.amount:,.0f} EUR. Eine Ablehnung waere hier eine "
+            f"{de(coverage*100)}% des Finanzierungsvolumens von "
+            f"{de(req.amount)} EUR. Eine Ablehnung waere hier eine "
             "Besicherungs-, keine Bonitaetsentscheidung."
         ),
         remediation=(
@@ -365,19 +366,19 @@ def _rule_genuine_weakness(case: ClientCase, r: RatioSet, s: ScorecardResult) ->
     """The honest-decline rule. Deliberately blunt."""
     reasons: list[str] = []
     if r.ebitda <= 0:
-        reasons.append(f"EBITDA negativ ({r.ebitda:,.0f} EUR)")
+        reasons.append(f"EBITDA negativ ({de(r.ebitda)} EUR)")
     if (r.eigenkapitalquote or 0) < 0:
         reasons.append(
             f"bilanzielle Ueberschuldung (wirtschaftliches EK "
-            f"{r.wirtschaftliches_eigenkapital:,.0f} EUR)"
+            f"{de(r.wirtschaftliches_eigenkapital)} EUR)"
         )
     if r.umsatzwachstum is not None and r.umsatzwachstum < -0.15 and (r.ebit_marge or 0) < 0:
         reasons.append(
-            f"Umsatzrueckgang {r.umsatzwachstum*100:.0f}% bei negativer EBIT-Marge"
+            f"Umsatzrueckgang {de(r.umsatzwachstum*100)}% bei negativer EBIT-Marge"
         )
     dv = r.dynamischer_verschuldungsgrad
     if dv is not None and dv > 8.0:
-        reasons.append(f"dynamischer Verschuldungsgrad {dv:.1f}x")
+        reasons.append(f"dynamischer Verschuldungsgrad {de(dv, 1)}x")
 
     if not reasons:
         return None
@@ -466,12 +467,12 @@ def _rule_inventory(case: ClientCase, r: RatioSet, s: ScorecardResult) -> Option
         category=FixCategory.PRODUCT_FIT,
         severity="gering",
         observation=(
-            f"Die Vorratsreichweite betraegt {reach:.0f} Tage "
-            f"({bs.vorraete:,.0f} EUR). Ein Teil des Kreditbedarfs entsteht im "
+            f"Die Vorratsreichweite betraegt {de(reach)} Tage "
+            f"({de(bs.vorraete)} EUR). Ein Teil des Kreditbedarfs entsteht im "
             "Lager, nicht im Geschaeftsmodell."
         ),
         remediation=(
-            f"Bestandsabbau von rund {release:,.0f} EUR (Langsamdreher, "
+            f"Bestandsabbau von rund {de(release)} EUR (Langsamdreher, "
             "Mindestbestellmengen, Konsignationslager) reduziert den "
             "Finanzierungsbedarf unmittelbar."
         ),

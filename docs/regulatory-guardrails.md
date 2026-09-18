@@ -75,6 +75,32 @@ Open-banking access is rented from a licensed PSD2 account-information provider
 (finAPI, Tink or comparable) precisely so that no BaFin/ZAG licence of our own is
 required. That boundary must not be crossed for convenience.
 
+### The local portal, and what hosting it would take
+
+`python -m credit_readiness serve` starts a portal bound to `127.0.0.1`. It has
+no login, stores files unencrypted in `data/clients/`, and is meant for exactly
+one situation: the founder working through client files on their own laptop
+with full-disk encryption (BitLocker) switched on.
+
+What is already in place:
+
+| Control | Where |
+|---|---|
+| GDPR consent is a hard gate: no consent, no analysis | `intake/assemble.py` |
+| Cross-site write requests rejected (Origin check) | `webapp/server.py` |
+| Strict Content-Security-Policy, no inline script, `nosniff`, `no-referrer` | `webapp/server.py` |
+| Case IDs, document IDs, artifact names whitelisted; filenames sanitised | `casefile.py` |
+| Upload type and size limits per document type | `casefile.py`, `intake/documents.py` |
+| All client text rendered via `textContent` / HTML-escaped | `webapp/static/app.js`, `reporting/html.py` |
+| SHA-256 of every uploaded file recorded | `casefile.py` |
+| Client data never committed | `.gitignore` |
+
+What hosting additionally requires, **before** the first real client file goes
+online: authentication with per-client access, TLS, encryption at rest,
+Frankfurt-region hosting, a DPA with the hosting and database providers, audit
+logging, retention and deletion rules per document class, and rate limiting.
+The `CaseStore` interface is where the database and object storage plug in.
+
 ## Liability
 
 `remediation.py` attaches a caveat to every recommendation, and flags which need

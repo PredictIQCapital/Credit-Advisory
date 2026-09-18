@@ -28,6 +28,7 @@ from typing import Optional, Sequence
 
 from .models import ClientCase
 from .ratios import RatioSet
+from .formatting import de
 
 
 class Band(str, Enum):
@@ -264,14 +265,14 @@ class FactorScore:
         if self.value is None:
             return "n/a"
         if self.unit == "percent":
-            return f"{self.value * 100:.1f}%"
+            return f"{de(self.value * 100, 1)}%"
         if self.unit == "x":
-            return f"{self.value:.2f}x"
+            return f"{de(self.value, 2)}x"
         if self.unit in ("months", "days"):
-            return f"{self.value:.1f}"
+            return f"{de(self.value, 1)}"
         if self.unit == "index":
-            return f"{self.value:.0f}"
-        return f"{self.value:.2f}"
+            return f"{de(self.value)}"
+        return f"{de(self.value, 2)}"
 
 
 @dataclass

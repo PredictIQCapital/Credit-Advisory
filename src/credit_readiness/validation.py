@@ -17,6 +17,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from .models import ClientCase
+from .formatting import de
 
 BALANCE_TOLERANCE_ABS = 1.0        # EUR
 BALANCE_TOLERANCE_REL = 0.005      # 0.5% of total assets
@@ -74,8 +75,8 @@ def validate(case: ClientCase) -> list[ValidationIssue]:
             ValidationIssue(
                 Severity.ERROR,
                 "BILANZ_UNAUSGEGLICHEN",
-                f"Aktiva ({aktiva:,.0f} EUR) und Passiva ({passiva:,.0f} EUR) "
-                f"weichen um {diff:,.0f} EUR ab. Vor jeder Auswertung klaeren -- "
+                f"Aktiva ({de(aktiva)} EUR) und Passiva ({de(passiva)} EUR) "
+                f"weichen um {de(diff)} EUR ab. Vor jeder Auswertung klaeren -- "
                 "meist ein Zuordnungs- oder Erfassungsfehler.",
             )
         )
@@ -95,9 +96,9 @@ def validate(case: ClientCase) -> list[ValidationIssue]:
                 ValidationIssue(
                     Severity.ERROR,
                     "ERGEBNIS_ABWEICHUNG",
-                    f"Der Jahresueberschuss laut GuV ({gu_result:,.0f} EUR) weicht vom "
-                    f"in der Bilanz ausgewiesenen Ergebnis ({bs_result:,.0f} EUR) um "
-                    f"{gu_result - bs_result:,.0f} EUR ab. Stammen Bilanz und GuV aus "
+                    f"Der Jahresueberschuss laut GuV ({de(gu_result)} EUR) weicht vom "
+                    f"in der Bilanz ausgewiesenen Ergebnis ({de(bs_result)} EUR) um "
+                    f"{de(gu_result - bs_result)} EUR ab. Stammen Bilanz und GuV aus "
                     "derselben Periode und demselben Auswertungslauf?",
                 )
             )
@@ -143,7 +144,7 @@ def validate(case: ClientCase) -> list[ValidationIssue]:
                 ValidationIssue(
                     Severity.WARNING,
                     "NEGATIVER_BESTAND",
-                    f"{field_name} ist negativ ({value:,.0f} EUR). Vorzeichen pruefen.",
+                    f"{field_name} ist negativ ({de(value)} EUR). Vorzeichen pruefen.",
                 )
             )
 
@@ -153,8 +154,8 @@ def validate(case: ClientCase) -> list[ValidationIssue]:
             ValidationIssue(
                 Severity.WARNING,
                 "KK_UEBERZIEHUNG",
-                f"Kontokorrent ist mit {b.kontokorrent_inanspruchnahme:,.0f} EUR ueber "
-                f"das Limit von {b.kontokorrent_limit:,.0f} EUR hinaus in Anspruch "
+                f"Kontokorrent ist mit {de(b.kontokorrent_inanspruchnahme)} EUR ueber "
+                f"das Limit von {de(b.kontokorrent_limit)} EUR hinaus in Anspruch "
                 "genommen. Als geduldete Ueberziehung ein eigenstaendiges Warnsignal.",
             )
         )
@@ -172,9 +173,9 @@ def validate(case: ClientCase) -> list[ValidationIssue]:
                     ValidationIssue(
                         Severity.WARNING,
                         "DARLEHEN_ABWEICHUNG",
-                        f"Summe der Einzeldarlehen ({facility_debt:,.0f} EUR) weicht um "
-                        f"{gap*100:.0f}% von den Bankverbindlichkeiten der Bilanz "
-                        f"({bank_debt:,.0f} EUR) ab. Vollstaendigkeit pruefen -- eine "
+                        f"Summe der Einzeldarlehen ({de(facility_debt)} EUR) weicht um "
+                        f"{de(gap*100)}% von den Bankverbindlichkeiten der Bilanz "
+                        f"({de(bank_debt)} EUR) ab. Vollstaendigkeit pruefen -- eine "
                         "unvollstaendige Darlehensliste ueberschaetzt die "
                         "Kapitaldienstfaehigkeit.",
                     )

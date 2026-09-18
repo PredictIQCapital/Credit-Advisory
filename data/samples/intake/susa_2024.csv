@@ -1,0 +1,25 @@
+Konto;Bezeichnung;Saldo
+0100;Konzessionen;70.000,00
+0400;Technische Anlagen;2.150.000,00
+1000;Roh-, Hilfs- und Betriebsstoffe;720.000,00
+1200;Forderungen LuL;1.080.000,00
+1300;Sonstige Vermoegensgegenstaende;85.000,00
+1800;Bank;152.000,00
+1900;Aktive RAP;20.000,00
+2000;Gezeichnetes Kapital;-25.000,00
+2200;Gewinnruecklagen;-95.000,00
+2300;Gewinnvortrag;-30.000,00
+3000;Rueckstellungen;-330.000,00
+3150;Bankverb. kurzfristig;-380.000,00
+3200;Bankverb. langfristig;-1.430.000,00
+3300;Verb. LuL;-640.000,00
+3400;Sonst. Verb. kurzfristig;-220.000,00
+3500;Sonst. Verb. langfristig;-400.000,00
+3600;Gesellschafterdarlehen;-600.000,00
+4000;Umsatzerloese;-7.650.000,00
+5000;Materialaufwand;3.920.000,00
+6000;Personalaufwand;2.480.000,00
+6200;Abschreibungen;238.000,00
+6300;Sonst. betriebl. Aufwendungen;745.000,00
+7100;Zinsaufwand;88.000,00
+7600;Steuern;52.000,00

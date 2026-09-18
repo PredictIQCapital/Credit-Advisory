@@ -1,0 +1,19 @@
+{
+  "kanzlei": "Kanzlei Beispiel Steuerberatung (fiktiv)",
+  "ansprechpartner": "Stefan Beispiel",
+  "email": "kanzlei@example.de",
+  "kontenrahmen": "SKR04",
+  "individuelle_konten": false,
+  "jahresabschluss_festgestellt": true,
+  "jahresabschluss_stichtag": "2025-12-31",
+  "bwa_frequenz": "quartalsweise",
+  "bwa_stand": "2026-04",
+  "rangruecktritt_bestaetigt": "nein",
+  "steuerrueckstaende": false,
+  "planrechnung_vorhanden": false,
+  "einmaleffekte_betrag": 35000,
+  "einmaleffekte_beschreibung": "Umzug des Lagers",
+  "bilanzierungswahlrechte": "",
+  "besondere_risiken": "Abhaengigkeit von zwei Grosskunden (zusammen ca. 45% Umsatz).",
+  "freigabe_umgliederung": true
+}

@@ -27,11 +27,13 @@ SKR03 support is deliberately unimplemented rather than guessed at -- see
 from __future__ import annotations
 
 import csv
+import re
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 from typing import Iterable, Optional
 
+from ..formatting import de
 from ..models import BalanceSheet, IncomeStatement
 
 UNMAPPED_THRESHOLD = 0.05  # >5% of total volume unmapped -> raise
@@ -91,14 +93,20 @@ SKR04_MAP: tuple[AccountRange, ...] = (
 
 
 def _parse_german_number(raw: str) -> float:
-    """Parse '1.234.567,89' and '-1234.56' alike."""
-    s = (raw or "").strip().replace(" ", "").replace(" ", "")
+    """Parse '1.234.567,89', '1.234.567' and '-1234.56' alike.
+
+    A dot followed only by groups of exactly three digits is a German thousands
+    separator ('750.000' = 750000), never a decimal point.
+    """
+    s = (raw or "").strip().replace(" ", "").replace(" ", "")
     if not s:
         return 0.0
     neg = s.startswith("-") or (s.endswith("-") and not s.startswith("-"))
     s = s.strip("-")
     if "," in s:
         s = s.replace(".", "").replace(",", ".")
+    elif re.match(r"^\d{1,3}(\.\d{3})+$", s):
+        s = s.replace(".", "")
     try:
         value = float(s)
     except ValueError:
@@ -115,15 +123,30 @@ def _find_column(header: list[str], candidates: Iterable[str]) -> Optional[int]:
     return None
 
 
+def _decode(raw: bytes, encoding: Optional[str]) -> str:
+    """DATEV exports are frequently Windows-1252, not UTF-8. Try both."""
+    if encoding:
+        return raw.decode(encoding)
+    for enc in ("utf-8-sig", "cp1252", "latin-1"):
+        try:
+            return raw.decode(enc)
+        except UnicodeDecodeError:
+            continue
+    raise DatevMappingError("Zeichenkodierung der Datei nicht erkannt")
+
+
 def parse_datev_susa(
-    path: str | Path,
+    path: str | Path | bytes,
     period_end: date,
     period_months: int = 12,
     kontenrahmen: str = "SKR04",
     delimiter: str = ";",
-    encoding: str = "utf-8-sig",
+    encoding: Optional[str] = None,
 ) -> tuple[BalanceSheet, IncomeStatement, dict[str, float]]:
     """Parse a DATEV SuSa CSV into (BalanceSheet, IncomeStatement, diagnostics).
+
+    `path` may be a file path or the raw file bytes (uploads). `encoding=None`
+    auto-detects UTF-8 vs Windows-1252.
 
     Returns a diagnostics dict carrying `mapped_volume`, `unmapped_volume` and
     `unmapped_share` so the caller can see exactly how much of the trial balance
@@ -131,6 +154,8 @@ def parse_datev_susa(
 
     Raises DatevMappingError when the unmapped share exceeds UNMAPPED_THRESHOLD.
     """
+    if not 1 <= period_months <= 12:
+        raise DatevMappingError(f"Zeitraum {period_months} Monate; zulaessig 1-12.")
     if kontenrahmen.upper() != "SKR04":
         raise DatevMappingError(
             f"Kontenrahmen {kontenrahmen} nicht implementiert. Nur SKR04 wird "
@@ -138,7 +163,8 @@ def parse_datev_susa(
             "gegen echte Exporte kalibriert werden, bevor es geraten wird."
         )
 
-    rows = list(csv.reader(Path(path).read_text(encoding=encoding).splitlines(), delimiter=delimiter))
+    raw = path if isinstance(path, bytes) else Path(path).read_bytes()
+    rows = list(csv.reader(_decode(raw, encoding).splitlines(), delimiter=delimiter))
     if not rows:
         raise DatevMappingError("Leere Datei")
 
@@ -199,8 +225,8 @@ def parse_datev_susa(
 
     if share > UNMAPPED_THRESHOLD:
         raise DatevMappingError(
-            f"{share*100:.1f}% des Volumens konnten nicht zugeordnet werden "
-            f"(Schwelle {UNMAPPED_THRESHOLD*100:.0f}%). Nicht zugeordnete Konten: "
+            f"{de(share*100, 1)}% des Volumens konnten nicht zugeordnet werden "
+            f"(Schwelle {de(UNMAPPED_THRESHOLD*100)}%). Nicht zugeordnete Konten: "
             f"{sorted(set(unmapped_accounts))[:20]}. Kontenrahmen pruefen, bevor "
             "das Ergebnis verwendet wird."
         )

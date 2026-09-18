@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Fragebogen fuer das Unternehmen</title><style>
+:root { --ink:#1d2330; --muted:#5b6475; --line:#d9dde5; --accent:#1f4e8c; --warn:#8a1c1c;
+        --bg:#ffffff; --soft:#f4f6f9; }
+* { box-sizing: border-box; }
+body { font: 15px/1.55 "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+       color: var(--ink); background: var(--bg); margin: 0; padding: 32px 16px; }
+main { max-width: 920px; margin: 0 auto; }
+h1 { font-size: 26px; margin: 0 0 12px; color: var(--accent); }
+h2 { font-size: 19px; margin: 32px 0 10px; padding-bottom: 4px;
+     border-bottom: 2px solid var(--line); }
+h3 { font-size: 16px; margin: 22px 0 6px; }
+p { margin: 8px 0; }
+.table-wrap { overflow-x: auto; margin: 10px 0 14px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { border: 1px solid var(--line); padding: 6px 8px; text-align: left;
+         vertical-align: top; }
+th { background: var(--soft); }
+blockquote { margin: 12px 0; padding: 8px 14px; border-left: 4px solid var(--accent);
+             background: var(--soft); color: var(--muted); }
+code { background: var(--soft); padding: 1px 4px; border-radius: 3px; }
+pre { background: var(--soft); padding: 10px; overflow-x: auto; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 24px 0; }
+.box { display:inline-block; width:14px; height:14px; border:1.5px solid var(--ink);
+       vertical-align:-2px; margin: 0 5px 0 18px; }
+p > .box:first-child { margin-left: 0; }
+@media print {
+  body { padding: 0; font-size: 12px; }
+  h2 { page-break-after: avoid; }
+  table, blockquote { page-break-inside: avoid; }
+}
+</style></head><body><main>
+<h1>Fragebogen fuer das Unternehmen</h1>
+<p>Diese Angaben ergaenzen Ihre Buchhaltungsdaten um das, was in keiner Summen- und Saldenliste steht. Bei jeder Frage steht, warum wir sie stellen. Wenn Sie etwas nicht wissen, lassen Sie das Feld leer -- eine Luecke ist besser als eine Schaetzung.</p>
+<p>Pflichtangaben sind mit <strong>(Pflicht)</strong> markiert.</p>
+<h2>1. Unternehmen</h2>
+<p>Stammdaten fuer die Einordnung nach Branche und Groessenklasse.</p>
+<p><strong>Firmenname</strong> <strong>(Pflicht)</strong></p>
+<p>______________________________</p>
+<p><strong>Rechtsform</strong> <strong>(Pflicht)</strong></p>
+<p><span class="box"></span> GmbH   <span class="box"></span> UG (haftungsbeschraenkt)   <span class="box"></span> GmbH &amp; Co. KG   <span class="box"></span> Einzelunternehmen   <span class="box"></span> OHG   <span class="box"></span> KG   <span class="box"></span> AG   <span class="box"></span> GbR</p>
+<p><strong>Branche</strong> <strong>(Pflicht)</strong></p>
+<p><span class="box"></span> Verarbeitendes Gewerbe   <span class="box"></span> Baugewerbe   <span class="box"></span> Grosshandel   <span class="box"></span> Einzelhandel   <span class="box"></span> Verkehr und Lagerei   <span class="box"></span> Gastgewerbe   <span class="box"></span> Information und Kommunikation   <span class="box"></span> Freiberufliche und technische Dienstleistungen   <span class="box"></span> Gesundheitswesen   <span class="box"></span> Sonstige Dienstleistungen</p>
+<blockquote>Warum wir fragen: Kennzahlen werden mit dem Branchenmedian verglichen -- eine niedrige EK-Quote ist im Gastgewerbe etwas anderes als in der IT.</blockquote>
+<p><strong>Anzahl Mitarbeiter (Vollzeitaequivalente)</strong> <strong>(Pflicht)</strong></p>
+<p>______________________________ ganze Zahl</p>
+<p><strong>Gruendungsjahr</strong> <strong>(Pflicht)</strong></p>
+<p>______________________________ ganze Zahl</p>
+<p><strong>Sitz (Stadt)</strong></p>
+<p>______________________________</p>
+<p><strong>Land</strong></p>
+<p><span class="box"></span> DE   <span class="box"></span> AT</p>
+<p><strong>Handelsregisternummer</strong></p>
+<p><em>z. B. HRB 12345, Amtsgericht Ulm</em></p>
+<p>______________________________</p>
+<h2>2. Finanzierungsvorhaben</h2>
+<p>Was Sie finanzieren moechten. Das bestimmt, welcher Kreditgebertyp ueberhaupt passt -- oft staerker als die Kennzahlen.</p>
+<p><strong>Gewuenschter Finanzierungsbetrag</strong> <strong>(Pflicht)</strong></p>
+<p>______________________________ EUR</p>
+<p><strong>Verwendungszweck</strong> <strong>(Pflicht)</strong></p>
+<p><span class="box"></span> Betriebsmittel   <span class="box"></span> Investition   <span class="box"></span> Wachstum   <span class="box"></span> Umschuldung</p>
+<p><strong>Kurze Beschreibung des Vorhabens</strong></p>
+<p>______________________________________________________________</p>
+<p>______________________________________________________________</p>
+<p><strong>Gewuenschte Laufzeit</strong></p>
+<p>______________________________ Jahre</p>
+<blockquote>Warum wir fragen: Die Laufzeit bestimmt die jaehrliche Rate und damit die Kapitaldienstfaehigkeit.</blockquote>
+<p><strong>Wert verfuegbarer Sicherheiten</strong></p>
+<p>______________________________ EUR</p>
+<blockquote>Warum wir fragen: Eine Ablehnung trotz tragfaehiger Zahlen ist oft eine Besicherungsfrage -- die ueber Foerderprogramme loesbar ist.</blockquote>
+<p><strong>Welche Sicherheiten?</strong></p>
+<p><em>Grundschulden, Maschinen, Forderungsabtretung, Buergschaften</em></p>
+<p>______________________________________________________________</p>
+<p>______________________________________________________________</p>
+<p><strong>Bis wann wird das Geld benoetigt?</strong></p>
+<p>______________________________ Wochen ab heute</p>
+<p><strong>Wurde das Vorhaben bereits abgelehnt?</strong></p>
+<p><span class="box"></span> ja   <span class="box"></span> nein</p>
+<p><strong>Von wem und mit welcher Begruendung?</strong> <em>(nur falls "Wurde das Vorhaben bereits abgelehnt?" = ja)</em></p>
+<p>______________________________________________________________</p>
+<p>______________________________________________________________</p>
+<blockquote>Warum wir fragen: Eine dokumentierte Ablehnung beeinflusst die naechste Anfrage. Wir muessen sie kennen.</blockquote>
+<p><strong>Hausbank</strong></p>
+<p>______________________________</p>
+<h2>3. Bestehende Finanzierungen</h2>
+<p>Alle laufenden Kredite, Kontokorrentlinien und Leasingvertraege. Eine unvollstaendige Liste laesst Ihre Kapitaldienstfaehigkeit besser aussehen, als die Bank sie sehen wird.</p>
+<p><strong>Laufende Finanzierungen</strong></p>
+<div class="table-wrap"><table><thead><tr><th>Kreditgeber</th><th>Art der Finanzierung</th><th>Urspruenglicher Betrag</th><th>Aktuelle Restschuld bzw. Inanspruchnahme</th><th>Zinssatz</th><th>Tilgung pro Jahr</th><th>Laufzeit bis (Jahr)</th><th>Besichert?</th></tr></thead><tbody><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr></tbody></table></div>
+<blockquote>Warum wir fragen: Zins und Tilgung aller Darlehen ergeben den Kapitaldienst -- die wichtigste einzelne Kennzahl im Bankrating.</blockquote>
+<p><strong>Kontokorrentlimit (Summe aller Linien)</strong></p>
+<p>______________________________ EUR</p>
+<p><strong>Aktuelle Inanspruchnahme des Kontokorrents</strong></p>
+<p>______________________________ EUR</p>
+<p><strong>An wie vielen Tagen der letzten 12 Monate war das Kontokorrent (nahezu) ausgeschoepft?</strong></p>
+<p><em>Schaetzung genuegt. Wird durch Kontoumsaetze ersetzt, sobald diese vorliegen.</em></p>
+<p>______________________________ Tage</p>
+<blockquote>Warum wir fragen: Dauerhafte Ausschoepfung ist eines der staerksten Warnsignale fuer Banken -- und oft mit einem passenden Darlehen leicht behebbar.</blockquote>
+<p><strong>Summe laufender Leasingverpflichtungen</strong></p>
+<p>______________________________ EUR</p>
+<h2>4. Gesellschafter</h2>
+<p>Gesellschafterdarlehen werden von Banken je nach Vertragsgestaltung als Eigen- oder als Fremdkapital gewertet.</p>
+<p><strong>Bestehen Darlehen von Gesellschaftern an das Unternehmen?</strong> <strong>(Pflicht)</strong></p>
+<p><span class="box"></span> ja   <span class="box"></span> nein</p>
+<p><strong>Hoehe der Gesellschafterdarlehen</strong> <em>(nur falls "Bestehen Darlehen von Gesellschaftern an das Unternehmen?" = ja)</em></p>
+<p>______________________________ EUR</p>
+<p><strong>Ist fuer diese Darlehen ein Rangruecktritt vereinbart?</strong> <em>(nur falls "Bestehen Darlehen von Gesellschaftern an das Unternehmen?" = ja)</em></p>
+<p><em>Eine schriftliche Erklaerung, dass das Darlehen im Insolvenzfall hinter allen anderen Glaeubigern steht.</em></p>
+<p><span class="box"></span> ja   <span class="box"></span> nein</p>
+<blockquote>Warum wir fragen: Mit Rangruecktritt zaehlt das Darlehen fuer fast alle Banken als wirtschaftliches Eigenkapital. Das ist die haeufigste einzelne Stellschraube.</blockquote>
+<p><strong>Waeren Gesellschafter bereit, zusaetzliches Kapital einzubringen?</strong></p>
+<p><span class="box"></span> ja   <span class="box"></span> nein</p>
+<h2>5. Reporting und Zahlungsverhalten</h2>
+<p>Weiche Faktoren. Sie zaehlen im Bankrating mehr, als die meisten Unternehmer erwarten -- und sie sind am billigsten zu verbessern.</p>
+<p><strong>Wie oft wird eine BWA erstellt?</strong> <strong>(Pflicht)</strong></p>
+<p><span class="box"></span> monatlich   <span class="box"></span> quartalsweise   <span class="box"></span> jaehrlich</p>
+<p><strong>Monat der juengsten BWA</strong> <strong>(Pflicht)</strong></p>
+<p>______________________________ MM/JJJJ</p>
+<blockquote>Warum wir fragen: Eine veraltete BWA wird als schwaches internes Reporting gelesen.</blockquote>
+<p><strong>Gibt es eine aktuelle Planrechnung (Plan-GuV / Liquiditaetsplan)?</strong></p>
+<p><span class="box"></span> ja   <span class="box"></span> nein</p>
+<p><strong>Wie viele Tage zahlen Sie Lieferanten im Schnitt nach Faelligkeit?</strong></p>
+<p><em>0, wenn Sie puenktlich zahlen.</em></p>
+<p>______________________________ Tage</p>
+<p><strong>Anzahl Ruecklastschriften in den letzten 12 Monaten</strong></p>
+<p>______________________________ ganze Zahl</p>
+<p><strong>Bestehen derzeit Steuerrueckstaende?</strong> <strong>(Pflicht)</strong></p>
+<p><span class="box"></span> ja   <span class="box"></span> nein</p>
+<blockquote>Warum wir fragen: Fuer nahezu jede Bank ein K.-o.-Kriterium. Wir muessen es vor der Bank wissen.</blockquote>
+<p><strong>Creditreform-Bonitaetsindex (falls bekannt)</strong></p>
+<p><em>Zwischen 100 (sehr gut) und 600 (Zahlungsausfall).</em></p>
+<p>______________________________ ganze Zahl</p>
+<h2>6. Einwilligungen und Kontakt</h2>
+<p>Ohne diese Angaben koennen wir nicht arbeiten.</p>
+<p><strong>Ich willige in die Verarbeitung der uebermittelten Daten zum Zweck der Kreditfaehigkeitsanalyse ein.</strong> <strong>(Pflicht)</strong></p>
+<p><span class="box"></span> ja   <span class="box"></span> nein</p>
+<p><strong>Wir duerfen Ihren Steuerberater direkt kontaktieren.</strong></p>
+<p><span class="box"></span> ja   <span class="box"></span> nein</p>
+<blockquote>Warum wir fragen: Jede Umgliederung braucht die Freigabe Ihres Steuerberaters.</blockquote>
+<p><strong>Kanzlei Ihres Steuerberaters</strong></p>
+<p>______________________________</p>
+<p><strong>E-Mail Ihres Steuerberaters</strong></p>
+<p>______________________________</p>
+<p><strong>Ihr Name</strong> <strong>(Pflicht)</strong></p>
+<p>______________________________</p>
+<p><strong>Ihre E-Mail</strong> <strong>(Pflicht)</strong></p>
+<p>______________________________</p>
+<p><strong>Ihre Telefonnummer</strong></p>
+<p>______________________________</p>
+<hr>
+<p>Datum, Unterschrift: ______________________________</p>
+</main></body></html>

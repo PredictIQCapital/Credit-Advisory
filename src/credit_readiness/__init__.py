@@ -26,7 +26,7 @@ from .ratios import RatioSet, compute_ratios
 from .remediation import FixCategory, Finding, Verdict
 from .scorecard import Band, ScorecardResult, evaluate
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "BalanceSheet",

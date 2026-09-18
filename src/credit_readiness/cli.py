@@ -3,6 +3,14 @@
     python -m credit_readiness diagnose data/samples/case_01.json -o output/
     python -m credit_readiness batch data/samples
     python -m credit_readiness datev export.csv --period-end 2026-06-30
+
+Intake and engagement workflow:
+
+    python -m credit_readiness serve --open                  local client portal
+    python -m credit_readiness questionnaire unternehmen      printable questionnaire
+    python -m credit_readiness documents                      document checklist
+    python -m credit_readiness bank konto.csv --limit 500000  analyse bank export
+    python -m credit_readiness case new "Firma GmbH"          engagement via CLI
 """
 
 from __future__ import annotations
@@ -19,37 +27,17 @@ from .validation import Severity, ValidationError
 from .ingest.datev import DatevMappingError, parse_datev_susa
 from .ingest.json_intake import load_case_file
 from .reporting.report import render_markdown
+from .reporting.summary import result_summary
+from . import workflow as wf
+from .casefile import OUTCOMES, CaseStoreError, LocalCaseStore
+from .ingest.bank_csv import BankCsvError, analyse_bank_csv
+from .intake.documents import DOCUMENT_TYPES
+from .intake.questionnaire import AUDIENCES, get_questionnaire
+from .reporting.forms import answers_template, documents_markdown, questionnaire_markdown
+from .reporting.html import markdown_to_html
 
 
-def _result_summary(result) -> dict:
-    return {
-        "case_id": result.case.case_id,
-        "company": result.case.profile.name,
-        "sector": result.case.profile.sector.value,
-        "band": result.scorecard.band.value,
-        "score": result.scorecard.total_score,
-        "verdict": result.verdict.value,
-        "engageable": result.is_engageable,
-        "score_after_remediation": result.simulation.after_score,
-        "band_after_remediation": result.simulation.after_band,
-        "delta": result.simulation.delta,
-        "findings": [
-            {
-                "rule": f.rule_id,
-                "title": f.title,
-                "category": f.category.value,
-                "severity": f.severity,
-                "fixable": f.category.is_fixable,
-            }
-            for f in result.findings
-        ],
-        "top_lender_now": next(
-            (o.lender.name for o in result.routing_now if o.eligible), None
-        ),
-        "top_lender_after": next(
-            (o.lender.name for o in result.routing_after if o.eligible), None
-        ),
-    }
+_result_summary = result_summary
 
 
 def cmd_diagnose(args: argparse.Namespace) -> int:
@@ -208,8 +196,178 @@ def main(argv: list[str] | None = None) -> int:
     p_datev.add_argument("--kontenrahmen", default="SKR04")
     p_datev.set_defaults(func=cmd_datev)
 
+    # ------------------------------------------------------------ intake
+    p_serve = sub.add_parser("serve", help="Lokales Mandantenportal starten")
+    p_serve.add_argument("--host", default="127.0.0.1")
+    p_serve.add_argument("--port", type=int, default=8765)
+    p_serve.add_argument("--data-dir", help="Ablage (Standard: data/clients)")
+    p_serve.add_argument("--open", action="store_true", help="Browser oeffnen")
+    p_serve.set_defaults(func=cmd_serve)
+
+    p_q = sub.add_parser("questionnaire", help="Fragebogen ausgeben")
+    p_q.add_argument("audience", choices=AUDIENCES)
+    p_q.add_argument("--format", choices=("md", "html", "json", "template"), default="md",
+                     help="template = leere Antwortdatei zum Ausfuellen")
+    p_q.add_argument("-o", "--out", help="Zieldatei")
+    p_q.set_defaults(func=cmd_questionnaire)
+
+    p_docs = sub.add_parser("documents", help="Unterlagenliste ausgeben")
+    p_docs.add_argument("--format", choices=("md", "html", "json"), default="md")
+    p_docs.add_argument("-o", "--out", help="Zieldatei")
+    p_docs.set_defaults(func=cmd_documents)
+
+    p_bank = sub.add_parser("bank", help="Kontoumsaetze (CSV) auswerten")
+    p_bank.add_argument("file")
+    p_bank.add_argument("--limit", type=float, help="Kontokorrentlimit in EUR")
+    p_bank.set_defaults(func=cmd_bank)
+
+    p_case = sub.add_parser("case", help="Faelle verwalten")
+    p_case.add_argument("--data-dir", help="Ablage (Standard: data/clients)")
+    cs = p_case.add_subparsers(dest="case_command", required=True)
+    c = cs.add_parser("new", help="Fall anlegen")
+    c.add_argument("company_name")
+    c = cs.add_parser("list", help="Faelle auflisten")
+    c = cs.add_parser("show", help="Stand eines Falls")
+    c.add_argument("case_id")
+    c = cs.add_parser("answers", help="Antworten (JSON) speichern")
+    c.add_argument("case_id")
+    c.add_argument("audience", choices=AUDIENCES)
+    c.add_argument("file")
+    c = cs.add_parser("upload", help="Unterlage hochladen")
+    c.add_argument("case_id")
+    c.add_argument("doc_type", choices=[d.id for d in DOCUMENT_TYPES])
+    c.add_argument("file")
+    c.add_argument("--period-end", help="Stichtag der SuSa, JJJJ-MM-TT")
+    c.add_argument("--period-months", type=int, default=12)
+    c.add_argument("--account-label", help="Bezeichnung des Kontos")
+    c = cs.add_parser("diagnose", help="Diagnostik erstellen")
+    c.add_argument("case_id")
+    c = cs.add_parser("letters", help="Anforderungsschreiben erzeugen")
+    c.add_argument("case_id")
+    c = cs.add_parser("outcome", help="Ergebnis protokollieren")
+    c.add_argument("case_id")
+    c.add_argument("outcome", choices=OUTCOMES)
+    c.add_argument("--lender-type", default="")
+    c.add_argument("--amount", default="")
+    c.add_argument("--rate", default="")
+    c.add_argument("--weeks", default="")
+    c.add_argument("--notes", default="")
+    p_case.set_defaults(func=cmd_case)
+
     args = parser.parse_args(argv)
     return args.func(args)
+
+
+# ---------------------------------------------------------------- intake commands
+
+
+def _write_or_print(text: str, out: str | None) -> None:
+    if out:
+        Path(out).parent.mkdir(parents=True, exist_ok=True)
+        Path(out).write_text(text, encoding="utf-8")
+        print(f"geschrieben: {out}")
+    else:
+        print(text)
+
+
+def cmd_serve(args: argparse.Namespace) -> int:
+    from .webapp.server import serve
+
+    serve(host=args.host, port=args.port, data_dir=args.data_dir, open_browser=args.open)
+    return 0
+
+
+def cmd_questionnaire(args: argparse.Namespace) -> int:
+    q = get_questionnaire(args.audience)
+    if args.format == "json":
+        text = json.dumps(q.as_dict(), indent=2, ensure_ascii=False)
+    elif args.format == "template":
+        text = json.dumps(answers_template(q), indent=2, ensure_ascii=False)
+    elif args.format == "html":
+        text = markdown_to_html(questionnaire_markdown(q), q.title)
+    else:
+        text = questionnaire_markdown(q)
+    _write_or_print(text, args.out)
+    return 0
+
+
+def cmd_documents(args: argparse.Namespace) -> int:
+    if args.format == "json":
+        text = json.dumps([d.as_dict() for d in DOCUMENT_TYPES], indent=2, ensure_ascii=False)
+    elif args.format == "html":
+        text = markdown_to_html(documents_markdown(), "Unterlagenliste")
+    else:
+        text = documents_markdown()
+    _write_or_print(text, args.out)
+    return 0
+
+
+def cmd_bank(args: argparse.Namespace) -> int:
+    try:
+        a = analyse_bank_csv(Path(args.file), kontokorrent_limit=args.limit,
+                             account_label=Path(args.file).name)
+    except BankCsvError as exc:
+        print(f"Kontoumsaetze nicht auswertbar: {exc}", file=sys.stderr)
+        return 2
+    print(json.dumps(a.as_dict(), indent=2, ensure_ascii=False, default=str))
+    return 0
+
+
+def cmd_case(args: argparse.Namespace) -> int:
+    store = LocalCaseStore(args.data_dir)
+    cc = args.case_command
+    try:
+        if cc == "new":
+            meta = store.create_case(args.company_name)
+            print(f"Fall angelegt: {meta['case_id']}  ({store.root / meta['case_id']})")
+        elif cc == "list":
+            for m in store.list_cases():
+                print(f"{m['case_id']}  {m['stage']:<24} {m['company_name']}")
+        elif cc == "show":
+            ov = wf.case_overview(store, args.case_id)
+            print(json.dumps({k: ov[k] for k in (
+                "stage_label", "answers", "missing_answers", "answer_errors",
+                "outstanding_documents", "ready_for_diagnosis", "blocking",
+                "assembly_notes", "latest_summary")}, indent=2, ensure_ascii=False, default=str))
+        elif cc == "answers":
+            data = json.loads(Path(args.file).read_text(encoding="utf-8"))
+            store.save_answers(args.case_id, args.audience, data)
+            ov = wf.case_overview(store, args.case_id)
+            print(f"gespeichert. Fehlend: {ov['missing_answers'][args.audience] or 'nichts'}; "
+                  f"Fehler: {ov['answer_errors'][args.audience] or 'keine'}")
+        elif cc == "upload":
+            meta = {}
+            if args.period_end:
+                meta = {"period_end": args.period_end, "period_months": args.period_months}
+            if args.account_label:
+                meta["account_label"] = args.account_label
+            p = Path(args.file)
+            entry = store.add_document(args.case_id, args.doc_type, p.name, p.read_bytes(), meta)
+            print(f"hochgeladen: {entry['filename']} ({entry['doc_id']})")
+        elif cc == "diagnose":
+            res = wf.run_case_diagnostic(store, args.case_id)
+            if not res["ok"]:
+                print("Diagnostik nicht moeglich:", file=sys.stderr)
+                for b in res["blocking"]:
+                    print(f"  - {b}", file=sys.stderr)
+                return 2
+            s = res["summary"]
+            print(f"Band {s['band']} ({s['score']}) -> {s['band_after_remediation']} "
+                  f"({s['score_after_remediation']}); {s['verdict']}")
+            print(f"Bericht: {store.root / args.case_id / 'artifacts' / 'diagnostik.html'}")
+        elif cc == "letters":
+            wf.generate_letters(store, args.case_id)
+            print(f"Schreiben erzeugt in {store.root / args.case_id / 'artifacts'}")
+        elif cc == "outcome":
+            row = wf.record_outcome(store, args.case_id, {
+                "outcome": args.outcome, "lender_type_routed": args.lender_type,
+                "facility_amount_eur": args.amount, "rate_pct": args.rate,
+                "weeks_to_decision": args.weeks, "notes": args.notes})
+            print(f"protokolliert: {row['case_id']} {row['outcome']}")
+    except CaseStoreError as exc:
+        print(f"Fehler: {exc}", file=sys.stderr)
+        return 2
+    return 0
 
 
 if __name__ == "__main__":

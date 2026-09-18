@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Credit Readiness Portal</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Credit Readiness <span>Portal</span></div>
+    <div class="topbar-right">
+      <span class="badge badge-local" title="Laeuft nur auf diesem Rechner">lokal</span>
+      <a href="/forms/unternehmen.html" target="_blank" rel="noopener">Fragebogen Unternehmen (Druck)</a>
+      <a href="/forms/steuerberater.html" target="_blank" rel="noopener">Fragebogen Steuerberater (Druck)</a>
+      <a href="/forms/unterlagen.html" target="_blank" rel="noopener">Unterlagenliste (Druck)</a>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <form id="new-case-form" class="new-case">
+        <label for="new-case-name">Neuer Fall</label>
+        <div class="row">
+          <input id="new-case-name" type="text" placeholder="Firmenname" autocomplete="off" required>
+          <button type="submit">Anlegen</button>
+        </div>
+      </form>
+      <div class="sidebar-title">Faelle</div>
+      <ul id="case-list" class="case-list"></ul>
+    </aside>
+
+    <main id="main" class="main">
+      <section class="empty-state">
+        <h1>Willkommen</h1>
+        <p>Legen Sie links einen Fall an oder waehlen Sie einen bestehenden aus.</p>
+        <ol>
+          <li>Fragebogen des Unternehmens ausfuellen (oder ausgefuellt uebernehmen)</li>
+          <li>Unterlagen hochladen &ndash; die DATEV-SuSa und Kontoumsaetze werden automatisch ausgewertet</li>
+          <li>Anforderungsschreiben fuer fehlende Unterlagen erzeugen</li>
+          <li>Diagnostik erstellen, Massnahmen mit dem Steuerberater abstimmen</li>
+          <li>Ergebnis protokollieren &ndash; jeder Fall verbessert die Datengrundlage</li>
+        </ol>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -21,6 +21,7 @@ from typing import Optional
 from .models import ClientCase
 from .ratios import RatioSet
 from .scorecard import ScorecardResult
+from .formatting import de
 
 
 @dataclass(frozen=True)
@@ -209,15 +210,15 @@ def route(
 
         if dscr is not None:
             if dscr < lp.min_dscr:
-                blockers.append(f"DSCR {dscr:.2f}x < {lp.min_dscr:.2f}x")
+                blockers.append(f"DSCR {de(dscr, 2)}x < {de(lp.min_dscr, 2)}x")
             else:
                 score += 10
-                reasons.append(f"Kapitaldienstfaehigkeit {dscr:.2f}x ausreichend")
+                reasons.append(f"Kapitaldienstfaehigkeit {de(dscr, 2)}x ausreichend")
 
         if eqr is not None and lp.min_equity_ratio > -1.0:
             if eqr < lp.min_equity_ratio:
                 blockers.append(
-                    f"EK-Quote {eqr*100:.1f}% < {lp.min_equity_ratio*100:.0f}%"
+                    f"EK-Quote {de(eqr*100, 1)}% < {de(lp.min_equity_ratio*100)}%"
                 )
             else:
                 score += 8
@@ -225,8 +226,8 @@ def route(
         if req:
             if req.amount < lp.amount_min or req.amount > lp.amount_max:
                 blockers.append(
-                    f"Volumen {req.amount:,.0f} EUR ausserhalb "
-                    f"{lp.amount_min:,.0f}-{lp.amount_max:,.0f} EUR"
+                    f"Volumen {de(req.amount)} EUR ausserhalb "
+                    f"{de(lp.amount_min)}-{de(lp.amount_max)} EUR"
                 )
             else:
                 score += 6
@@ -248,14 +249,14 @@ def route(
             if coverage < 0.6 and lp.key in ("kfw_haftungsfreistellung", "buergschaftsbank"):
                 score += 15
                 reasons.append(
-                    f"adressiert die Besicherungsluecke (Deckung nur {coverage*100:.0f}%)"
+                    f"adressiert die Besicherungsluecke (Deckung nur {de(coverage*100)}%)"
                 )
 
         # Targeted boosts where the instrument solves the specific weakness.
         if lp.key == "factoring" and (ratios.debitorenlaufzeit_tage or 0) > 45:
             score += 14
             reasons.append(
-                f"Debitorenlaufzeit {ratios.debitorenlaufzeit_tage:.0f} Tage - "
+                f"Debitorenlaufzeit {de(ratios.debitorenlaufzeit_tage)} Tage - "
                 "Forderungsbestand ist finanzierbar"
             )
         if lp.key == "mezzanine" and eqr is not None and eqr < 0.12:

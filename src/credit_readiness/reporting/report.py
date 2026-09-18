@@ -15,22 +15,23 @@ from __future__ import annotations
 from ..benchmarks import VINTAGE
 from ..engine import DiagnosticResult
 from ..remediation import FixCategory, Verdict
+from ..formatting import de
 
 
 def _pct(v: float | None, digits: int = 1) -> str:
-    return "n/a" if v is None else f"{v * 100:.{digits}f}%"
+    return "n/a" if v is None else f"{de(v * 100, digits)}%"
 
 
 def _x(v: float | None) -> str:
-    return "n/a" if v is None else f"{v:.2f}x"
+    return "n/a" if v is None else f"{de(v, 2)}x"
 
 
 def _eur(v: float | None) -> str:
-    return "n/a" if v is None else f"{v:,.0f} EUR"
+    return "n/a" if v is None else f"{de(v)} EUR"
 
 
 def _days(v: float | None) -> str:
-    return "n/a" if v is None else f"{v:.0f} Tage"
+    return "n/a" if v is None else f"{de(v)} Tage"
 
 
 _VERDICT_GUIDANCE = {
@@ -58,7 +59,29 @@ _VERDICT_GUIDANCE = {
 }
 
 
-def render_markdown(result: DiagnosticResult) -> str:
+_PROVENANCE_LABELS = {
+    "balance_sheet": "Bilanz und GuV",
+    "facilities": "Darlehensliste",
+    "balance_sheet.kontokorrent_limit": "Kontokorrentlimit",
+    "balance_sheet.kontokorrent_inanspruchnahme": "Kontokorrent-Inanspruchnahme",
+    "balance_sheet.gesellschafterdarlehen_rangruecktritt": "Rangruecktritt",
+    "behavior.bwa_stand": "BWA-Stand",
+    "behavior.bwa_age_months": "BWA-Alter",
+    "behavior.bwa_frequency": "BWA-Frequenz",
+    "behavior.has_planning_forecast": "Planrechnung",
+    "behavior.tax_arrears": "Steuerrueckstaende",
+    "behavior.overdraft_days_at_limit_12m": "Tage am Kontokorrentlimit",
+    "behavior.returned_direct_debits_12m": "Ruecklastschriften",
+}
+
+
+def render_markdown(result: DiagnosticResult, data_basis: dict | None = None) -> str:
+    """Render the client report.
+
+    `data_basis` is the optional assembly record (provenance, notes, parsed
+    sources) of a case built from uploads; it adds section 9 so the reader can
+    see which figure came from which source.
+    """
     c = result.case
     r = result.ratios
     s = result.scorecard
@@ -88,8 +111,8 @@ def render_markdown(result: DiagnosticResult) -> str:
     w(f"| | |")
     w(f"|---|---|")
     w(f"| **Readiness-Band** | **{s.band.value}** - {s.band.interpretation} |")
-    w(f"| Indikativer Gesamtwert | {s.total_score:.1f} / 100 |")
-    w(f"| Datenabdeckung | {s.coverage*100:.0f}% der Bewertungsfaktoren |")
+    w(f"| Indikativer Gesamtwert | {de(s.total_score, 1)} / 100 |")
+    w(f"| Datenabdeckung | {de(s.coverage*100)}% der Bewertungsfaktoren |")
     w(f"| **Einordnung** | **{result.verdict.value}** |")
     w("")
     w(_VERDICT_GUIDANCE[result.verdict])
@@ -97,7 +120,7 @@ def render_markdown(result: DiagnosticResult) -> str:
 
     sim = result.simulation
     if sim.applied:
-        arrow = f"{sim.before_score:.1f} -> {sim.after_score:.1f}"
+        arrow = f"{de(sim.before_score, 1)} -> {de(sim.after_score, 1)}"
         band_txt = (
             f"Band {sim.before_band} -> {sim.after_band}"
             if sim.band_improved
@@ -105,7 +128,7 @@ def render_markdown(result: DiagnosticResult) -> str:
         )
         w(
             f"**Simulierte Wirkung der Massnahmen:** {arrow} Punkte "
-            f"({sim.delta:+.1f}), {band_txt}."
+            f"({'+' if sim.delta >= 0 else ''}{de(sim.delta, 1)}), {band_txt}."
         )
         w("")
 
@@ -143,7 +166,7 @@ def render_markdown(result: DiagnosticResult) -> str:
     for label, value in rows:
         fk = key_for_label.get(label)
         fs = score_by_key.get(fk) if fk else None
-        assessment = f"{fs.score:.0f}/100" if fs and fs.score is not None else "-"
+        assessment = f"{de(fs.score)}/100" if fs and fs.score is not None else "-"
         w(f"| {label} | {value} | {assessment} |")
     w("")
     w(
@@ -162,8 +185,8 @@ def render_markdown(result: DiagnosticResult) -> str:
     w("|---|---|---|---|---|---|")
     for i, f in enumerate(s.ranked_weaknesses[:8], start=1):
         w(
-            f"| {i} | {f.label} | {f.format_value()} | {f.score:.0f} | "
-            f"{f.weight*100:.0f}% | {f.points_lost:.1f} |"
+            f"| {i} | {f.label} | {f.format_value()} | {de(f.score)} | "
+            f"{de(f.weight*100)}% | {de(f.points_lost, 1)} |"
         )
     w("")
     if s.missing_factors:
@@ -232,7 +255,7 @@ def render_markdown(result: DiagnosticResult) -> str:
             f"| Kontokorrent-Auslastung | {_pct(b.kontokorrent_auslastung, 0)} "
             f"| {_pct(a.kontokorrent_auslastung, 0)} |"
         )
-        w(f"| **Gesamtwert** | **{sim.before_score:.1f}** | **{sim.after_score:.1f}** |")
+        w(f"| **Gesamtwert** | **{de(sim.before_score, 1)}** | **{de(sim.after_score, 1)}** |")
         w(f"| **Band** | **{sim.before_band}** | **{sim.after_band}** |")
         w("")
         w("**Simuliert:** " + "; ".join(sim.applied))
@@ -259,7 +282,7 @@ def render_markdown(result: DiagnosticResult) -> str:
         # For an excluded route the blockers ARE the useful information; showing
         # only its positive reasons would read as an endorsement of a dead end.
         detail = "; ".join(o.reasons if o.eligible else o.blockers)[:160] or "-"
-        w(f"| {o.lender.name} | {o.fit_score:.0f} | {status} | {detail} |")
+        w(f"| {o.lender.name} | {de(o.fit_score)} | {status} | {detail} |")
     w("")
     newly = {o.lender.key for o in result.routing_after if o.eligible} - {
         o.lender.key for o in result.routing_now if o.eligible
@@ -303,11 +326,46 @@ def render_markdown(result: DiagnosticResult) -> str:
             [f for f in result.findings if f.category.is_fixable],
             key=lambda f: f.weeks_to_effect,
         )
+        effort_adj = {"gering": "geringer", "mittel": "mittlerer", "hoch": "hoher"}
         for i, f in enumerate(ordered, start=1):
-            w(f"{i}. **{f.title}** ({f.effort.value}er Aufwand, ca. {f.weeks_to_effect} Wochen)")
+            adj = effort_adj.get(f.effort.value, f.effort.value)
+            w(f"{i}. **{f.title}** ({adj} Aufwand, ca. {f.weeks_to_effect} Wochen)")
         w(f"{len(ordered)+1}. Unterlagenpaket zusammenstellen und erst danach "
           "Gespraech mit dem in Abschnitt 6 genannten Kreditgebertyp fuehren.")
     w("")
+
+    # --------------------------------------------------------- data basis
+    if data_basis:
+        w("## 9. Datengrundlage")
+        w("")
+        prov = data_basis.get("provenance") or {}
+        if prov:
+            w("| Angabe | Quelle |")
+            w("|---|---|")
+            for key, src in sorted(prov.items()):
+                w(f"| {_PROVENANCE_LABELS.get(key, key)} | {src} |")
+            w("")
+        for d in (data_basis.get("datev") or {}).values():
+            w(
+                f"- DATEV-SuSa *{d['filename']}* (Stichtag {d['period_end']}, "
+                f"{d['period_months']} Monate): {de(d['unmapped_share']*100, 2)}% des "
+                "Volumens nicht zugeordnet."
+            )
+        for b in data_basis.get("bank") or []:
+            w(
+                f"- Kontoumsaetze *{b['account_label']}*: {b['first_date']} bis "
+                f"{b['last_date']} ({b['days_covered']} Tage, {b['transaction_count']} "
+                "Buchungen)."
+            )
+        notes = data_basis.get("notes") or []
+        if notes:
+            w("")
+            w("**Hinweise zur Datenlage:**")
+            w("")
+            for n in notes:
+                w(f"- {n}")
+        w("")
+
     w("---")
     w("")
     w(f"*{result.disclaimer}*")

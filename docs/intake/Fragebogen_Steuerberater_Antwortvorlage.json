@@ -1,0 +1,23 @@
+{
+  "_hinweis": "Fragebogen fuer die Steuerberatung. Werte eintragen, unbekannte Felder auf null lassen. Prozente als Zahl (4,8 % -> 4.8), Monate als \"JJJJ-MM\", Daten als \"JJJJ-MM-TT\", ja/nein als true/false.",
+  "kanzlei": null,
+  "ansprechpartner": null,
+  "email": null,
+  "telefon": null,
+  "kontenrahmen": null,
+  "individuelle_konten": null,
+  "individuelle_konten_details": null,
+  "jahresabschluss_festgestellt": null,
+  "jahresabschluss_stichtag": null,
+  "bwa_frequenz": null,
+  "bwa_stand": null,
+  "rangruecktritt_bestaetigt": null,
+  "steuerrueckstaende": null,
+  "stundungsvereinbarung": null,
+  "planrechnung_vorhanden": null,
+  "einmaleffekte_betrag": null,
+  "einmaleffekte_beschreibung": null,
+  "bilanzierungswahlrechte": null,
+  "besondere_risiken": null,
+  "freigabe_umgliederung": null
+}
