@@ -17,3 +17,6 @@ output/*.json
 data/clients/
 data/demo/
 *_client_*.json
+
+# Working artefact, not project history.
+previous-claude-chat.md

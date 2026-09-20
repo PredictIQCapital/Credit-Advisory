@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Credit Readiness Advisory — Product and Technology Overview</title>
+<style>
+  :root{
+    --navy:#0d2440; --navy-2:#173a63; --green:#0b8f73; --green-l:#39b894;
+    --ink:#1a2430; --muted:#5b6b7c; --line:#d8e0e8; --bg-soft:#f4f7fa;
+    --amber:#b57500; --red:#a8323a;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-print-color-adjust:exact; print-color-adjust:exact}
+  body{
+    font-family:"Segoe UI","Helvetica Neue",Arial,sans-serif;
+    color:var(--ink); font-size:10pt; line-height:1.5; margin:0;
+  }
+  h1,h2,h3,h4{margin:0; line-height:1.25; color:var(--navy)}
+  p{margin:0 0 8px}
+  a{color:var(--green); text-decoration:none}
+  small{font-size:8.5pt}
+  .muted{color:var(--muted)}
+  .sheet{padding:0 0 4mm}
+
+  /* ---------- cover ---------- */
+  .cover{
+    background:var(--navy); color:#fff; padding:26mm 16mm 14mm;
+    margin:-14mm -14mm 10mm; /* bleed into the page margin */
+  }
+  .cover h1{color:#fff; font-size:27pt; letter-spacing:-.4pt; margin-bottom:8px}
+  .cover .sub{color:#a9c2dc; font-size:12pt; margin-bottom:18px}
+  .cover .lede{color:#dce7f2; font-size:10.5pt; max-width:150mm; margin-bottom:16px}
+  .logo{display:flex; align-items:center; gap:9px; margin-bottom:22mm}
+  .logo .bars{display:flex; align-items:flex-end; gap:3px; height:22px}
+  .logo .bars i{display:block; width:6px; border-radius:2px}
+  .logo .bars i:nth-child(1){height:9px;  background:#6fd3b7}
+  .logo .bars i:nth-child(2){height:15px; background:#39b894}
+  .logo .bars i:nth-child(3){height:22px; background:#0b8f73}
+  .logo span{color:#fff; font-weight:600; font-size:12pt; letter-spacing:.2pt}
+  .factbar{display:flex; gap:0; border-top:1px solid rgba(255,255,255,.22); padding-top:12px; margin-top:20px}
+  .factbar div{flex:1; padding-right:10px}
+  .factbar b{display:block; color:#6fd3b7; font-size:14pt; line-height:1.2}
+  .factbar small{color:#a9c2dc}
+
+  /* ---------- structure ---------- */
+  .eyebrow{
+    display:inline-block; font-size:8pt; font-weight:700; letter-spacing:1.1pt;
+    text-transform:uppercase; color:var(--green); margin-bottom:5px;
+  }
+  h2{font-size:15.5pt; margin-bottom:4px; padding-bottom:5px; border-bottom:2px solid var(--green)}
+  h2 .n{color:var(--green-l); font-weight:700; margin-right:7px}
+  h3{font-size:11pt; margin:12px 0 5px}
+  section{margin-bottom:12px}
+  .lead{font-size:10.5pt; color:var(--muted); margin:8px 0 12px}
+
+  /* ---------- tables ---------- */
+  table{width:100%; border-collapse:collapse; margin:8px 0 10px; font-size:9pt}
+  th{
+    text-align:left; background:var(--navy); color:#fff; font-weight:600;
+    padding:6px 8px; font-size:8.5pt; letter-spacing:.2pt;
+  }
+  td{padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top}
+  tbody tr:nth-child(even) td{background:var(--bg-soft)}
+  td.num{white-space:nowrap; font-variant-numeric:tabular-nums}
+  table.tight td, table.tight th{padding:4px 7px}
+
+  /* ---------- blocks ---------- */
+  .cards{display:flex; gap:8px; margin:8px 0 10px}
+  .card{
+    flex:1; border:1px solid var(--line); border-radius:6px; padding:9px 11px;
+    background:#fff; page-break-inside:avoid;
+  }
+  .card h4{font-size:10pt; margin-bottom:4px}
+  .card p{font-size:9pt; margin:0; color:var(--muted)}
+  .note{
+    border-left:3px solid var(--green); background:var(--bg-soft);
+    padding:9px 12px; margin:10px 0; page-break-inside:avoid; font-size:9.5pt;
+  }
+  .note.warn{border-left-color:var(--amber)}
+  .note b{color:var(--navy)}
+  .pill{
+    display:inline-block; font-size:7.5pt; font-weight:700; letter-spacing:.4pt;
+    text-transform:uppercase; padding:1.5px 6px; border-radius:20px; white-space:nowrap;
+  }
+  .pill.ok{background:#e2f4ee; color:#0b6f5a}
+  .pill.open{background:#fdf1dc; color:var(--amber)}
+  .pill.est{background:#eef2f7; color:var(--muted)}
+  ul{margin:4px 0 8px; padding-left:16px}
+  li{margin-bottom:3px}
+  .flow{display:flex; gap:5px; margin:10px 0; page-break-inside:avoid}
+  .flow div{
+    flex:1; border:1px solid var(--line); border-top:3px solid var(--green-l);
+    border-radius:4px; padding:7px 8px; font-size:8.5pt; background:#fff;
+  }
+  .flow b{display:block; color:var(--navy); font-size:9pt; margin-bottom:2px}
+  .flow span{color:var(--muted)}
+  th code{background:rgba(255,255,255,.16); color:#fff}
+  code{font-family:Consolas,"Courier New",monospace; font-size:8.5pt; background:var(--bg-soft); padding:1px 4px; border-radius:3px}
+  pre{
+    font-family:Consolas,"Courier New",monospace; font-size:8.5pt; background:#0d2440; color:#dbe7f2;
+    padding:9px 11px; border-radius:5px; overflow:hidden; margin:7px 0; line-height:1.45;
+  }
+  pre .c{color:#7fa7c9}
+  .kv{font-size:9pt}
+  .kv td:first-child{width:34%; font-weight:600; color:var(--navy)}
+
+  .page-break{page-break-before:always}
+  h2, h3{page-break-after:avoid}
+  .note, .cards, .flow{page-break-inside:avoid}
+  /* a long two-column comparison reads better stacked, and may split across pages */
+  .cards.stack{display:block; page-break-inside:auto}
+  .cards.stack .card{page-break-inside:auto; margin-bottom:8px}
+  .cards.stack .card ul{columns:2; column-gap:16px; font-size:9pt; color:var(--muted)}
+  tr{page-break-inside:avoid}
+  thead{display:table-header-group}
+  .footnote{font-size:8pt; color:var(--muted); border-top:1px solid var(--line); padding-top:7px; margin-top:12px}
+</style>
+</head>
+<body>
+
+<!-- =========================== COVER =========================== -->
+<div class="cover">
+  <div class="logo">
+    <span class="bars"><i></i><i></i><i></i></span>
+    <span>Credit Readiness Advisory</span>
+  </div>
+  <h1>Creditworthy SMEs get rejected<br>for fixable reasons.</h1>
+  <div class="sub">Product and technology overview — for a software developer and an investor</div>
+  <p class="lede">
+    A credit-readiness advisory for German and Austrian SMEs (10–249 employees). It diagnoses exactly
+    which factors pull a company's file below a lender's approval line, separates presentation problems
+    from genuine credit risk, and routes the corrected file to the lender type most likely to approve it.
+    A free AI-assisted check brings companies in; paid analysis and advisory follow.
+  </p>
+  <div class="factbar">
+    <div><b>20 Sept 2026</b><small>Version 0.3.0</small></div>
+    <div><b>Working prototype</b><small>No paying clients yet</small></div>
+    <div><b>~9,000 lines</b><small>Python, 217 tests passing</small></div>
+    <div><b>Germany first</b><small>Austria second</small></div>
+  </div>
+</div>
+
+<section>
+  <h2><span class="n">00</span>How to read this</h2>
+  <table class="tight">
+    <thead><tr><th style="width:22%">If you are…</th><th>Read</th></tr></thead>
+    <tbody>
+      <tr><td><b>An investor</b></td><td>§1 Problem · §2 Solution · §3 How it works · §4 AI · §7 Challenges · §8 Costs · §9 Goals · §10 Status</td></tr>
+      <tr><td><b>A software developer</b></td><td>§3 How it works · §5 Stack and architecture · §6 What is left to build · §7.1 Technical challenges · §11 Running it locally</td></tr>
+    </tbody>
+  </table>
+  <div class="note">
+    <b>Everything in this document is stated at its real confidence level.</b> Figures sourced from
+    public data name their source. Anything marked <span class="pill est">estimate</span> is a planning
+    assumption, not a measurement. The product has been validated on fictional cases only — that is the
+    single most important caveat on every page that follows.
+  </div>
+</section>
+
+<!-- =========================== 1. PROBLEM =========================== -->
+<section>
+  <h2><span class="n">01</span>The problem</h2>
+  <p class="lead">German SME lending is tightening structurally, and the companies caught by it have
+    nowhere to turn between their bookkeeper and a consultancy priced for corporates.</p>
+
+  <div class="cards">
+    <div class="card">
+      <h4>40.5% report restrictive banks</h4>
+      <p>Share of Mittelstand firms in credit negotiations reporting restrictive bank behaviour — a record
+        since the survey began in 2017, up 6.5 points in a single quarter. <i>KfW Research, 7 July 2026.</i></p>
+    </div>
+    <div class="card">
+      <h4>Germany-specific worsening</h4>
+      <p>SME rejection rates rose further in Germany through Q3–Q4 2025, faster for SMEs than for large
+        firms, while other large euro-area countries were flat or falling. <i>ECB Bank Lending Survey.</i></p>
+    </div>
+    <div class="card">
+      <h4>Nobody serves the middle</h4>
+      <p>Bookkeepers do not read rating models. Premium consultancies are priced for €50M+ companies.
+        Automated fintech lenders do not advise. The €3–15M SME is unserved.</p>
+    </div>
+  </div>
+
+  <h3>What actually happens to the company</h3>
+  <ul>
+    <li>The SME learns it has a problem <b>only after the bank has said no</b> — and the rejection reason
+      it is given is usually a sentence, not a diagnosis.</li>
+    <li>A logged rejection makes the next application harder. Reapplying without changing anything is the
+      most common and most expensive mistake.</li>
+    <li>Much of what fails is <b>not the business</b>: a shareholder loan without a subordination
+      agreement reads as debt; an overdraft used as permanent financing reads as distress; a management
+      report six months old reads as weak reporting. Each is fixable in weeks.</li>
+    <li>Nobody currently tells the owner which of the two situations they are in.</li>
+  </ul>
+</section>
+
+<!-- =========================== 2. SOLUTION =========================== -->
+<section>
+  <h2><span class="n">02</span>The solution</h2>
+  <p class="lead">Tell the company, before it applies, exactly which factors fail and whether they are
+    fixable — then either fix them or say honestly that they cannot be fixed.</p>
+
+  <h3>Three products, one funnel</h3>
+  <table>
+    <thead><tr><th style="width:20%">Tier</th><th style="width:14%">Price</th><th>What the company gets</th><th style="width:20%">Role in the business</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>Credit check</b></td><td class="num">Free</td>
+        <td>Uploads its annual accounts. The figures are read automatically, the company confirms each one
+          and answers ~12 questions. Instant readiness band (A–E), its three biggest weaknesses, and a
+          plain-language explanation.</td>
+        <td>Acquisition and qualification. Self-serve, near-zero marginal cost.</td>
+      </tr>
+      <tr>
+        <td><b>Full report</b></td><td class="num">€390</td>
+        <td>Full questionnaire (41 questions) plus the tax advisor's 20, the document set, the complete
+          diagnostic, the before/after simulation and the lender-type routing — reviewed and released by a
+          human advisor.</td>
+        <td>Mostly automated, low marginal cost. The volume product.</td>
+      </tr>
+      <tr>
+        <td><b>Advisory</b></td><td class="num">€1,500–3,000</td>
+        <td>Calls, coordination with the company's tax advisor, sign-off on reclassifications, support up
+          to the bank meeting.</td>
+        <td>Flat fee per engagement, earned regardless of outcome.</td>
+      </tr>
+      <tr>
+        <td><b>Success fee</b> <span class="pill open">optional</span></td><td class="num">1.5–2%</td>
+        <td>Only where placement is actively supported.</td>
+        <td>Likely requires a §34c GewO licence — a decision deliberately not yet taken.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="muted"><small>All fee figures are planning assumptions. The free check widens the addressable
+    funnel from the ~16,000 companies that hit obstacles each year to the ~113,000 that apply (§9).</small></p>
+
+  <h3>Two functions, deliberately kept separate</h3>
+  <div class="cards">
+    <div class="card">
+      <h4>1 · Diagnostic engine</h4>
+      <p>A transparent rules-and-ratios engine — DSCR, equity ratio, leverage, margins, payment behaviour —
+        flags which factors pull the file below a typical approval line and simulates the effect of each
+        fix. Sold standalone at a flat fee.</p>
+    </div>
+    <div class="card">
+      <h4>2 · Remediation and routing</h4>
+      <p>An advisor turns each flag into an action — reclassify a shareholder loan, fix reporting cadence,
+        swap an overdraft for a term loan or factoring, use a KfW liability-release programme — and matches
+        the corrected profile to a lender type.</p>
+    </div>
+  </div>
+  <p>The separation keeps the core business <b>advisory</b> — not brokerage, not a rating agency. The SME
+    pays, never the lender, so there is no conflict between "best terms for the client" and "whoever pays
+    the most referral fee".</p>
+
+  <div class="note">
+    <b>The distinction the whole business rests on: we say no.</b>
+    Every weakness is classified as presentation, documentation, product fit, collateral — or genuine
+    credit risk. Genuine risk is never simulated away; rule <code>R08</code> refuses, and one substantive
+    finding outranks any number of cosmetic ones. Those clients are advised not to apply. Polishing a
+    distressed file produces a better-looking rejection, burns the lender relationships and poisons the
+    outcome dataset that is meant to become the moat. Declining the engagement is the product working
+    correctly, and the demo includes such a case deliberately.
+  </div>
+</section>
+
+<!-- =========================== 3. HOW IT WORKS =========================== -->
+<section>
+  <h2><span class="n">03</span>How it works, end to end</h2>
+
+  <h3>The free check — four steps, a few minutes</h3>
+  <div class="flow">
+    <div><b>1 · Upload</b><span>Annual accounts as PDF or scan. Nothing else needed.</span></div>
+    <div><b>2 · Read</b><span>33 balance-sheet and P&amp;L fields extracted automatically.</span></div>
+    <div><b>3 · Confirm</b><span>Every figure shown for the company to check and correct. Consistency checks must pass.</span></div>
+    <div><b>4 · Result</b><span>~12 questions, then band A–E, top three weaknesses, plain-language explanation.</span></div>
+  </div>
+
+  <h3>The paid engagement — the full pipeline</h3>
+  <table class="tight">
+    <thead><tr><th style="width:18%">Stage</th><th>What happens</th><th style="width:26%">Built from</th></tr></thead>
+    <tbody>
+      <tr><td><b>Intake</b></td><td>Two questionnaires — 41 questions for the company, 20 for its tax advisor; every question states <i>why</i> it is asked. A catalogue of 14 document types says who supplies each, whether it is required or conditional, and in which format.</td><td><code>intake/questionnaire.py</code>, <code>intake/documents.py</code></td></tr>
+      <tr><td><b>Import</b></td><td>Automatic reading of the two structured sources: the DATEV trial balance (current and prior year) and bank-statement CSVs, which yield days at the overdraft limit and returned direct debits.</td><td><code>ingest/datev.py</code>, <code>ingest/bank_csv.py</code></td></tr>
+      <tr><td><b>Assembly</b></td><td>One case from three parties with a strict precedence — bank data beats the tax advisor, the tax advisor beats the client — and a provenance record for every contested figure.</td><td><code>intake/assemble.py</code></td></tr>
+      <tr><td><b>Validation</b></td><td>Refuses to analyse a file whose balance sheet does not balance. A confident diagnostic from a broken input is this business's worst failure mode.</td><td><code>validation.py</code></td></tr>
+      <tr><td><b>Ratios</b></td><td>A 26-value ratio set computed the way a German bank's rating engine does it, annualised correctly when working from a mid-year management report.</td><td><code>ratios.py</code></td></tr>
+      <tr><td><b>Score</b></td><td>Transparent weighted scorecard: 10 factors, piecewise-linear over published thresholds, renormalised when a factor is unavailable. Every factor exposes its value, weight and points lost. Bands A–E.</td><td><code>scorecard.py</code></td></tr>
+      <tr><td><b>Diagnose</b></td><td>10 fixability rules (R01–R10) classify each weakness and attach the concrete measure, its cost and its lead time.</td><td><code>remediation.py</code></td></tr>
+      <tr><td><b>Simulate</b></td><td>Applies the measures to a copy of the case and recomputes: before/after score and band.</td><td><code>remediation.py</code></td></tr>
+      <tr><td><b>Route</b></td><td>Ranks 7 lender types — house bank, KfW with liability release, state guarantee bank, factoring, leasing, digital lender, mezzanine/MBG — for both the current and the corrected profile.</td><td><code>routing.py</code></td></tr>
+      <tr><td><b>Report</b></td><td>German client report with the disclaimer on every page, plus the request letters and the tax-advisor sign-off sheet. Released only after a human advisor reviews it.</td><td><code>reporting/</code></td></tr>
+      <tr><td><b>Outcome</b></td><td>One row per engagement — weaknesses flagged, measures applied, lender routed to, approved or not — appended to the outcome log.</td><td><code>workflow.py</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    <b>The outcome log is the long-term asset.</b> Early on it is a spreadsheet, not a model. It is what
+    eventually moves the scorecard thresholds from published convention to something calibrated on this
+    business's own placement history — a dataset no competitor can buy.
+  </div>
+
+  <h3>Three parties, three views</h3>
+  <table class="tight">
+    <thead><tr><th style="width:20%">Role</th><th>Sees</th></tr></thead>
+    <tbody>
+      <tr><td><b>Company (SME)</b></td><td>A guided seven-step flow: its own case, its questionnaire, its uploads, and the report once released.</td></tr>
+      <tr><td><b>Tax advisor</b></td><td>Only the cases of clients who invited them. Confirmations, uploads, the sign-off sheet — not the company's questionnaire answers.</td></tr>
+      <tr><td><b>Advisor (us)</b></td><td>The whole pipeline: every case, run the diagnostic, release reports, generate letters, record outcomes.</td></tr>
+    </tbody>
+  </table>
+  <p class="muted"><small>Permissions are enforced server-side, not hidden in the interface, and are covered by tests that exercise them over real HTTP with cookies.</small></p>
+</section>
+
+<!-- =========================== 4. AI =========================== -->
+<section>
+  <h2><span class="n">04</span>Where the AI sits — and where it deliberately does not</h2>
+  <p class="lead">"AI reads and explains. Transparent rules decide." That sentence is the product's
+    positioning, its legal posture and its architecture, and it is enforced in code.</p>
+
+  <table>
+    <thead><tr><th style="width:34%">Task</th><th style="width:26%">Who does it</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>Read balance sheet and P&amp;L from a PDF or scan</td><td><b>AI</b> (Claude) or the local rules reader</td><td>Removes the real friction: typing figures. Works on any layout.</td></tr>
+      <tr><td>Decide which figures are used</td><td><b>The company</b>, confirming each figure</td><td>A proposal is not an input until a person has confirmed it.</td></tr>
+      <tr><td>Check the figures</td><td>Deterministic checks</td><td>Assets = liabilities; P&amp;L result = balance-sheet result. Catches misreads before they reach a ratio.</td></tr>
+      <tr><td>Band, findings, simulation, routing</td><td><b>Rules engine only</b></td><td>Explainable, auditable, legally defensible. Never a model.</td></tr>
+      <tr><td>Explain the result, answer questions</td><td><b>AI</b>, grounded only in the engine's output</td><td>An owner understands "your equity ratio reads as 10.1% because…", not a ratio table.</td></tr>
+      <tr><td>Guardrail on every AI sentence</td><td>Deterministic filter</td><td>Rejects approval promises, odds and rating vocabulary; falls back to a fixed template.</td></tr>
+      <tr><td>Release of the paid report</td><td><b>A human advisor</b></td><td>Nothing paid-for reaches a client unreviewed.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Why this split, and not "an AI that scores companies"</h3>
+  <ul>
+    <li><b>Regulatory.</b> A transparent rules engine keeps the product on the advisory side of the EU
+      Credit Rating Agencies Regulation, and outside the EU AI Act's high-risk "creditworthiness of
+      natural persons" category. An opaque score that ranks creditworthiness is much closer to a rating.</li>
+    <li><b>Saleability.</b> The buyer is an SME owner and their tax advisor. A model output cannot be
+      argued with by an accountant; a ratio can — and being argued with is how the advice earns its fee.</li>
+    <li><b>Data reality.</b> At two to three engagements a month there will be tens of outcomes in year
+      one, not thousands. There is no training set. A model fitted to that would be noise wrapped in
+      false authority.</li>
+  </ul>
+  <p class="muted"><small>Recorded as ADR-001 in the repository: replacing the engine with a model is a
+    legal decision, not a technical upgrade, and must not happen as an incremental refactor.</small></p>
+
+  <h3>Data protection built into the AI path</h3>
+  <table class="tight">
+    <thead><tr><th style="width:52%">Control</th><th style="width:16%">Status</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td>Local reader is the default — no data leaves the server</td><td><span class="pill ok">in place</span></td><td>Claude is opt-in per deployment via one environment variable</td></tr>
+      <tr><td>Separate, voluntary AI consent per company</td><td><span class="pill ok">in place</span></td><td>Without it the document is never sent; manual entry offered instead</td></tr>
+      <tr><td>Data minimisation towards the AI</td><td><span class="pill ok">in place</span></td><td>Document only for reading; for explanations only the result summary — no names, no documents</td></tr>
+      <tr><td>Audit log of every AI call</td><td><span class="pill ok">in place</span></td><td>Time, purpose, provider, model, SHA-256 of the input, actor — never the content</td></tr>
+      <tr><td>Self-service erasure (Art. 17 GDPR)</td><td><span class="pill ok">in place</span></td><td>Deletes account, cases and documents</td></tr>
+      <tr><td>Transparency labelling (EU AI Act Art. 50)</td><td><span class="pill ok">in place</span></td><td>AI-read figures and AI-written text are labelled as such in the interface</td></tr>
+      <tr><td>Data processing agreements incl. the AI provider; no training on client data</td><td><span class="pill open">before go-live</span></td><td>Contractual, plus transfer basis and inference region</td></tr>
+      <tr><td>EU hosting, encryption at rest, DPIA, retention schedule, 2FA</td><td><span class="pill open">before go-live</span></td><td>See §6 and §7.2</td></tr>
+    </tbody>
+  </table>
+  <p class="muted"><small>The full 10-point pre-launch checklist lives in <code>docs/ai-and-data-protection.md</code>, and a public-facing version of this table is already on the website at <code>/sicherheit</code>.</small></p>
+</section>
+
+<!-- =========================== 5. STACK =========================== -->
+<section>
+  <h2><span class="n">05</span>The stack</h2>
+  <p class="lead">Written for a developer picking this up. The guiding decision was <b>zero runtime
+    dependencies</b>: the entire product — engine, API and website — runs on a laptop with nothing but a
+    Python install.</p>
+
+  <table class="kv tight">
+    <tbody>
+      <tr><td>Language</td><td>Python 3.11+ (developed on 3.14)</td></tr>
+      <tr><td>Runtime dependencies</td><td><b>None.</b> Standard library only, including the web server</td></tr>
+      <tr><td>Optional extras</td><td><code>[dev]</code> pytest · <code>[ai]</code> anthropic SDK · <code>[pdf]</code> pymupdf for scanned documents</td></tr>
+      <tr><td>Web server</td><td>stdlib <code>ThreadingHTTPServer</code>; a thin JSON API over the workflow layer, one file</td></tr>
+      <tr><td>Front end</td><td>Vanilla JavaScript SPA — no framework, no build step, no bundler. Hash routing, DOM built with <code>textContent</code> only (no <code>innerHTML</code>, so no injection surface)</td></tr>
+      <tr><td>Languages (UI)</td><td>German and English throughout, switchable live; German number formatting on every client-facing document</td></tr>
+      <tr><td>Auth</td><td>PBKDF2-SHA256, 600,000 iterations; HttpOnly / SameSite=Strict session cookies; login lockout; strict CSP; origin checks</td></tr>
+      <tr><td>Storage today</td><td>JSON case folders on disk behind a <code>CaseStore</code> interface — the designated database swap point</td></tr>
+      <tr><td>AI (optional)</td><td>Anthropic Claude (<code>claude-opus-5</code>) for document reading and explanations, behind a provider interface with a local rules-based fallback</td></tr>
+      <tr><td>Tests</td><td>pytest — <b>217 tests</b>, all passing; includes real-HTTP portal tests, regulatory-wording tests and a calibration check against the Bundesbank dataset</td></tr>
+      <tr><td>Size</td><td>~9218 lines of Python across 38 modules</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Module map</h3>
+<pre>src/credit_readiness/
+├── models.py        HGB §266/§275 domain objects; economic-equity restatement
+├── validation.py    input plausibility; errors block analysis by default
+├── ratios.py        ratio computation, partial-year annualisation
+├── scorecard.py     factor weights, breakpoints, banding          <span class="c">[REGULATORY]</span>
+├── remediation.py   fixability rules R01–R10 + simulation         <span class="c">[CORE IP]</span>
+├── routing.py       lender-type matching                          <span class="c">[REGULATORY]</span>
+├── benchmarks.py    sector medians                                <span class="c">[PLACEHOLDER DATA]</span>
+├── engine.py        orchestrator → DiagnosticResult
+├── ai/              document reading (rules | Claude), explanations, guardrails, audit log
+├── intake/          questionnaires, document catalogue, case assembly
+├── ingest/          json_intake (canonical), datev (SKR04), bank_csv
+├── casefile.py      CaseStore interface + local folder store      <span class="c">[SWAP FOR DATABASE]</span>
+├── auth.py          accounts, roles, sessions (PBKDF2)            <span class="c">[SWAP FOR DATABASE]</span>
+├── workflow.py      overview, diagnose, letters, outcome — used by portal and CLI
+├── reporting/       report, HTML, letters, printable forms, summary JSON
+├── webapp/          website, investor page, portal (API + front end, DE/EN)
+└── cli.py           diagnose / batch / datev / serve / case / questionnaire / bank</pre>
+
+  <h3>Why zero dependencies was a deliberate choice</h3>
+  <ul>
+    <li>The product handles confidential financial data on a founder's machine before it is ever hosted.
+      A small dependency tree is a small supply-chain surface.</li>
+    <li>Everything is inspectable. There is no framework magic between an HTTP request and the rule that
+      produced a number — which matters when a regulator or a tax advisor asks how a figure was derived.</li>
+    <li>It is not dogma: the three places where a real deployment needs real infrastructure are named in
+      the code (<code>CaseStore</code>, <code>auth.py</code>, <code>webapp/server.py</code>), and are
+      additions rather than rewrites.</li>
+  </ul>
+
+  <h3>Everything the portal does is also a command</h3>
+<pre>python -m credit_readiness serve --demo --open        <span class="c"># website + portal, fictional data</span>
+python -m credit_readiness case new "Firma GmbH"
+python -m credit_readiness case upload CRA-2026-0001 susa_aktuell susa.csv
+python -m credit_readiness case diagnose CRA-2026-0001
+python -m credit_readiness batch data/samples                <span class="c"># whole folder of cases</span></pre>
+  <p class="muted"><small>Useful for the developer: the entire business logic is reachable without the
+    web layer, which is why the test suite can cover it without a browser.</small></p>
+</section>
+
+<!-- =========================== 6. TO BUILD =========================== -->
+<section>
+  <h2><span class="n">06</span>What a developer would pick up</h2>
+  <p class="lead">The prototype is complete as a prototype. Turning it into a hosted service is a
+    well-bounded piece of work, and the seams are already cut.</p>
+
+  <table>
+    <thead><tr><th style="width:32%">Work item</th><th>What it involves</th><th style="width:16%">Effort <span class="pill est">estimate</span></th></tr></thead>
+    <tbody>
+      <tr><td><b>Database-backed storage</b></td><td>Implement <code>CaseStore</code> and the user store against PostgreSQL (about a dozen methods each). Nothing above that interface changes.</td><td class="num">5–8 days</td></tr>
+      <tr><td><b>EU hosting, TLS, CI/CD</b></td><td>Frankfurt region; container or managed platform; automated deploys; staging environment.</td><td class="num">3–5 days</td></tr>
+      <tr><td><b>Document storage</b></td><td>S3-compatible EU object storage with encryption at rest, replacing local folders; retention/deletion jobs.</td><td class="num">2–3 days</td></tr>
+      <tr><td><b>Payments</b></td><td>Stripe or Mollie for the €390 tier and advisory invoices; order state already exists in the product and is currently recorded as "to be invoiced".</td><td class="num">3–5 days</td></tr>
+      <tr><td><b>Transactional email</b></td><td>Registration, password reset, tax-advisor invitations, report-ready notifications.</td><td class="num">2–3 days</td></tr>
+      <tr><td><b>Claude reading in production</b></td><td>The integration is written and tested against a stand-in, but <b>has never called the live API</b>. Needs real-document testing, an evaluation set of real layouts, cost and latency measurement, retry handling.</td><td class="num">5–8 days</td></tr>
+      <tr><td><b>Security hardening</b></td><td>Two-factor login, secrets management, centralised logging with alerting, backups with a restore test, penetration test.</td><td class="num">4–6 days</td></tr>
+      <tr><td><b>Polish</b></td><td>Mobile refinement, accessibility pass, error states, analytics on the funnel.</td><td class="num">3–5 days</td></tr>
+    </tbody>
+  </table>
+  <p><b>Total: roughly 27–43 developer-days</b> — about six to nine weeks for one competent full-stack
+    developer, excluding the legal work that runs in parallel (§7.2).</p>
+
+  <div class="note">
+    <b>A developer joining this reads three files first:</b> <code>workflow.py</code> (every operation the
+    product performs), <code>casefile.py</code> (the storage interface to replace) and
+    <code>webapp/server.py</code> (the HTTP layer). The domain logic in <code>scorecard.py</code> and
+    <code>remediation.py</code> is where the intellectual property lives and should be changed only with
+    the domain owner — those files carry regulatory consequences, and the tests enforce them.
+  </div>
+</section>
+
+<!-- =========================== 7. CHALLENGES =========================== -->
+<section>
+  <h2><span class="n">07</span>Challenges, stated honestly</h2>
+
+  <h3>7.1 Technical</h3>
+  <table class="tight">
+    <thead><tr><th style="width:30%">Challenge</th><th>Detail and mitigation</th></tr></thead>
+    <tbody>
+      <tr><td><b>Reading real annual accounts</b></td><td>The hardest technical problem in the product. 33 fields are extracted correctly from four fictional companies, but real German annual accounts vary enormously in layout, and scans are worse. <i>Mitigation, already built:</i> deterministic consistency checks, mandatory human confirmation of every figure, and manual entry always available — a misread is caught, not propagated.</td></tr>
+      <tr><td><b>The Claude path is untested live</b></td><td>The request shape is pinned by tests using a stand-in, but no real document has ever been sent. Cost, latency and accuracy on real layouts are unknown.</td></tr>
+      <tr><td><b>DATEV mapping uncalibrated</b></td><td>The SKR04 account-range mapping needs validating against three real tax-advisor exports. SKR03 deliberately raises an error rather than guessing.</td></tr>
+      <tr><td><b>Six of ten scorecard factors are convention</b></td><td>Equity ratio, EBIT margin and quick ratio are anchored to the Bundesbank distribution of German SMEs. Debt service capacity, leverage, interest cover, overdraft use, reporting cadence and payment behaviour have no published series and can only be calibrated on real placement outcomes.</td></tr>
+      <tr><td><b>Thresholds are convention, not calibration</b></td><td>Scorecard breakpoints follow published lending convention. Only the outcome log can validate them, and that takes real engagements.</td></tr>
+      <tr><td><b>Single-developer product</b></td><td>~9218 lines written by one person. Well tested and documented, but bus-factor one until someone else reads it.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>7.2 Regulatory and legal <span class="pill open">the critical path</span></h3>
+  <table class="tight">
+    <thead><tr><th style="width:24%">Area</th><th style="width:20%">Position</th><th>Open item</th></tr></thead>
+    <tbody>
+      <tr><td><b>§32 KWG</b> (banking licence)</td><td><span class="pill ok">avoided by design</span></td><td>No lending, no deposits, never touches client capital.</td></tr>
+      <tr><td><b>EU CRA Regulation</b></td><td><span class="pill ok">avoided by design</span></td><td>Transparent rules, no ML score, no rating vocabulary, disclaimer on every report — enforced by automated tests. The free check's self-serve wording still needs a lawyer's read.</td></tr>
+      <tr><td><b>EU AI Act</b></td><td>Designed outside Annex III 5(b)</td><td>Confirm in writing, in particular for sole proprietors, who are natural persons.</td></tr>
+      <tr><td><b>§34c GewO</b></td><td>Decision deferred</td><td>Only triggered by a success fee. Paid legal opinion before that fee structure is offered.</td></tr>
+      <tr><td><b>GDPR</b></td><td>Product controls in place</td><td>Processor agreements, transfer basis for the AI provider, DPIA, records of processing, retention schedule, lawyer-reviewed consent texts.</td></tr>
+      <tr><td><b>Professional liability</b></td><td>Not yet in force</td><td>Vermögensschadenhaftpflicht before the first paying client.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>7.3 Commercial — the risks that actually decide this</h3>
+  <ul>
+    <li><b>The central assumption is unvalidated.</b> That one-third to one-half of obstacle cases are
+      fixable rather than genuinely uncreditworthy is judgement, not data. If the true share is small,
+      the addressable market shrinks by an order of magnitude. This is the first thing the pilot measures,
+      and the outcome log is designed to measure it case by case.</li>
+    <li><b>Conversion from free to €390 is unknown.</b> The free check is an acquisition bet. If the band
+      and three weaknesses are enough for the owner, they may never buy the report. The counter-design:
+      the free result deliberately names the weaknesses without quantifying what fixing them is worth.</li>
+    <li><b>Acquisition channel unproven.</b> Tax advisors are the natural referral route — they see the
+      rejection first — but they may see an advisory product as competition rather than a service to
+      their clients.</li>
+    <li><b>Trust.</b> An SME handing its complete financials to an unknown brand is a real barrier, which
+      is why the security page states plainly what is and is not yet in place rather than making claims.</li>
+    <li><b>Founder capacity.</b> Phase 0 is solo and side-structured. Every paid engagement consumes
+      founder days, which is exactly why the free tier had to be self-serve.</li>
+    <li><b>Timing.</b> The product is counter-cyclical — demand rises as lending tightens — but if credit
+      conditions loosen materially, urgency falls.</li>
+  </ul>
+</section>
+
+<!-- =========================== 8. COSTS =========================== -->
+<section>
+  <h2><span class="n">08</span>Costs</h2>
+  <p class="lead">All figures below are planning estimates in EUR, to be verified against current provider
+    pricing. <b>The infrastructure is not the constraint; legal work and customer acquisition are.</b></p>
+
+  <h3>8.1 One-off, to reach a hosted service with a first paying client</h3>
+  <table>
+    <thead><tr><th style="width:42%">Item</th><th style="width:22%">Estimate</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td>Engineering (27–43 days, §6)</td><td class="num">€0 — or €16k–39k</td><td>€0 if founder-built; €600–900/day if contracted out</td></tr>
+      <tr><td>Data-protection package: privacy notice, consent texts, DPIA, records of processing</td><td class="num">€2,000–5,000</td><td>Specialist lawyer or external DPO</td></tr>
+      <tr><td>§34c GewO opinion + terms of business</td><td class="num">€1,000–2,000</td><td>Only needed if a success fee is offered</td></tr>
+      <tr><td>Professional liability insurance (first year)</td><td class="num">€800–2,000</td><td>Annual, scales with cover</td></tr>
+      <tr><td>Penetration test</td><td class="num">€2,000–5,000</td><td>Can be deferred past the first pilot clients</td></tr>
+      <tr><td><s>Bundesbank benchmark data work</s> — done</td><td class="num">€0</td><td>Seven editions imported; the publication is free</td></tr>
+      <tr><td>Brand, domain, company formation</td><td class="num">€500–1,500</td><td>Depends on legal form</td></tr>
+      <tr><td><b>Total to a defensible launch</b></td><td class="num"><b>€6k–16k founder-built</b><br>€22k–55k fully contracted</td><td>Excluding founder time</td></tr>
+    </tbody>
+  </table>
+
+  <h3>8.2 Running cost, per month at pilot volume</h3>
+  <table>
+    <thead><tr><th style="width:42%">Item</th><th style="width:22%">Estimate</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td>EU application hosting + managed PostgreSQL</td><td class="num">€40–120</td><td>Frankfurt region</td></tr>
+      <tr><td>Object storage, backups</td><td class="num">€10–30</td><td>Documents are small</td></tr>
+      <tr><td>Domain, business email, error monitoring</td><td class="num">€15–55</td><td></td></tr>
+      <tr><td>AI reading and explanations</td><td class="num">€0.10–0.60 per check</td><td>One document read plus explanations. At 100 free checks a month: <b>€10–60</b>. Verify against current API pricing; the local reader costs nothing</td></tr>
+      <tr><td>Payment processing</td><td class="num">~1.5% + €0.25</td><td>Per transaction, EU cards — about €6 on a €390 report</td></tr>
+      <tr><td><b>Fixed monthly run rate</b></td><td class="num"><b>€65–205</b></td><td>Plus usage. One €390 report a month covers it several times over</td></tr>
+    </tbody>
+  </table>
+
+  <h3>8.3 Unit economics <span class="pill est">illustrative</span></h3>
+  <table class="tight">
+    <thead><tr><th style="width:22%">Product</th><th style="width:14%">Price</th><th style="width:22%">Marginal cost</th><th>Human time</th></tr></thead>
+    <tbody>
+      <tr><td>Free check</td><td class="num">€0</td><td class="num">~€0.10–0.60</td><td>None — fully self-serve</td></tr>
+      <tr><td>Full report</td><td class="num">€390</td><td class="num">~€7 incl. payment fee</td><td>30–45 min advisor review before release</td></tr>
+      <tr><td>Advisory</td><td class="num">€1,500–3,000</td><td class="num">negligible</td><td>1–2 days per engagement</td></tr>
+    </tbody>
+  </table>
+  <p>The shape that matters: the free tier is cheap enough to run at volume without funding it, the report
+    is near-pure margin once the advisor review is efficient, and advisory is capacity-limited rather than
+    cost-limited. The binding constraint at every stage is advisor hours, which is why the first hire in
+    Phase 1 is a junior credit analyst rather than a salesperson.</p>
+</section>
+
+<!-- =========================== 9. GOALS =========================== -->
+<section>
+  <h2><span class="n">09</span>What we want to achieve</h2>
+
+  <h3>The market we are aiming at</h3>
+  <table class="tight">
+    <thead><tr><th>Stage</th><th style="width:20%">Estimate</th><th style="width:28%">Basis</th></tr></thead>
+    <tbody>
+      <tr><td>Small and medium enterprises, 10–249 employees (Germany)</td><td class="num">~419,000</td><td>Destatis / Statista, 2022</td></tr>
+      <tr><td>Apply for a bank loan in a survey period</td><td class="num">~113,000</td><td>ECB SAFE (27%) — the free check's market</td></tr>
+      <tr><td>Face significant obstacles — rejected, partly rejected, discouraged</td><td class="num">~16,000</td><td>ECB SAFE (14% of applicants)</td></tr>
+      <tr><td><b>Fixable rather than genuinely uncreditworthy</b></td><td class="num"><b>~5,000–8,000/yr</b></td><td><span class="pill open">unvalidated assumption</span></td></tr>
+    </tbody>
+  </table>
+  <p class="muted"><small>Stated plainly: euro-area rates applied to Germany (likely an understatement,
+    given Germany's faster deterioration); rolling survey periods, so this is an order-of-magnitude
+    snapshot; the fixable share is judgement and is the first thing to validate.</small></p>
+
+  <h3>Milestones</h3>
+  <table class="tight">
+    <thead><tr><th style="width:18%">Horizon</th><th>Goal</th></tr></thead>
+    <tbody>
+      <tr><td><b>0–3 months</b></td><td>10 pilot cases run free on real company data. Conversations with 5 tax-advisory firms. Legal package commissioned. DATEV mapping calibrated on real exports.</td></tr>
+      <tr><td><b>3–6 months</b></td><td>Hosted in the EU with payments live. First paid reports sold. Free-to-paid conversion measured for the first time. Claude reading validated on real documents or dropped in favour of the local reader.</td></tr>
+      <tr><td><b>6–12 months</b></td><td>Two to three paid engagements a month. Outcome log at 30+ rows. First recalibration of scorecard thresholds against real placements. First working relationships with specific lenders. Decision on the §34c success-fee model.</td></tr>
+      <tr><td><b>Beyond</b></td><td>Junior credit analyst hired for volume; founder on clients and lender relationships; Austria as the second market; the outcome dataset as the defensible asset.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>The metrics that decide whether this works</h3>
+  <div class="cards">
+    <div class="card"><h4>Fixable share</h4><p>Of cases that hit obstacles, how many are presentation rather than substance? The whole thesis.</p></div>
+    <div class="card"><h4>Free → paid conversion</h4><p>What share of completed free checks buy the €390 report?</p></div>
+    <div class="card"><h4>Band uplift</h4><p>Measured before/after improvement on real files, not simulated.</p></div>
+    <div class="card"><h4>Placement rate</h4><p>Of prepared files taken to a lender, how many are approved?</p></div>
+  </div>
+</section>
+
+<!-- =========================== 10. STATUS =========================== -->
+<section>
+  <h2><span class="n">10</span>Status today</h2>
+  <div class="cards stack">
+    <div class="card">
+      <h4><span class="pill ok">Built and tested</span></h4>
+      <ul style="margin-top:6px">
+        <li>Diagnostic engine: 26-value ratio set, 10-factor transparent scorecard, 10 fixability rules, before/after simulation, 7 lender types</li>
+        <li>Free AI-assisted credit check: reading, human confirmation, instant result, guarded explanation</li>
+        <li>Automatic reading of DATEV trial balances and bank-statement exports</li>
+        <li>Public website, investor page and security page, DE/EN</li>
+        <li>Three-party portal with server-enforced permissions, guided intake, uploads, letters, advisor release</li>
+        <li>Outcome log from engagement one; AI-use audit log; self-service data deletion</li>
+        <li>Sector benchmarks and three scorecard factors calibrated against the Bundesbank Jahresabschlussstatistik (firm-level quartiles, by sector and revenue class)</li>
+        <li>217 automated tests, including regulatory-wording, real-HTTP permission and calibration-drift tests</li>
+        <li>Verified end to end: a case assembled from uploaded questionnaires, DATEV exports and a bank statement reproduces the hand-built reference case exactly</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4><span class="pill open">Honestly still open</span></h4>
+      <ul style="margin-top:6px">
+        <li>No paying clients — validated on fictional cases only</li>
+        <li>The fixable share (5,000–8,000/yr) is unvalidated</li>
+        <li>DATEV mapping uncalibrated; six of ten scorecard factors still rest on convention rather than data</li>
+        <li>Claude reading never run against a real document</li>
+        <li>No database, no hosting, no payment provider, no transactional email</li>
+        <li>Data processing agreements, DPIA, retention schedule, EU hosting, encryption at rest</li>
+        <li>§34c GewO decision; EU AI Act classification confirmed in writing; liability insurance</li>
+      </ul>
+    </div>
+  </div>
+  <div class="note">
+    <b>What this is, precisely:</b> a complete, working, tested product that has never met a real customer
+    or a real lawyer. Everything that would be expensive to change later — the regulatory posture, the
+    separation of AI from assessment, the refusal to simulate away genuine risk, the outcome log — is
+    already decided and built. Everything still open is either a purchase, a contract, or a well-bounded
+    engineering task.
+  </div>
+</section>
+
+<!-- =========================== 11. RUNNING IT =========================== -->
+<section>
+  <h2><span class="n">11</span>Appendix — running it locally</h2>
+  <p class="lead">For the developer. No dependencies to install, no build step, no services to start.</p>
+<pre><span class="c"># Demo: website, investor page and portal with four fictional companies</span>
+python -m credit_readiness serve --demo --open          <span class="c"># http://127.0.0.1:8766</span>
+
+<span class="c"># Tests</span>
+pip install -e ".[dev]" &amp;&amp; pytest                       <span class="c"># 204 passing</span>
+
+<span class="c"># A complete engagement on generated fictional data</span>
+python scripts/generate_intake_samples.py               <span class="c"># questionnaires, DATEV, bank CSV, PDFs</span>
+python scripts/demo_intake_flow.py                      <span class="c"># case → uploads → letters → diagnostic → outcome</span></pre>
+
+  <table class="tight">
+    <thead><tr><th style="width:28%">Demo login (password <code>demo1234</code>)</th><th style="width:16%">Role</th><th>Shows</th></tr></thead>
+    <tbody>
+      <tr><td><code>jonas.weber@demo.de</code></td><td>Company</td><td>The free credit check from step one — upload an annual-accounts PDF and watch it work</td></tr>
+      <tr><td><code>anna.mueller@demo.de</code></td><td>Company</td><td>A complete engagement, report released: band C → A, fixable</td></tr>
+      <tr><td><code>elif.yilmaz@demo.de</code></td><td>Company</td><td>The honest no: genuine credit risk, advised not to apply</td></tr>
+      <tr><td><code>kanzlei@demo.de</code></td><td>Tax advisor</td><td>Only its own clients' cases; confirmations and sign-off sheet</td></tr>
+      <tr><td><code>berater@demo.de</code></td><td>Advisor</td><td>The pipeline: run analyses, release reports, record outcomes</td></tr>
+    </tbody>
+  </table>
+  <p class="muted"><small>Delete <code>data/demo/</code> to reset the demo; it is re-created on the next
+    start. Real use runs against <code>data/clients/</code>, which is excluded from version control.
+    Sample PDFs for testing the reader are in <code>data/samples/intake/</code>.</small></p>
+
+  <div class="footnote">
+    <b>Disclaimers.</b> This document describes a pre-revenue product. Market figures come from the sources
+    named; the fixable share, all fee levels, all cost estimates and all conversion assumptions are
+    unvalidated planning assumptions. All demo companies and all sample documents are fictional and must
+    never be presented as evidence about the real market. The product produces a directional readiness
+    indication — never a credit rating, a probability of default, or a promise of approval. The lender
+    decides. Nothing here is legal advice; the items marked open in §7.2 require a qualified lawyer before
+    real client data is processed on a server.
+  </div>
+</section>
+
+</body>
+</html>
