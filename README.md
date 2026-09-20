@@ -89,10 +89,10 @@ Sample output:
 
 ```
 Fall       Unternehmen                  Band   Score  ->   Score Band  Einordnung
-CASE-01    Mueller Praezisionstechnik   C       64.5  ->    83.4 A     behebbar - Struktur
-CASE-02    Nordlicht Handel GmbH & Co.  D       46.1  ->    61.3 C     behebbar - Struktur
-CASE-03    Gastro Rheinblick GmbH       E        3.6  ->     7.7 E     substanzielles Kreditrisiko
-CASE-06    Hoffmann Medizintechnik      A       97.4  ->    97.4 A     bereits finanzierbar
+CASE-01    Mueller Praezisionstechnik   B       66.4  ->    80.3 A     behebbar - Struktur
+CASE-02    Nordlicht Handel GmbH & Co.  D       50.7  ->    64.7 C     behebbar - Struktur
+CASE-03    Gastro Rheinblick GmbH       E        4.2  ->     8.7 E     substanzielles Kreditrisiko
+CASE-06    Hoffmann Medizintechnik      A       93.3  ->    93.3 A     bereits finanzierbar
 ```
 
 ## Products
@@ -173,7 +173,7 @@ src/credit_readiness/
 ├── scorecard.py     factor weights, breakpoints, banding    [REGULATORY]
 ├── remediation.py   fixability rules R01-R10 + simulation   [CORE IP]
 ├── routing.py       lender-type matching                    [REGULATORY]
-├── benchmarks.py    sector medians                          [PLACEHOLDER DATA]
+├── benchmarks.py    sector quartiles, Bundesbank            [REAL DATA]
 ├── engine.py        orchestrator -> DiagnosticResult
 ├── ai/              document reading (rules | Claude), explanations, guardrails, audit log
 ├── intake/          questionnaires, document catalogue, case assembly
@@ -210,9 +210,9 @@ code it affects:
 
 | Item | Where | What is needed |
 |---|---|---|
-| **Sector benchmarks are placeholder numbers** | `benchmarks.py` | Replace with Bundesbank *Verhältniszahlen aus Jahresabschlüssen deutscher Unternehmen*. Data task, not a code task — keep the shape, swap the values, record the vintage. |
+| ~~Sector benchmarks are placeholder numbers~~ **done** | `benchmarks.py` | Loaded from the Bundesbank *Verhältniszahlen* (firm-level quartiles, by sector and revenue class). Three scorecard factors are now calibrated against that distribution — see [ADR-002](docs/decisions/ADR-002-bundesbank-calibration.md). Re-run the importer when a new edition appears. |
 | **DATEV mapping is uncalibrated** | `ingest/datev.py` | Validate SKR04 ranges against three real Steuerberater exports. SKR03 raises rather than guessing. |
-| **Scorecard thresholds are convention, not calibration** | `scorecard.py` | Re-validate against real placement outcomes as the outcome log grows. |
+| **Six of ten scorecard factors are still convention** | `scorecard.py` | Equity, EBIT margin and quick ratio are anchored to the Bundesbank distribution; debt service capacity, leverage, interest cover, overdraft use, reporting cadence and payment behaviour have no published series and need real placement outcomes. |
 | **34c GewO applicability** | `docs/regulatory-guardrails.md` | Paid legal consultation, driven by the chosen fee structure. |
 
 The outcome log is the asset. Every engagement — flagged weaknesses, remediation
@@ -244,4 +244,4 @@ blueprint's own build order, the honest MVP is this engine run manually on the
 first handful of real client files — automate a layer only once real volume makes
 the manual version the bottleneck.
 
-163 tests, all passing.
+209 tests, all passing.

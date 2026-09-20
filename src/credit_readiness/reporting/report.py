@@ -12,7 +12,7 @@ Two constraints shape every line of this module:
 
 from __future__ import annotations
 
-from ..benchmarks import VINTAGE
+from ..benchmarks import CAVEAT, VINTAGE
 from ..engine import DiagnosticResult
 from ..remediation import FixCategory, Verdict
 from ..formatting import de
@@ -300,17 +300,30 @@ def render_markdown(result: DiagnosticResult, data_basis: dict | None = None) ->
     w("")
     w(f"*Datenstand Benchmark: {VINTAGE}*")
     w("")
-    w("| Kennzahl | Unternehmen | Branchenmedian | Einordnung |")
-    w("|---|---|---|---|")
+    w("Verglichen wird mit der Verteilung der Unternehmen derselben Branche und "
+      "Umsatzgroessenklasse. Das untere und das obere Viertel geben an, wo die "
+      "Streuung liegt - der Median allein sagt wenig ueber die Bandbreite.")
+    w("")
+    w("| Kennzahl | Unternehmen | Unteres Viertel | Branchenmedian | Oberes Viertel | Einordnung |")
+    w("|---|---|---|---|---|---|")
+
+    def _fmt(metric: str, value):
+        if metric in ("Eigenkapitalquote", "EBIT-Marge"):
+            return _pct(value)
+        if metric == "Debitorenlaufzeit":
+            return _days(value)
+        return _x(value)
+
     for cmp_ in result.benchmark:
-        cv = cmp_.company_value
-        if cmp_.metric in ("Eigenkapitalquote", "EBIT-Marge"):
-            cv_s, med_s = _pct(cv), _pct(cmp_.sector_median)
-        elif cmp_.metric == "Debitorenlaufzeit":
-            cv_s, med_s = _days(cv), _days(cmp_.sector_median)
-        else:
-            cv_s, med_s = _x(cv), _x(cmp_.sector_median)
-        w(f"| {cmp_.metric} | {cv_s} | {med_s} | {cmp_.verdict} |")
+        q = cmp_.quartiles
+        lower, upper = (_fmt(cmp_.metric, q[0]), _fmt(cmp_.metric, q[2])) if q else ("n/a", "n/a")
+        rank = ""
+        if cmp_.percentile is not None:
+            rank = f" ({de(cmp_.percentile, 0)}. Perzentil)"
+        w(f"| {cmp_.metric} | {_fmt(cmp_.metric, cmp_.company_value)} | {lower} | "
+          f"{_fmt(cmp_.metric, cmp_.sector_median)} | {upper} | {cmp_.verdict}{rank} |")
+    w("")
+    w(f"*{CAVEAT}*")
     w("")
 
     # ----------------------------------------------------------- next steps

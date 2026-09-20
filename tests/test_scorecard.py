@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import pytest
 
+from credit_readiness import benchmarks
 from credit_readiness.ratios import compute_ratios
 from credit_readiness.scorecard import (
     FACTORS,
+    FACTORS_BY_KEY,
     Band,
     band_for,
     evaluate,
@@ -147,3 +149,62 @@ def test_strong_case_outranks_weak_case(case_03, case_06):
     assert strong.total_score > weak.total_score
     assert strong.band is Band.A
     assert weak.band is Band.E
+
+
+# ---------------------------------------------------------------------------
+# Calibration against the Bundesbank distribution
+# ---------------------------------------------------------------------------
+
+#: factor key -> (metric in the Bundesbank dataset, conversion to our unit)
+CALIBRATED = {
+    "eigenkapitalquote": ("eigenmittel_pct_bilanzsumme", lambda v: v / 100),
+    "liquiditaet_2_grades": ("liquiditaet_2_pct", lambda v: v / 100),
+    "ebit_marge": ("ergebnis_vor_steuern_pct_umsatz",
+                   lambda v: v / 100 + benchmarks.EBT_TO_EBIT_ADJUSTMENT),
+}
+ANCHORS = {"q25": 58.0, "q50": 70.0, "q75": 82.0}
+
+
+def _sme_quartile(metric: str, quartile: str) -> float:
+    """All sectors, the two size classes that straddle our target segment."""
+    data = benchmarks._dataset()["sectors"]["__alle__"]
+    values = [data[size][metric][quartile] for size in ("2_bis_10m", "10_bis_50m")]
+    return sum(values) / len(values)
+
+
+@pytest.mark.parametrize("factor_key", sorted(CALIBRATED))
+def test_bundesbank_anchors(factor_key):
+    """The calibrated curves must still meet the published quartiles.
+
+    This is the guard that stops the breakpoints and the Bundesbank dataset
+    drifting apart: re-import a new edition and this fails until the
+    breakpoints are moved with it (see the CALIBRATION note in scorecard.py).
+    """
+    metric, convert = CALIBRATED[factor_key]
+    factor = FACTORS_BY_KEY[factor_key]
+    for quartile, expected in ANCHORS.items():
+        value = convert(_sme_quartile(metric, quartile))
+        assert interpolate(value, factor.breakpoints) == pytest.approx(expected, abs=0.5), (
+            f"{factor_key} at {quartile} ({value:.4f}) scores "
+            f"{interpolate(value, factor.breakpoints):.1f}, expected {expected}"
+        )
+
+
+def test_median_sme_lands_in_band_b():
+    """A company at the median of every calibrated factor is a typical one.
+
+    Typical must not read as borderline: that is the whole point of anchoring
+    the median at band B rather than at the midpoint of the scale.
+    """
+    assert band_for(ANCHORS["q50"]) is Band.B
+    assert band_for(ANCHORS["q25"]) is Band.C
+    assert band_for(ANCHORS["q75"]) is Band.A
+
+
+def test_uncalibrated_factors_are_declared_as_such():
+    """Anything not in CALIBRATED is convention, and the module says so."""
+    import credit_readiness.scorecard as sc
+
+    assert "Convention, not calibration" in sc.__doc__
+    for key in CALIBRATED:
+        assert "Bundesbank" in FACTORS_BY_KEY[key].note, f"{key} does not name its source"

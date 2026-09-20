@@ -241,7 +241,7 @@ def test_report_is_hidden_from_client_until_released(env):
 
     assert adv.call("POST", f"/api/cases/{cid}/release", {"released": True})[0] == 200
     ov = c.call("GET", f"/api/cases/{cid}")[1]
-    assert ov["latest_summary"]["band"] == "C"
+    assert ov["latest_summary"]["band"] == "B"
     assert c.call("GET", f"/api/cases/{cid}/artifacts/diagnostik.html")[0] == 200
     assert c.call("GET", f"/api/cases/{cid}/artifacts/case.json")[0] == 404, "internal files stay internal"
     assert store.get_meta(cid)["stage"] == "massnahmen_in_umsetzung"
@@ -328,7 +328,7 @@ def test_demo_seed_tells_the_intended_stories(tmp_path):
     mueller = wf.case_overview(store, ids["mueller"], today=TODAY)
     gastro = wf.case_overview(store, ids["gastro"], today=TODAY)
     assert mueller["report_released"] and mueller["latest_summary"]["engageable"]
-    assert (mueller["latest_summary"]["band"], mueller["latest_summary"]["score"]) == ("C", 64.5)
+    assert (mueller["latest_summary"]["band"], mueller["latest_summary"]["score"]) == ("B", 66.4)
     assert gastro["latest_summary"]["verdict"].startswith("nicht behebbar")
     assert gastro["meta"]["stage"] == "abgeschlossen"
     assert store.read_outcomes()[0]["outcome"] == "ADVISED_NOT_TO_APPLY"

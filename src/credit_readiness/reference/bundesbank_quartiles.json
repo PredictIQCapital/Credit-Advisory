@@ -1,0 +1,2342 @@
+{
+ "source": "Deutsche Bundesbank, Statistische Fachreihe Jahresabschlussstatistik (Verhaeltniszahlen)",
+ "edition": "2026",
+ "reporting_year": 2023,
+ "legal_form": "alle_rechtsformen",
+ "basis": "Quartilswerte (Verteilung ueber die Unternehmen), nicht hochgerechnet",
+ "caveat": "Erfassungsgrad der Umsatzklasse 2-10 Mio EUR rund 14%, 10-50 Mio EUR rund 42% -- kleinere Unternehmen sind im Datenpool der Bundesbank unterrepraesentiert.",
+ "sectors": {
+  "__alle__": {
+   "insgesamt": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 14.0,
+     "q50": 33.4,
+     "q75": 55.6
+    },
+    "liquiditaet_2_pct": {
+     "q25": 49.5,
+     "q50": 94.0,
+     "q75": 212.0
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 0.9,
+     "q50": 4.7,
+     "q75": 9.9
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 3.7,
+     "q50": 6.9,
+     "q75": 11.0
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 109.9,
+     "q50": 189.7,
+     "q75": 374.8
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 3.8,
+     "q75": 22.9
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 16.9,
+     "q50": 31.0,
+     "q75": 47.9
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 4.5,
+     "q50": 16.5,
+     "q75": 41.7
+    }
+   },
+   "unter_2m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": -0.9,
+     "q50": 16.5,
+     "q75": 41.9
+    },
+    "liquiditaet_2_pct": {
+     "q25": 31.8,
+     "q50": 64.3,
+     "q75": 178.6
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 1.0,
+     "q50": 6.9,
+     "q75": 14.9
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 2.3,
+     "q50": 5.2,
+     "q75": 10.1
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 58.7,
+     "q50": 132.7,
+     "q75": 374.1
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 14.9,
+     "q75": 42.4
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 4.7,
+     "q50": 23.4,
+     "q75": 50.9
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 2.7,
+     "q50": 15.6,
+     "q75": 48.0
+    }
+   },
+   "2_bis_10m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 11.1,
+     "q50": 32.7,
+     "q75": 57.8
+    },
+    "liquiditaet_2_pct": {
+     "q25": 41.9,
+     "q50": 91.6,
+     "q75": 223.9
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 0.8,
+     "q50": 4.4,
+     "q75": 10.2
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 3.7,
+     "q50": 6.7,
+     "q75": 11.0
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 128.3,
+     "q50": 236.1,
+     "q75": 541.3
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 9.6,
+     "q75": 31.7
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 17.1,
+     "q50": 33.7,
+     "q75": 54.5
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 3.3,
+     "q50": 15.5,
+     "q75": 45.4
+    }
+   },
+   "10_bis_50m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 18.5,
+     "q50": 37.5,
+     "q75": 56.0
+    },
+    "liquiditaet_2_pct": {
+     "q25": 49.7,
+     "q50": 91.7,
+     "q75": 208.7
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 0.9,
+     "q50": 4.1,
+     "q75": 8.7
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 4.6,
+     "q50": 7.8,
+     "q75": 11.9
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 115.8,
+     "q50": 200.3,
+     "q75": 387.6
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 4.6,
+     "q75": 22.0
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 20.3,
+     "q50": 35.2,
+     "q75": 50.0
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 4.3,
+     "q50": 17.1,
+     "q75": 40.3
+    }
+   },
+   "ab_50m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 16.0,
+     "q50": 33.4,
+     "q75": 56.2
+    },
+    "liquiditaet_2_pct": {
+     "q25": 58.2,
+     "q50": 106.2,
+     "q75": 214.0
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 1.0,
+     "q50": 4.8,
+     "q75": 9.8
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 3.3,
+     "q50": 6.8,
+     "q75": 10.4
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 110.8,
+     "q50": 172.9,
+     "q75": 311.3
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 0.1,
+     "q75": 13.4
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 16.7,
+     "q50": 27.5,
+     "q75": 40.8
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 5.8,
+     "q50": 16.6,
+     "q75": 38.5
+    }
+   }
+  },
+  "Verarbeitendes Gewerbe": {
+   "insgesamt": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 14.1,
+     "q50": 36.8,
+     "q75": 59.1
+    },
+    "liquiditaet_2_pct": {
+     "q25": 59.3,
+     "q50": 129.9,
+     "q75": 292.3
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 0.5,
+     "q50": 4.1,
+     "q75": 10.1
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 2.7,
+     "q50": 6.6,
+     "q75": 12.2
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 98.1,
+     "q50": 158.5,
+     "q75": 365.4
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 6.8,
+     "q75": 28.8
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 7.2,
+     "q75": 30.1
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 1.9,
+     "q50": 16.1,
+     "q75": 44.1
+    }
+   },
+   "unter_2m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 11.1,
+     "q50": 36.8,
+     "q75": 62.4
+    },
+    "liquiditaet_2_pct": {
+     "q25": 63.9,
+     "q50": 165.9,
+     "q75": 391.2
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 0.0,
+     "q50": 4.7,
+     "q75": 14.0
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 2.1,
+     "q50": 6.4,
+     "q75": 13.3
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 89.2,
+     "q50": 166.0,
+     "q75": 412.5
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 6.8,
+     "q75": 32.7
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 1.7,
+     "q75": 16.6
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": -11.4,
+     "q50": 12.5,
+     "q75": 49.9
+    }
+   },
+   "2_bis_10m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 13.8,
+     "q50": 34.9,
+     "q75": 55.7
+    },
+    "liquiditaet_2_pct": {
+     "q25": 55.8,
+     "q50": 117.4,
+     "q75": 246.0
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 0.6,
+     "q50": 3.9,
+     "q75": 9.4
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 3.3,
+     "q50": 7.2,
+     "q75": 12.1
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 103.0,
+     "q50": 170.8,
+     "q75": 370.9
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 9.8,
+     "q75": 32.1
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 0.6,
+     "q50": 11.0,
+     "q75": 34.8
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 4.0,
+     "q50": 16.0,
+     "q75": 42.5
+    }
+   },
+   "10_bis_50m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 17.5,
+     "q50": 40.0,
+     "q75": 61.0
+    },
+    "liquiditaet_2_pct": {
+     "q25": 59.2,
+     "q50": 118.2,
+     "q75": 234.2
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 1.2,
+     "q50": 4.2,
+     "q75": 8.3
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 2.7,
+     "q50": 6.3,
+     "q75": 11.2
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 101.2,
+     "q50": 148.3,
+     "q75": 290.9
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 4.3,
+     "q75": 21.2
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 0.7,
+     "q50": 14.3,
+     "q75": 38.5
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 6.7,
+     "q50": 19.5,
+     "q75": 40.9
+    }
+   },
+   "ab_50m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 19.3,
+     "q50": 39.4,
+     "q75": 56.3
+    },
+    "liquiditaet_2_pct": {
+     "q25": 62.3,
+     "q50": 123.0,
+     "q75": 194.8
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 0.1,
+     "q50": 2.4,
+     "q75": 6.6
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 1.9,
+     "q50": 5.9,
+     "q75": 10.9
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 94.2,
+     "q50": 126.4,
+     "q75": 209.4
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 0.6,
+     "q75": 17.3
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 1.2,
+     "q50": 12.9,
+     "q75": 33.1
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 5.9,
+     "q50": 17.3,
+     "q75": 39.0
+    }
+   }
+  },
+  "Baugewerbe": {
+   "insgesamt": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 13.3,
+     "q50": 33.5,
+     "q75": 57.5
+    },
+    "liquiditaet_2_pct": {
+     "q25": 52.1,
+     "q50": 104.6,
+     "q75": 252.8
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 0.4,
+     "q50": 4.6,
+     "q75": 10.0
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 3.1,
+     "q50": 6.9,
+     "q75": 11.5
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 109.4,
+     "q50": 188.3,
+     "q75": 408.7
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 2.4,
+     "q75": 22.6
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 13.2,
+     "q50": 26.2,
+     "q75": 44.9
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 2.4,
+     "q50": 15.3,
+     "q75": 44.3
+    }
+   },
+   "unter_2m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 2.5,
+     "q50": 27.7,
+     "q75": 54.3
+    },
+    "liquiditaet_2_pct": {
+     "q25": 42.3,
+     "q50": 101.5,
+     "q75": 282.2
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": -0.4,
+     "q50": 5.4,
+     "q75": 12.3
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 2.1,
+     "q50": 5.1,
+     "q75": 9.8
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 83.1,
+     "q50": 176.0,
+     "q75": 435.1
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 10.2,
+     "q75": 41.2
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 5.2,
+     "q50": 17.6,
+     "q75": 39.0
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": -2.2,
+     "q50": 13.1,
+     "q75": 51.3
+    }
+   },
+   "2_bis_10m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 14.5,
+     "q50": 34.2,
+     "q75": 58.0
+    },
+    "liquiditaet_2_pct": {
+     "q25": 52.2,
+     "q50": 104.4,
+     "q75": 272.1
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 1.7,
+     "q50": 4.6,
+     "q75": 9.0
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 3.6,
+     "q50": 7.0,
+     "q75": 12.4
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 114.2,
+     "q50": 217.5,
+     "q75": 549.6
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 7.5,
+     "q75": 28.0
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 14.4,
+     "q50": 32.0,
+     "q75": 49.4
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 5.6,
+     "q50": 19.5,
+     "q75": 46.0
+    }
+   },
+   "10_bis_50m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 16.4,
+     "q50": 37.9,
+     "q75": 60.0
+    },
+    "liquiditaet_2_pct": {
+     "q25": 49.9,
+     "q50": 98.3,
+     "q75": 240.2
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 0.5,
+     "q50": 5.0,
+     "q75": 9.9
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 4.0,
+     "q50": 7.6,
+     "q75": 12.1
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 117.7,
+     "q50": 194.8,
+     "q75": 442.7
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 2.6,
+     "q75": 19.0
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 17.6,
+     "q50": 31.0,
+     "q75": 49.6
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 2.8,
+     "q50": 15.5,
+     "q75": 47.5
+    }
+   },
+   "ab_50m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 16.0,
+     "q50": 30.8,
+     "q75": 54.3
+    },
+    "liquiditaet_2_pct": {
+     "q25": 61.7,
+     "q50": 119.7,
+     "q75": 240.1
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": -0.4,
+     "q50": 3.6,
+     "q75": 9.2
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 2.7,
+     "q50": 6.9,
+     "q75": 10.4
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 107.7,
+     "q50": 176.4,
+     "q75": 325.8
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 0.0,
+     "q75": 8.9
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 12.6,
+     "q50": 22.8,
+     "q75": 37.1
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 2.2,
+     "q50": 12.1,
+     "q75": 32.1
+    }
+   }
+  },
+  "Grosshandel": {
+   "insgesamt": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 8.1,
+     "q50": 24.5,
+     "q75": 43.4
+    },
+    "liquiditaet_2_pct": {
+     "q25": 47.3,
+     "q50": 81.2,
+     "q75": 133.0
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 1.5,
+     "q50": 4.1,
+     "q75": 8.4
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 3.1,
+     "q50": 5.4,
+     "q75": 8.2
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 92.2,
+     "q50": 181.2,
+     "q75": 507.8
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 6.7,
+     "q75": 29.2
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 9.9,
+     "q50": 28.7,
+     "q75": 48.2
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 7.8,
+     "q50": 21.7,
+     "q75": 51.9
+    }
+   },
+   "unter_2m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 0.3,
+     "q50": 15.5,
+     "q75": 48.8
+    },
+    "liquiditaet_2_pct": {
+     "q25": 44.4,
+     "q50": 94.1,
+     "q75": 173.5
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 3.0,
+     "q50": 9.8,
+     "q75": 19.4
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 1.3,
+     "q50": 4.5,
+     "q75": 8.5
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 60.5,
+     "q50": 157.4,
+     "q75": 521.6
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 11.5,
+     "q75": 42.6
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 0.7,
+     "q50": 13.4,
+     "q75": 40.4
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 4.1,
+     "q50": 27.3,
+     "q75": 85.9
+    }
+   },
+   "2_bis_10m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 5.3,
+     "q50": 20.9,
+     "q75": 41.0
+    },
+    "liquiditaet_2_pct": {
+     "q25": 39.3,
+     "q50": 66.9,
+     "q75": 125.7
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 1.8,
+     "q50": 4.4,
+     "q75": 8.2
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 2.9,
+     "q50": 5.8,
+     "q75": 9.6
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 83.9,
+     "q50": 170.2,
+     "q75": 559.7
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 15.8,
+     "q75": 36.1
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 11.0,
+     "q50": 32.1,
+     "q75": 53.7
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 7.7,
+     "q50": 21.8,
+     "q75": 51.0
+    }
+   },
+   "10_bis_50m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 11.5,
+     "q50": 26.2,
+     "q75": 45.7
+    },
+    "liquiditaet_2_pct": {
+     "q25": 46.3,
+     "q50": 83.4,
+     "q75": 140.6
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 1.5,
+     "q50": 3.8,
+     "q75": 7.1
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 3.5,
+     "q50": 5.5,
+     "q75": 8.1
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 96.3,
+     "q50": 208.8,
+     "q75": 548.1
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 6.4,
+     "q75": 27.5
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 11.7,
+     "q50": 31.3,
+     "q75": 50.3
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 7.9,
+     "q50": 21.3,
+     "q75": 50.0
+    }
+   },
+   "ab_50m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 12.3,
+     "q50": 27.8,
+     "q75": 41.3
+    },
+    "liquiditaet_2_pct": {
+     "q25": 55.7,
+     "q50": 82.4,
+     "q75": 116.3
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 1.0,
+     "q50": 2.9,
+     "q75": 6.7
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 3.4,
+     "q50": 5.3,
+     "q75": 7.8
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 101.2,
+     "q50": 162.1,
+     "q75": 404.9
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 2.4,
+     "q75": 19.6
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 12.9,
+     "q50": 27.2,
+     "q75": 44.1
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 9.0,
+     "q50": 20.7,
+     "q75": 45.0
+    }
+   }
+  },
+  "Einzelhandel": {
+   "insgesamt": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 1.1,
+     "q50": 18.9,
+     "q75": 41.5
+    },
+    "liquiditaet_2_pct": {
+     "q25": 38.7,
+     "q50": 74.6,
+     "q75": 130.3
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 2.0,
+     "q50": 5.0,
+     "q75": 9.8
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 0.3,
+     "q50": 2.0,
+     "q75": 6.5
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 67.5,
+     "q50": 155.8,
+     "q75": 398.5
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 16.3,
+     "q75": 43.9
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 14.8,
+     "q50": 28.4,
+     "q75": 48.5
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 10.0,
+     "q50": 28.5,
+     "q75": 62.0
+    }
+   },
+   "unter_2m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": -16.0,
+     "q50": 11.8,
+     "q75": 43.1
+    },
+    "liquiditaet_2_pct": {
+     "q25": 30.8,
+     "q50": 76.6,
+     "q75": 153.4
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 4.5,
+     "q50": 9.2,
+     "q75": 16.8
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 0.0,
+     "q50": 1.2,
+     "q75": 5.0
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 14.9,
+     "q50": 145.5,
+     "q75": 467.7
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 22.9,
+     "q75": 56.1
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 10.4,
+     "q50": 29.9,
+     "q75": 50.0
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 11.0,
+     "q50": 41.6,
+     "q75": 93.0
+    }
+   },
+   "2_bis_10m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 2.2,
+     "q50": 20.9,
+     "q75": 42.4
+    },
+    "liquiditaet_2_pct": {
+     "q25": 42.4,
+     "q50": 74.9,
+     "q75": 126.9
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 2.0,
+     "q50": 4.8,
+     "q75": 7.7
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 0.7,
+     "q50": 3.5,
+     "q75": 7.2
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 97.4,
+     "q50": 180.4,
+     "q75": 422.7
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 2.5,
+     "q50": 23.3,
+     "q75": 47.4
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 15.4,
+     "q50": 27.1,
+     "q75": 48.9
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 10.7,
+     "q50": 27.0,
+     "q75": 54.6
+    }
+   },
+   "10_bis_50m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 6.0,
+     "q50": 18.7,
+     "q75": 40.1
+    },
+    "liquiditaet_2_pct": {
+     "q25": 41.5,
+     "q50": 75.8,
+     "q75": 131.1
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 0.9,
+     "q50": 3.2,
+     "q75": 6.2
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 0.9,
+     "q50": 3.4,
+     "q75": 7.0
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 82.3,
+     "q50": 160.6,
+     "q75": 406.9
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 12.6,
+     "q75": 33.4
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 15.0,
+     "q50": 26.8,
+     "q75": 45.6
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 7.0,
+     "q50": 21.4,
+     "q75": 40.9
+    }
+   },
+   "ab_50m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 8.9,
+     "q50": 26.8,
+     "q75": 39.1
+    },
+    "liquiditaet_2_pct": {
+     "q25": 36.1,
+     "q50": 70.0,
+     "q75": 98.1
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 1.0,
+     "q50": 2.5,
+     "q75": 4.0
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 0.0,
+     "q50": 0.6,
+     "q75": 1.9
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 56.7,
+     "q50": 109.6,
+     "q75": 220.3
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 0.0,
+     "q75": 5.0
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 18.9,
+     "q50": 29.4,
+     "q75": 41.6
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 13.0,
+     "q50": 27.8,
+     "q75": 43.7
+    }
+   }
+  },
+  "Verkehr und Lagerei": {
+   "insgesamt": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 12.9,
+     "q50": 33.8,
+     "q75": 56.2
+    },
+    "liquiditaet_2_pct": {
+     "q25": 47.0,
+     "q50": 91.0,
+     "q75": 222.6
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 0.8,
+     "q50": 4.0,
+     "q75": 8.6
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 2.6,
+     "q50": 5.8,
+     "q75": 10.3
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 100.6,
+     "q50": 177.9,
+     "q75": 375.3
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 4.3,
+     "q75": 23.5
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 12.7,
+     "q50": 27.5,
+     "q75": 46.5
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 3.8,
+     "q50": 15.3,
+     "q75": 38.5
+    }
+   },
+   "unter_2m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 4.5,
+     "q50": 28.6,
+     "q75": 57.8
+    },
+    "liquiditaet_2_pct": {
+     "q25": 45.2,
+     "q50": 104.4,
+     "q75": 273.3
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 0.3,
+     "q50": 3.8,
+     "q75": 11.1
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 2.5,
+     "q50": 5.4,
+     "q75": 10.0
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 95.7,
+     "q50": 164.6,
+     "q75": 416.7
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 18.2,
+     "q75": 43.9
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 5.2,
+     "q50": 16.9,
+     "q75": 37.7
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": -3.1,
+     "q50": 12.2,
+     "q75": 35.7
+    }
+   },
+   "2_bis_10m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 13.6,
+     "q50": 35.8,
+     "q75": 58.7
+    },
+    "liquiditaet_2_pct": {
+     "q25": 46.6,
+     "q50": 94.6,
+     "q75": 265.3
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 0.9,
+     "q50": 4.0,
+     "q75": 8.7
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 3.2,
+     "q50": 6.1,
+     "q75": 10.3
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 102.9,
+     "q50": 196.8,
+     "q75": 399.7
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 7.6,
+     "q75": 28.8
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 11.2,
+     "q50": 28.7,
+     "q75": 51.2
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 2.8,
+     "q50": 15.1,
+     "q75": 40.4
+    }
+   },
+   "10_bis_50m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 13.2,
+     "q50": 33.9,
+     "q75": 57.9
+    },
+    "liquiditaet_2_pct": {
+     "q25": 43.0,
+     "q50": 83.6,
+     "q75": 201.7
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 1.1,
+     "q50": 4.1,
+     "q75": 7.9
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 2.6,
+     "q50": 6.1,
+     "q75": 11.2
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 99.4,
+     "q50": 191.4,
+     "q75": 390.2
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 1.8,
+     "q75": 18.3
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 17.4,
+     "q50": 32.7,
+     "q75": 50.8
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 4.8,
+     "q50": 17.0,
+     "q75": 38.5
+    }
+   },
+   "ab_50m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 16.1,
+     "q50": 33.9,
+     "q75": 51.8
+    },
+    "liquiditaet_2_pct": {
+     "q25": 52.8,
+     "q50": 88.4,
+     "q75": 181.5
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 0.7,
+     "q50": 3.8,
+     "q75": 8.1
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 2.1,
+     "q50": 5.3,
+     "q75": 9.4
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 101.2,
+     "q50": 158.3,
+     "q75": 291.0
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 0.1,
+     "q75": 15.1
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 15.7,
+     "q50": 27.1,
+     "q75": 39.1
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 6.5,
+     "q50": 15.6,
+     "q75": 35.8
+    }
+   }
+  },
+  "Gastgewerbe": {
+   "insgesamt": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 13.2,
+     "q50": 32.9,
+     "q75": 56.7
+    },
+    "liquiditaet_2_pct": {
+     "q25": 50.0,
+     "q50": 99.2,
+     "q75": 228.9
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 0.8,
+     "q50": 4.2,
+     "q75": 9.7
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 3.2,
+     "q50": 6.4,
+     "q75": 10.6
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 107.1,
+     "q50": 190.8,
+     "q75": 404.0
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 3.2,
+     "q75": 21.8
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 13.8,
+     "q50": 28.4,
+     "q75": 46.0
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 3.9,
+     "q50": 17.2,
+     "q75": 44.6
+    }
+   },
+   "unter_2m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 6.9,
+     "q50": 26.8,
+     "q75": 55.9
+    },
+    "liquiditaet_2_pct": {
+     "q25": 57.7,
+     "q50": 116.0,
+     "q75": 280.0
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 0.8,
+     "q50": 5.2,
+     "q75": 12.6
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 2.5,
+     "q50": 5.6,
+     "q75": 10.0
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 96.1,
+     "q50": 191.0,
+     "q75": 512.6
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 8.1,
+     "q75": 32.8
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 4.5,
+     "q50": 17.4,
+     "q75": 37.4
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 0.6,
+     "q50": 20.3,
+     "q75": 56.4
+    }
+   },
+   "2_bis_10m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 10.5,
+     "q50": 30.8,
+     "q75": 57.8
+    },
+    "liquiditaet_2_pct": {
+     "q25": 41.1,
+     "q50": 91.0,
+     "q75": 245.9
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 0.9,
+     "q50": 4.2,
+     "q75": 10.2
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 3.1,
+     "q50": 6.2,
+     "q75": 11.2
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 107.4,
+     "q50": 238.4,
+     "q75": 568.7
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 6.0,
+     "q75": 29.2
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 13.2,
+     "q50": 30.1,
+     "q75": 51.3
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 2.0,
+     "q50": 14.5,
+     "q75": 43.1
+    }
+   },
+   "10_bis_50m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 15.8,
+     "q50": 35.0,
+     "q75": 57.8
+    },
+    "liquiditaet_2_pct": {
+     "q25": 48.9,
+     "q50": 92.8,
+     "q75": 210.0
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 0.9,
+     "q50": 4.2,
+     "q75": 9.1
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 3.8,
+     "q50": 7.0,
+     "q75": 11.2
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 108.9,
+     "q50": 190.7,
+     "q75": 391.6
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 4.0,
+     "q75": 19.7
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 19.6,
+     "q50": 33.7,
+     "q75": 49.2
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 5.2,
+     "q50": 18.4,
+     "q75": 46.8
+    }
+   },
+   "ab_50m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 18.6,
+     "q50": 34.6,
+     "q75": 55.9
+    },
+    "liquiditaet_2_pct": {
+     "q25": 57.5,
+     "q50": 104.3,
+     "q75": 206.4
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 0.5,
+     "q50": 3.7,
+     "q75": 8.6
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 3.2,
+     "q50": 6.4,
+     "q75": 10.3
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 111.0,
+     "q50": 169.3,
+     "q75": 295.0
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 0.0,
+     "q75": 12.4
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 14.9,
+     "q50": 26.2,
+     "q75": 41.5
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 5.3,
+     "q50": 16.8,
+     "q75": 39.1
+    }
+   }
+  },
+  "Information und Kommunikation": {
+   "insgesamt": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 9.4,
+     "q50": 29.7,
+     "q75": 53.3
+    },
+    "liquiditaet_2_pct": {
+     "q25": 49.0,
+     "q50": 109.8,
+     "q75": 249.7
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 1.0,
+     "q50": 4.7,
+     "q75": 11.0
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 2.6,
+     "q50": 6.6,
+     "q75": 12.0
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 90.7,
+     "q50": 163.0,
+     "q75": 422.6
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 6.1,
+     "q75": 29.5
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 0.8,
+     "q50": 13.1,
+     "q75": 41.0
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 3.9,
+     "q50": 16.9,
+     "q75": 46.0
+    }
+   },
+   "unter_2m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 3.0,
+     "q50": 26.5,
+     "q75": 53.3
+    },
+    "liquiditaet_2_pct": {
+     "q25": 46.8,
+     "q50": 122.2,
+     "q75": 300.0
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 0.8,
+     "q50": 7.1,
+     "q75": 18.2
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 1.3,
+     "q50": 5.6,
+     "q75": 12.2
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 71.3,
+     "q50": 153.8,
+     "q75": 420.0
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 14.1,
+     "q75": 41.8
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 3.6,
+     "q75": 24.9
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": -0.6,
+     "q50": 18.5,
+     "q75": 57.9
+    }
+   },
+   "2_bis_10m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 8.8,
+     "q50": 28.8,
+     "q75": 52.9
+    },
+    "liquiditaet_2_pct": {
+     "q25": 46.3,
+     "q50": 107.0,
+     "q75": 236.7
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 1.0,
+     "q50": 4.3,
+     "q75": 9.8
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 3.2,
+     "q50": 6.8,
+     "q75": 11.7
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 95.8,
+     "q50": 180.1,
+     "q75": 556.2
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 8.3,
+     "q75": 30.3
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 1.1,
+     "q50": 19.5,
+     "q75": 49.7
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 5.2,
+     "q50": 19.5,
+     "q75": 50.3
+    }
+   },
+   "10_bis_50m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 13.8,
+     "q50": 32.6,
+     "q75": 55.1
+    },
+    "liquiditaet_2_pct": {
+     "q25": 49.0,
+     "q50": 106.9,
+     "q75": 218.2
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 1.2,
+     "q50": 4.0,
+     "q75": 8.1
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 3.5,
+     "q50": 7.3,
+     "q75": 12.1
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 99.5,
+     "q50": 172.1,
+     "q75": 423.0
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 2.0,
+     "q75": 21.6
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 3.1,
+     "q50": 22.7,
+     "q75": 48.0
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 5.1,
+     "q50": 15.9,
+     "q75": 37.3
+    }
+   },
+   "ab_50m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 16.6,
+     "q50": 33.1,
+     "q75": 51.2
+    },
+    "liquiditaet_2_pct": {
+     "q25": 55.0,
+     "q50": 104.8,
+     "q75": 203.9
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 0.7,
+     "q50": 3.6,
+     "q75": 8.0
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 3.4,
+     "q50": 6.7,
+     "q75": 12.1
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 96.0,
+     "q50": 144.0,
+     "q75": 270.1
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 0.1,
+     "q75": 15.6
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 3.4,
+     "q50": 16.9,
+     "q75": 40.0
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 4.5,
+     "q50": 14.2,
+     "q75": 31.7
+    }
+   }
+  },
+  "Freiberufliche und technische Dienstleistungen": {
+   "insgesamt": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 14.5,
+     "q50": 36.2,
+     "q75": 60.4
+    },
+    "liquiditaet_2_pct": {
+     "q25": 51.6,
+     "q50": 117.4,
+     "q75": 266.7
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 0.7,
+     "q50": 4.0,
+     "q75": 9.6
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 2.8,
+     "q50": 6.5,
+     "q75": 11.5
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 97.6,
+     "q50": 163.9,
+     "q75": 377.8
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 7.3,
+     "q75": 26.7
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 0.8,
+     "q50": 13.2,
+     "q75": 38.3
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 2.8,
+     "q50": 17.3,
+     "q75": 47.2
+    }
+   },
+   "unter_2m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 8.3,
+     "q50": 31.9,
+     "q75": 59.3
+    },
+    "liquiditaet_2_pct": {
+     "q25": 57.7,
+     "q50": 138.3,
+     "q75": 357.1
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 0.3,
+     "q50": 4.6,
+     "q75": 12.6
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 2.5,
+     "q50": 6.9,
+     "q75": 12.6
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 90.3,
+     "q50": 179.7,
+     "q75": 491.7
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 7.8,
+     "q75": 33.6
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 4.2,
+     "q75": 24.5
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": -5.9,
+     "q50": 14.2,
+     "q75": 47.7
+    }
+   },
+   "2_bis_10m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 16.1,
+     "q50": 35.9,
+     "q75": 58.3
+    },
+    "liquiditaet_2_pct": {
+     "q25": 51.7,
+     "q50": 115.2,
+     "q75": 251.9
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 0.9,
+     "q50": 4.0,
+     "q75": 9.4
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 3.1,
+     "q50": 6.7,
+     "q75": 11.4
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 102.9,
+     "q50": 177.1,
+     "q75": 453.2
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 8.9,
+     "q75": 28.2
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 1.5,
+     "q50": 14.1,
+     "q75": 41.2
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 3.4,
+     "q50": 17.9,
+     "q75": 44.8
+    }
+   },
+   "10_bis_50m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 18.8,
+     "q50": 42.3,
+     "q75": 64.0
+    },
+    "liquiditaet_2_pct": {
+     "q25": 47.1,
+     "q50": 108.8,
+     "q75": 235.5
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 0.9,
+     "q50": 4.1,
+     "q75": 8.1
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 2.9,
+     "q50": 6.2,
+     "q75": 10.5
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 102.1,
+     "q50": 153.2,
+     "q75": 297.2
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 6.4,
+     "q75": 22.4
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 2.9,
+     "q50": 23.3,
+     "q75": 43.8
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 6.0,
+     "q50": 20.5,
+     "q75": 51.5
+    }
+   },
+   "ab_50m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 17.8,
+     "q50": 38.6,
+     "q75": 60.1
+    },
+    "liquiditaet_2_pct": {
+     "q25": 47.0,
+     "q50": 102.0,
+     "q75": 180.2
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 0.4,
+     "q50": 3.1,
+     "q75": 6.4
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 2.1,
+     "q50": 5.6,
+     "q75": 10.8
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 92.1,
+     "q50": 130.9,
+     "q75": 215.9
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 1.0,
+     "q75": 14.3
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 3.3,
+     "q50": 20.0,
+     "q75": 41.5
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 6.3,
+     "q50": 18.7,
+     "q75": 41.5
+    }
+   }
+  },
+  "Sonstige Dienstleistungen": {
+   "insgesamt": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 13.6,
+     "q50": 36.2,
+     "q75": 60.0
+    },
+    "liquiditaet_2_pct": {
+     "q25": 51.2,
+     "q50": 119.6,
+     "q75": 271.2
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 0.8,
+     "q50": 4.4,
+     "q75": 10.7
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 2.7,
+     "q50": 6.6,
+     "q75": 11.7
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 92.1,
+     "q50": 141.2,
+     "q75": 306.2
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 7.6,
+     "q75": 30.3
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 0.3,
+     "q50": 8.8,
+     "q75": 33.0
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 3.2,
+     "q50": 17.4,
+     "q75": 46.5
+    }
+   },
+   "unter_2m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 5.5,
+     "q50": 31.6,
+     "q75": 61.5
+    },
+    "liquiditaet_2_pct": {
+     "q25": 46.8,
+     "q50": 129.6,
+     "q75": 385.6
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 0.6,
+     "q50": 4.9,
+     "q75": 13.3
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 1.7,
+     "q50": 6.2,
+     "q75": 13.0
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 77.2,
+     "q50": 135.9,
+     "q75": 350.0
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 13.5,
+     "q75": 42.3
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 2.4,
+     "q75": 18.3
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": -3.5,
+     "q50": 16.5,
+     "q75": 46.9
+    }
+   },
+   "2_bis_10m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 15.5,
+     "q50": 35.8,
+     "q75": 59.1
+    },
+    "liquiditaet_2_pct": {
+     "q25": 49.0,
+     "q50": 121.5,
+     "q75": 273.5
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 1.1,
+     "q50": 4.8,
+     "q75": 11.5
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 3.2,
+     "q50": 7.2,
+     "q75": 12.2
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 99.4,
+     "q50": 168.0,
+     "q75": 391.2
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 8.7,
+     "q75": 30.7
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 0.5,
+     "q50": 10.7,
+     "q75": 38.4
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 3.9,
+     "q50": 17.1,
+     "q75": 52.6
+    }
+   },
+   "10_bis_50m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 21.4,
+     "q50": 39.9,
+     "q75": 61.0
+    },
+    "liquiditaet_2_pct": {
+     "q25": 53.9,
+     "q50": 108.5,
+     "q75": 209.4
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 0.8,
+     "q50": 3.3,
+     "q75": 8.2
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 3.1,
+     "q50": 6.3,
+     "q75": 10.6
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 98.1,
+     "q50": 134.4,
+     "q75": 228.5
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 6.7,
+     "q75": 26.7
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 1.8,
+     "q50": 16.0,
+     "q75": 40.3
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 5.9,
+     "q50": 17.7,
+     "q75": 42.7
+    }
+   },
+   "ab_50m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 16.8,
+     "q50": 36.2,
+     "q75": 56.6
+    },
+    "liquiditaet_2_pct": {
+     "q25": 56.3,
+     "q50": 117.5,
+     "q75": 201.0
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": 0.2,
+     "q50": 2.4,
+     "q75": 7.9
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 2.8,
+     "q50": 6.4,
+     "q75": 11.3
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 94.6,
+     "q50": 129.0,
+     "q75": 213.9
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 0.1,
+     "q75": 14.8
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 3.1,
+     "q50": 16.3,
+     "q75": 33.5
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": 4.2,
+     "q50": 17.2,
+     "q75": 38.6
+    }
+   }
+  },
+  "Gesundheitswesen": {
+   "insgesamt": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 15.1,
+     "q50": 45.4,
+     "q75": 65.1
+    },
+    "liquiditaet_2_pct": {
+     "q25": 109.0,
+     "q50": 188.5,
+     "q75": 377.7
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": -3.9,
+     "q50": 1.1,
+     "q75": 7.3
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 7.7,
+     "q50": 13.0,
+     "q75": 19.0
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 91.5,
+     "q50": 126.8,
+     "q75": 225.3
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 1.5,
+     "q75": 19.8
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 1.0,
+     "q75": 3.2
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": -8.9,
+     "q50": 10.5,
+     "q75": 34.3
+    }
+   },
+   "unter_2m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": -5.8,
+     "q50": 23.6,
+     "q75": 61.1
+    },
+    "liquiditaet_2_pct": {
+     "q25": 79.0,
+     "q50": 168.9,
+     "q75": 555.1
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": -6.8,
+     "q50": 1.7,
+     "q75": 10.8
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 4.1,
+     "q50": 9.2,
+     "q75": 14.8
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 68.8,
+     "q50": 160.5,
+     "q75": 461.8
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 0.7,
+     "q75": 36.8
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 0.0,
+     "q75": 1.4
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": -20.4,
+     "q50": 7.7,
+     "q75": 40.2
+    }
+   },
+   "2_bis_10m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 6.8,
+     "q50": 35.0,
+     "q75": 62.3
+    },
+    "liquiditaet_2_pct": {
+     "q25": 94.7,
+     "q50": 211.4,
+     "q75": 475.7
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": -3.6,
+     "q50": 2.8,
+     "q75": 12.1
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 6.4,
+     "q50": 11.9,
+     "q75": 17.4
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 82.2,
+     "q50": 154.2,
+     "q75": 361.2
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 0.5,
+     "q75": 25.7
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 0.2,
+     "q75": 1.9
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": -12.0,
+     "q50": 10.0,
+     "q75": 43.6
+    }
+   },
+   "10_bis_50m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 25.8,
+     "q50": 51.3,
+     "q75": 68.7
+    },
+    "liquiditaet_2_pct": {
+     "q25": 114.5,
+     "q50": 207.6,
+     "q75": 375.6
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": -2.6,
+     "q50": 1.9,
+     "q75": 7.8
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 8.1,
+     "q50": 13.1,
+     "q75": 19.6
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 97.2,
+     "q50": 128.3,
+     "q75": 197.0
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 0.0,
+     "q75": 15.6
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 0.3,
+     "q50": 1.2,
+     "q75": 3.2
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": -6.1,
+     "q50": 14.2,
+     "q75": 40.1
+    }
+   },
+   "ab_50m": {
+    "eigenmittel_pct_bilanzsumme": {
+     "q25": 37.9,
+     "q50": 52.3,
+     "q75": 65.1
+    },
+    "liquiditaet_2_pct": {
+     "q25": 126.4,
+     "q50": 177.6,
+     "q75": 259.6
+    },
+    "ergebnis_vor_steuern_pct_umsatz": {
+     "q25": -3.7,
+     "q50": 0.0,
+     "q75": 1.7
+    },
+    "forderungen_ll_pct_umsatz": {
+     "q25": 12.1,
+     "q50": 16.6,
+     "q75": 22.7
+    },
+    "langfr_kapital_pct_anlagevermoegen": {
+     "q25": 101.1,
+     "q50": 116.9,
+     "q75": 138.3
+    },
+    "bankschulden_pct_bilanzsumme": {
+     "q25": 0.0,
+     "q50": 4.6,
+     "q75": 14.4
+    },
+    "vorraete_pct_bilanzsumme": {
+     "q25": 1.5,
+     "q50": 2.6,
+     "q75": 4.1
+    },
+    "cashflow_pct_nettofremdmittel": {
+     "q25": -0.3,
+     "q50": 9.8,
+     "q75": 21.3
+    }
+   }
+  }
+ }
+}

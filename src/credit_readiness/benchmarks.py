@@ -1,79 +1,166 @@
-"""Sector benchmarks.
+"""Sector benchmarks, from the Bundesbank Jahresabschlussstatistik.
 
 Purpose: distinguish "this company is weak" from "this company is normal for a
 genuinely difficult sector". That distinction changes the advice completely --
-a 6% equity ratio in Gastgewerbe is a different conversation from a 6% equity
-ratio in IT services.
+a 12% equity ratio in Einzelhandel sits near the sector median, the same ratio
+in Unternehmensdienstleistungen sits in the bottom quartile.
 
-DATA STATUS -- IMPORTANT
-========================
-The figures below are PLACEHOLDER order-of-magnitude values, entered to make the
-comparison logic testable. They are NOT the Bundesbank series and must not be
-quoted to a client in this state.
+DATA
+====
+Deutsche Bundesbank, Statistische Fachreihe "Jahresabschlussstatistik
+(Verhaeltniszahlen)". The dataset shipped with the package is built by
+`scripts/import_bundesbank_ratios.py` from the published PDFs; the per-edition
+extracts stay in data/reference/bundesbank/ as provenance.
 
-Before first client use, replace with the real dataset:
-    Deutsche Bundesbank, "Verhaeltniszahlen aus Jahresabschluessen deutscher
-    Unternehmen" (published annually, free, broken down by Wirtschaftszweig and
-    size class).
+We use the **Quartilswerte**, not the weighted averages. The averages weight
+each firm by its share of the reference base, so they describe the largest
+company in the group, not a Mittelstaendler. The quartiles are the firm-level
+distribution.
 
-Replacement is a data task, not a code task: keep the shape, swap the numbers,
-and record the vintage in `VINTAGE` so every report can state which year's
-benchmark it compared against.
+Two caveats that belong in any client-facing use, and are carried in VINTAGE
+and CAVEAT below:
+
+  * Coverage of our target size class is thin. The Bundesbank's own comparison
+    against the Unternehmensregister puts the 2-10M EUR revenue class at ~14%
+    and the 10-50M class at ~42% of turnover. Smaller firms are
+    under-represented, and the ones that are present reached the pool through
+    banks and credit insurers -- a population already in credit relationships.
+  * Quartiles are not additive. The median equity ratio and the median debt
+    ratio do not add up to a balance sheet; each distribution stands alone.
 """
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
+from functools import lru_cache
+from pathlib import Path
 from typing import Optional
 
 from .models import Sector
 
-VINTAGE = "PLACEHOLDER - nicht fuer Kundenberichte verwenden"
+_DATA_FILE = Path(__file__).with_name("reference") / "bundesbank_quartiles.json"
+
+# Revenue thresholds of the Bundesbank size classes, in EUR.
+_SIZE_CLASSES = [
+    (2_000_000, "unter_2m"),
+    (10_000_000, "2_bis_10m"),
+    (50_000_000, "10_bis_50m"),
+    (float("inf"), "ab_50m"),
+]
+_DEFAULT_SIZE = "2_bis_10m"
+
+#: Interest expense net of interest income, as a share of revenue, for the
+#: 2-10M and 10-50M size classes (weighted-average table of the same
+#: publication). Used to step from the published pre-tax margin to an EBIT
+#: margin, because the quartile tables publish only the former.
+EBT_TO_EBIT_ADJUSTMENT = 0.005
 
 
-@dataclass(frozen=True)
-class SectorBenchmark:
-    sector: Sector
-    eigenkapitalquote_median: float
-    ebit_marge_median: float
-    dynamischer_verschuldungsgrad_median: float
-    debitorenlaufzeit_median: float
+@lru_cache(maxsize=1)
+def _dataset() -> dict:
+    if not _DATA_FILE.exists():          # pragma: no cover - build artefact missing
+        raise FileNotFoundError(
+            f"{_DATA_FILE} fehlt. Erzeugen mit: "
+            "python scripts/import_bundesbank_ratios.py <pdf-ordner>"
+        )
+    return json.loads(_DATA_FILE.read_text(encoding="utf-8"))
 
 
-_BENCHMARKS: dict[Sector, SectorBenchmark] = {
-    Sector.MANUFACTURING: SectorBenchmark(Sector.MANUFACTURING, 0.32, 0.055, 2.6, 45),
-    Sector.CONSTRUCTION: SectorBenchmark(Sector.CONSTRUCTION, 0.22, 0.045, 2.3, 55),
-    Sector.WHOLESALE: SectorBenchmark(Sector.WHOLESALE, 0.26, 0.030, 2.8, 42),
-    Sector.RETAIL: SectorBenchmark(Sector.RETAIL, 0.20, 0.025, 3.0, 12),
-    Sector.TRANSPORT: SectorBenchmark(Sector.TRANSPORT, 0.21, 0.040, 3.4, 40),
-    Sector.HOSPITALITY: SectorBenchmark(Sector.HOSPITALITY, 0.12, 0.035, 4.2, 6),
-    Sector.IT_SERVICES: SectorBenchmark(Sector.IT_SERVICES, 0.38, 0.080, 1.8, 48),
-    Sector.PROFESSIONAL_SERVICES: SectorBenchmark(
-        Sector.PROFESSIONAL_SERVICES, 0.35, 0.070, 1.9, 50
-    ),
-    Sector.HEALTHCARE: SectorBenchmark(Sector.HEALTHCARE, 0.28, 0.060, 2.5, 30),
-    Sector.OTHER_SERVICES: SectorBenchmark(Sector.OTHER_SERVICES, 0.25, 0.045, 2.7, 38),
-}
+def vintage() -> str:
+    d = _dataset()
+    return (f"Deutsche Bundesbank, Jahresabschlussstatistik (Verhaeltniszahlen), "
+            f"Ausgabe {d['edition']}, Berichtsjahr {d['reporting_year']}, Quartilswerte")
 
 
-def get(sector: Sector) -> SectorBenchmark:
-    return _BENCHMARKS[sector]
+#: Kept as a module constant because the report prints it on every page.
+VINTAGE = vintage()
+CAVEAT = _dataset()["caveat"]
+REPORTING_YEAR = _dataset()["reporting_year"]
+
+
+def size_class(revenue: Optional[float]) -> str:
+    """Bundesbank size class for a revenue figure."""
+    if not revenue or revenue <= 0:
+        return _DEFAULT_SIZE
+    return next(key for limit, key in _SIZE_CLASSES if revenue < limit)
+
+
+_SECTOR_KEYS = {s: s.value for s in Sector}
+
+
+def quartiles(
+    metric: str, sector: Optional[Sector] = None, revenue: Optional[float] = None
+) -> Optional[dict]:
+    """{'q25','q50','q75'} for a metric, or None when the cell is not published.
+
+    Falls back from the sector to all sectors, and from the size class to the
+    sector total, so a thin cell degrades rather than disappears.
+    """
+    data = _dataset()["sectors"]
+    size = size_class(revenue)
+    for sector_key in ([_SECTOR_KEYS[sector]] if sector else []) + ["__alle__"]:
+        block = data.get(sector_key)
+        if not block:
+            continue
+        for size_key in (size, "insgesamt"):
+            cell = block.get(size_key, {}).get(metric)
+            if cell:
+                return cell
+    return None
+
+
+def percentile(value: float, cell: dict, higher_is_better: bool = True) -> float:
+    """Where a value sits in the published distribution, 0-100.
+
+    Linear between the three published quartiles; beyond them the tails are
+    extended at the slope of the nearest segment and clamped. This is an
+    estimate from three points, not a distribution -- it is used to phrase a
+    sentence, never to compute a score.
+    """
+    q25, q50, q75 = cell["q25"], cell["q50"], cell["q75"]
+    points = [(q25, 25.0), (q50, 50.0), (q75, 75.0)]
+    if value <= q25:
+        span = max(q50 - q25, 1e-9)
+        pct = 25.0 - (q25 - value) / span * 25.0
+    elif value >= q75:
+        span = max(q75 - q50, 1e-9)
+        pct = 75.0 + (value - q75) / span * 25.0
+    else:
+        for (x0, y0), (x1, y1) in zip(points, points[1:]):
+            if x0 <= value <= x1:
+                frac = (value - x0) / max(x1 - x0, 1e-9)
+                pct = y0 + frac * (y1 - y0)
+                break
+    pct = max(0.0, min(100.0, pct))
+    return round(pct if higher_is_better else 100.0 - pct, 1)
 
 
 @dataclass
 class BenchmarkComparison:
     metric: str
     company_value: Optional[float]
-    sector_median: float
+    sector_median: Optional[float]
     verdict: str          # "ueber Branchenmedian" | "im Rahmen" | "unter Branchenmedian"
     relative_gap: Optional[float]
+    percentile: Optional[float] = None
+    quartiles: Optional[tuple[float, float, float]] = None
 
 
 def _compare(
-    metric: str, value: Optional[float], median: float, higher_is_better: bool
+    metric: str,
+    value: Optional[float],
+    cell: Optional[dict],
+    higher_is_better: bool,
+    scale: float = 1.0,
 ) -> BenchmarkComparison:
+    """`scale` converts the published unit into ours (e.g. percent -> decimal)."""
+    if cell is None:
+        return BenchmarkComparison(metric, value, None, "keine Branchendaten", None)
+    median = cell["q50"] * scale
     if value is None or median == 0:
         return BenchmarkComparison(metric, value, median, "nicht vergleichbar", None)
+
     gap = (value - median) / abs(median)
     if not higher_is_better:
         gap = -gap
@@ -83,25 +170,38 @@ def _compare(
         verdict = "unter Branchenmedian"
     else:
         verdict = "im Rahmen"
-    return BenchmarkComparison(metric, value, median, verdict, round(gap, 3))
+
+    return BenchmarkComparison(
+        metric=metric,
+        company_value=value,
+        sector_median=median,
+        verdict=verdict,
+        relative_gap=round(gap, 3),
+        percentile=percentile(value / scale, cell, higher_is_better),
+        quartiles=(cell["q25"] * scale, cell["q50"] * scale, cell["q75"] * scale),
+    )
 
 
 def compare_all(sector: Sector, ratios) -> list[BenchmarkComparison]:
     """Compare a RatioSet against its sector. Typed loosely to avoid a cycle."""
-    b = get(sector)
+    revenue = getattr(ratios, "umsatz", None)
+
+    def cell(metric):
+        return quartiles(metric, sector, revenue)
+
+    margin_cell = cell("ergebnis_vor_steuern_pct_umsatz")
+    if margin_cell:
+        # Published figure is pre-tax margin; step it up to an EBIT basis.
+        margin_cell = {k: v + EBT_TO_EBIT_ADJUSTMENT * 100 for k, v in margin_cell.items()}
+
     return [
-        _compare("Eigenkapitalquote", ratios.eigenkapitalquote, b.eigenkapitalquote_median, True),
-        _compare("EBIT-Marge", ratios.ebit_marge, b.ebit_marge_median, True),
-        _compare(
-            "Dynamischer Verschuldungsgrad",
-            ratios.dynamischer_verschuldungsgrad,
-            b.dynamischer_verschuldungsgrad_median,
-            False,
-        ),
-        _compare(
-            "Debitorenlaufzeit",
-            ratios.debitorenlaufzeit_tage,
-            b.debitorenlaufzeit_median,
-            False,
-        ),
+        _compare("Eigenkapitalquote", ratios.eigenkapitalquote,
+                 cell("eigenmittel_pct_bilanzsumme"), True, 0.01),
+        _compare("EBIT-Marge", ratios.ebit_marge, margin_cell, True, 0.01),
+        _compare("Liquiditaet 2. Grades", ratios.liquiditaet_2_grades,
+                 cell("liquiditaet_2_pct"), True, 0.01),
+        _compare("Anlagendeckungsgrad II", ratios.anlagendeckungsgrad_ii,
+                 cell("langfr_kapital_pct_anlagevermoegen"), True, 0.01),
+        _compare("Debitorenlaufzeit", ratios.debitorenlaufzeit_tage,
+                 cell("forderungen_ll_pct_umsatz"), False, 3.65),
     ]

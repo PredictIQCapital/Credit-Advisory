@@ -22,7 +22,7 @@ credit-readiness = "credit_readiness.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-credit_readiness = ["webapp/static/*"]
+credit_readiness = ["webapp/static/*", "reference/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

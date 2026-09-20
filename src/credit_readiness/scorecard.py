@@ -15,9 +15,42 @@ Three rules follow from it, and they are enforced in code, not just in prose:
      thresholds only, so any output can be defended to a client or their
      Steuerberater line by line.
 
-Thresholds are calibrated from conventional German Mittelstand credit analysis
-practice. They are deliberately conservative and MUST be re-validated against
-real placement outcomes -- see the outcome-tracking log in data/reference/.
+CALIBRATION
+===========
+Two kinds of factor live in this file, and the difference matters when someone
+asks where a number comes from.
+
+**Calibrated against published data** -- eigenkapitalquote, ebit_marge,
+liquiditaet_2_grades. Their breakpoints are anchored to the firm-level quartiles
+of the Deutsche Bundesbank Jahresabschlussstatistik (Verhaeltniszahlen), all
+sectors, the 2-10M and 10-50M EUR revenue classes averaged, latest reporting
+year. See benchmarks.py for the dataset and its caveats.
+
+The anchor points are 25th percentile -> 58, median -> 70, 75th percentile -> 82,
+and the reasoning is one step long: the ECB SAFE survey puts roughly 14% of
+applicants in significant difficulty, so a company at the median of its size
+class should land in band B ("financeable, terms improvable"), the lower
+quartile in band C ("borderline"), and the upper quartile at the band A line.
+Percentile anchoring alone would put the median firm at 50 points, which would
+wrongly imply that half of German SMEs are borderline cases.
+
+Tails beyond the published quartiles stay conventional: the distribution gives
+three points, not a distribution, so the ends are drawn to economically
+meaningful limits (zero equity, negative margin) rather than extrapolated.
+
+**Convention, not calibration** -- everything else. The publication carries no
+comparable series for debt service capacity, overdraft utilisation, reporting
+cadence, credit-agency index or payment behaviour, and its leverage measure
+(cash flow in % of total liabilities less cash) is not our net financial debt
+over EBITDA: different numerator, much wider denominator. Translating one into
+the other would be a guess dressed as a calibration, so those curves are
+unchanged and remain the first candidates for revision once the outcome log
+holds real placements.
+
+Re-run `python scripts/import_bundesbank_ratios.py <pdf-folder>` after each new
+Bundesbank edition, then check tests/test_scorecard.py::test_bundesbank_anchors,
+which re-derives the anchors from the shipped dataset and fails if the
+breakpoints and the data have drifted apart.
 """
 
 from __future__ import annotations
@@ -108,10 +141,12 @@ FACTORS: tuple[FactorDefinition, ...] = (
         weight=0.20,
         unit="percent",
         breakpoints=(
-            (-0.20, 0.0), (0.0, 10.0), (0.05, 25.0), (0.10, 45.0),
-            (0.15, 58.0), (0.20, 70.0), (0.30, 88.0), (0.40, 100.0),
+            (-0.20, 0.0), (0.0, 25.0), (0.05, 38.0),
+            (0.148, 58.0), (0.351, 70.0), (0.569, 82.0),
+            (0.80, 95.0), (1.00, 100.0),
         ),
-        note="Wirtschaftliches EK inkl. nachrangiger Gesellschafterdarlehen.",
+        note="Wirtschaftliches EK inkl. nachrangiger Gesellschafterdarlehen. "
+             "Stuetzstellen 14,8/35,1/56,9% = Quartile der Bundesbank-Statistik.",
     ),
     FactorDefinition(
         key="kapitaldienstfaehigkeit_inkl_neu",
@@ -140,9 +175,12 @@ FACTORS: tuple[FactorDefinition, ...] = (
         weight=0.12,
         unit="percent",
         breakpoints=(
-            (-0.10, 0.0), (-0.02, 12.0), (0.0, 25.0), (0.02, 40.0),
-            (0.04, 55.0), (0.06, 68.0), (0.10, 85.0), (0.15, 100.0),
+            (-0.10, 0.0), (-0.05, 12.0), (-0.02, 28.0), (0.0, 45.0),
+            (0.0135, 58.0), (0.0475, 70.0), (0.0995, 82.0),
+            (0.18, 95.0), (0.25, 100.0),
         ),
+        note="Stuetzstellen 1,35/4,75/9,95% = Bundesbank-Quartile des "
+             "Ergebnisses vor Steuern, um 0,5 Punkte auf EBIT-Basis angehoben.",
     ),
     FactorDefinition(
         key="liquiditaet_2_grades",
@@ -150,9 +188,11 @@ FACTORS: tuple[FactorDefinition, ...] = (
         weight=0.08,
         unit="percent",
         breakpoints=(
-            (0.2, 0.0), (0.5, 25.0), (0.7, 45.0), (0.9, 62.0),
-            (1.0, 72.0), (1.2, 88.0), (1.5, 100.0),
+            (0.0, 0.0), (0.20, 25.0), (0.30, 40.0),
+            (0.458, 58.0), (0.917, 70.0), (2.163, 82.0),
+            (4.00, 95.0), (6.00, 100.0),
         ),
+        note="Stuetzstellen 45,8/91,7/216,3% = Quartile der Bundesbank-Statistik.",
     ),
     FactorDefinition(
         key="zinsdeckungsgrad",

@@ -1,0 +1,152 @@
+{
+ "source": "Deutsche Bundesbank, Jahresabschlussstatistik (Verhaeltniszahlen), Quartilswerte",
+ "editions": [
+  {
+   "edition": "2026",
+   "file": "verhaeltniszahlen_2026.json",
+   "years": [
+    2022,
+    2023
+   ],
+   "sectors": [
+    "Baugewerbe",
+    "Einzelhandel",
+    "Freiberufliche und technische Dienstleistungen",
+    "Gastgewerbe",
+    "Gesundheitswesen",
+    "Grosshandel",
+    "Information und Kommunikation",
+    "Sonstige Dienstleistungen",
+    "Verarbeitendes Gewerbe",
+    "Verkehr und Lagerei",
+    "__alle__"
+   ]
+  },
+  {
+   "edition": "2020",
+   "file": "verhaeltniszahlen_2020.json",
+   "years": [
+    2016,
+    2017
+   ],
+   "sectors": [
+    "Baugewerbe",
+    "Einzelhandel",
+    "Freiberufliche und technische Dienstleistungen",
+    "Gastgewerbe",
+    "Gesundheitswesen",
+    "Grosshandel",
+    "Information und Kommunikation",
+    "Sonstige Dienstleistungen",
+    "Verarbeitendes Gewerbe",
+    "Verkehr und Lagerei",
+    "__alle__"
+   ]
+  },
+  {
+   "edition": "2021",
+   "file": "verhaeltniszahlen_2021.json",
+   "years": [
+    2017,
+    2018
+   ],
+   "sectors": [
+    "Baugewerbe",
+    "Einzelhandel",
+    "Freiberufliche und technische Dienstleistungen",
+    "Gastgewerbe",
+    "Gesundheitswesen",
+    "Grosshandel",
+    "Information und Kommunikation",
+    "Sonstige Dienstleistungen",
+    "Verarbeitendes Gewerbe",
+    "Verkehr und Lagerei",
+    "__alle__"
+   ]
+  },
+  {
+   "edition": "2022",
+   "file": "verhaeltniszahlen_2022.json",
+   "years": [
+    2018,
+    2019
+   ],
+   "sectors": [
+    "Baugewerbe",
+    "Einzelhandel",
+    "Freiberufliche und technische Dienstleistungen",
+    "Gastgewerbe",
+    "Gesundheitswesen",
+    "Grosshandel",
+    "Information und Kommunikation",
+    "Sonstige Dienstleistungen",
+    "Verarbeitendes Gewerbe",
+    "Verkehr und Lagerei",
+    "__alle__"
+   ]
+  },
+  {
+   "edition": "2023",
+   "file": "verhaeltniszahlen_2023.json",
+   "years": [
+    2019,
+    2020
+   ],
+   "sectors": [
+    "Baugewerbe",
+    "Einzelhandel",
+    "Freiberufliche und technische Dienstleistungen",
+    "Gastgewerbe",
+    "Gesundheitswesen",
+    "Grosshandel",
+    "Information und Kommunikation",
+    "Sonstige Dienstleistungen",
+    "Verarbeitendes Gewerbe",
+    "Verkehr und Lagerei",
+    "__alle__"
+   ]
+  },
+  {
+   "edition": "2024",
+   "file": "verhaeltniszahlen_2024.json",
+   "years": [
+    2020,
+    2021
+   ],
+   "sectors": [
+    "Baugewerbe",
+    "Einzelhandel",
+    "Freiberufliche und technische Dienstleistungen",
+    "Gastgewerbe",
+    "Gesundheitswesen",
+    "Grosshandel",
+    "Information und Kommunikation",
+    "Sonstige Dienstleistungen",
+    "Verarbeitendes Gewerbe",
+    "Verkehr und Lagerei",
+    "__alle__"
+   ]
+  },
+  {
+   "edition": "2025",
+   "file": "verhaeltniszahlen_2025.json",
+   "years": [
+    2021,
+    2022
+   ],
+   "sectors": [
+    "Baugewerbe",
+    "Einzelhandel",
+    "Freiberufliche und technische Dienstleistungen",
+    "Gastgewerbe",
+    "Gesundheitswesen",
+    "Grosshandel",
+    "Information und Kommunikation",
+    "Sonstige Dienstleistungen",
+    "Verarbeitendes Gewerbe",
+    "Verkehr und Lagerei",
+    "__alle__"
+   ]
+  }
+ ]
+}

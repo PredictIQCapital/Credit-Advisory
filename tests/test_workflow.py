@@ -157,8 +157,8 @@ def test_upload_path_reproduces_the_hand_built_reference_case(store, full_case):
     res = wf.run_case_diagnostic(store, full_case, today=TODAY)
     assert res["ok"], res
     s = res["summary"]
-    assert (s["band"], s["score"]) == ("C", 64.5)
-    assert (s["band_after_remediation"], s["score_after_remediation"]) == ("A", 83.4)
+    assert (s["band"], s["score"]) == ("B", 66.4)
+    assert (s["band_after_remediation"], s["score_after_remediation"]) == ("A", 80.3)
     assert {"R01", "R04", "R05"} <= {f["rule"] for f in s["findings"]}
 
 
@@ -262,7 +262,7 @@ def test_outcome_requires_a_diagnostic_and_is_logged(store, full_case):
         wf.record_outcome(store, full_case, {"outcome": "VIELLEICHT"})
     row = wf.record_outcome(store, full_case, {"outcome": "APPROVED_BETTER_TERMS",
                                                "facility_amount_eur": "750000"})
-    assert row["band_before"] == "C" and row["findings"].startswith("R01")
+    assert row["band_before"] == "B" and row["findings"].startswith("R01")
     log = store.read_outcomes()
     assert len(log) == 1 and log[0]["outcome"] == "APPROVED_BETTER_TERMS"
     assert store.get_meta(full_case)["stage"] == "abgeschlossen"
