@@ -86,7 +86,21 @@ def validate(case: ClientCase) -> list[ValidationIssue]:
     # means the BWA and the balance sheet are from different periods or
     # different runs -- an analyst checks this within the first minute, and so
     # must we, because every equity-based ratio depends on it.
-    if g.period_months == 12:
+    if g.period_months == 12 and b.jahresueberschuss == 0 and g.jahresueberschuss != 0:
+        # An abridged balance sheet carries one aggregated equity line and no
+        # separate result, so there is nothing to reconcile against. Say so
+        # rather than blocking -- but say it, because the other possible cause
+        # is that the reader missed the line.
+        issues.append(
+            ValidationIssue(
+                Severity.WARNING,
+                "KEIN_BILANZERGEBNIS",
+                "Die Bilanz weist kein separates Jahresergebnis aus (aggregiertes "
+                "Eigenkapital). Der Abgleich mit der GuV entfaellt -- bitte pruefen, "
+                "ob das Eigenkapital vollstaendig erfasst ist.",
+            )
+        )
+    elif g.period_months == 12:
         gu_result = g.jahresueberschuss
         bs_result = b.jahresueberschuss
         gap = abs(gu_result - bs_result)

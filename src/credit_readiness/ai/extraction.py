@@ -39,16 +39,16 @@ class FieldSpec:
 FIELDS: tuple[FieldSpec, ...] = (
     # ---------------------------------------------------------------- Aktiva
     FieldSpec("immaterielle_vermoegensgegenstaende", "aktiva", "Immaterielle Vermögensgegenstände", "Intangible assets", (r"immaterielle vermoegensgegenstaende",)),
-    FieldSpec("sachanlagen", "aktiva", "Sachanlagen", "Property, plant and equipment", (r"^sachanlagen",)),
+    FieldSpec("sachanlagen", "aktiva", "Sachanlagen", "Property, plant and equipment", (r"^sachanlagen", r"^anlagevermoegen$")),
     FieldSpec("finanzanlagen", "aktiva", "Finanzanlagen", "Financial assets", (r"^finanzanlagen",)),
     FieldSpec("vorraete", "aktiva", "Vorräte", "Inventories", (r"^vorraete",)),
-    FieldSpec("forderungen_ll", "aktiva", "Forderungen aus Lieferungen und Leistungen", "Trade receivables", (r"forderungen aus lieferungen und leistungen",)),
+    FieldSpec("forderungen_ll", "aktiva", "Forderungen aus Lieferungen und Leistungen", "Trade receivables", (r"forderungen aus lieferungen und leistungen", r"forderungen aus l\s*[&+u]\s*l", r"^forderungen( und sonstige)?")),
     FieldSpec("sonstige_vermoegensgegenstaende", "aktiva", "Sonstige Vermögensgegenstände", "Other assets", (r"sonstige vermoegensgegenstaende",)),
     FieldSpec("wertpapiere", "aktiva", "Wertpapiere", "Securities", (r"^wertpapiere",)),
     FieldSpec("liquide_mittel", "aktiva", "Kassenbestand, Guthaben bei Kreditinstituten", "Cash and bank balances", (r"kassenbestand", r"guthaben bei kreditinstituten", r"liquide mittel")),
     FieldSpec("aktive_rap", "aktiva", "Aktive Rechnungsabgrenzung", "Prepaid expenses", (r"rechnungsabgrenzungsposten",)),
     # --------------------------------------------------------------- Passiva
-    FieldSpec("gezeichnetes_kapital", "passiva", "Gezeichnetes Kapital", "Subscribed capital", (r"gezeichnetes kapital",)),
+    FieldSpec("gezeichnetes_kapital", "passiva", "Gezeichnetes Kapital", "Subscribed capital", (r"gezeichnetes kapital", r"^eigenkapital$")),
     FieldSpec("kapitalruecklage", "passiva", "Kapitalrücklage", "Capital reserve", (r"kapitalruecklage",)),
     FieldSpec("gewinnruecklagen", "passiva", "Gewinnrücklagen", "Revenue reserves", (r"gewinnruecklagen",)),
     FieldSpec("gewinnvortrag", "passiva", "Gewinn-/Verlustvortrag", "Profit/loss carried forward", (r"gewinnvortrag", r"verlustvortrag"), negative_if=("verlustvortrag",)),
@@ -57,7 +57,7 @@ FIELDS: tuple[FieldSpec, ...] = (
     FieldSpec("rueckstellungen", "passiva", "Sonstige Rückstellungen", "Other provisions", (r"sonstige rueckstellungen", r"^rueckstellungen")),
     FieldSpec("verb_kreditinstitute_kurz", "passiva", "Verbindlichkeiten gegenüber Kreditinstituten (bis 1 Jahr)", "Bank debt (up to 1 year)", ()),
     FieldSpec("verb_kreditinstitute_lang", "passiva", "Verbindlichkeiten gegenüber Kreditinstituten (über 1 Jahr)", "Bank debt (over 1 year)", ()),
-    FieldSpec("verb_ll", "passiva", "Verbindlichkeiten aus Lieferungen und Leistungen", "Trade payables", (r"verbindlichkeiten aus lieferungen und leistungen",)),
+    FieldSpec("verb_ll", "passiva", "Verbindlichkeiten aus Lieferungen und Leistungen", "Trade payables", (r"verbindlichkeiten aus lieferungen und leistungen", r"^verb\.? aus l\s*[&+u]\s*l")),
     FieldSpec("gesellschafterdarlehen", "passiva", "Verbindlichkeiten gegenüber Gesellschaftern", "Shareholder loans", (r"verbindlichkeiten gegenueber gesellschaftern", r"gesellschafterdarlehen")),
     FieldSpec("sonstige_verbindlichkeiten_kurz", "passiva", "Sonstige Verbindlichkeiten (bis 1 Jahr)", "Other liabilities (up to 1 year)", ()),
     FieldSpec("sonstige_verbindlichkeiten_lang", "passiva", "Sonstige Verbindlichkeiten (über 1 Jahr)", "Other liabilities (over 1 year)", ()),
@@ -89,8 +89,80 @@ def _norm(s: str) -> str:
 _NUM = re.compile(r"(?<![\w.,])(-?\s?\d{1,3}(?:\.\d{3})*(?:,\d{1,2})?|-?\s?\d+(?:,\d{1,2})?)(?:\s*(?:eur|€|teur|t€))?(?![\w])", re.I)
 
 
+#: Column headers that tell you the figures are not in euros.
+_SCALES = ((r"^(in\s+)?(t\s?eur|t\s?€|tsd\.?\s*eur|in tausend eur)\.?$", 1_000.0),
+           (r"^(in\s+)?mio\.?\s*(eur|€)\.?$", 1_000_000.0))
+
+
+def _detect_scale(lines: list[str], lo: int, hi: int) -> tuple[float, str]:
+    """Figures in TEUR read as euros are wrong by a factor of a thousand.
+
+    Published statements state the unit in the column header, usually on a line
+    of its own directly under the balance-sheet date. Getting this wrong is the
+    single most dangerous extraction error available: every figure stays
+    internally consistent, so the balance sheet still balances and the mistake
+    survives every plausibility check. Only the unit catches it.
+    """
+    for i in range(lo, min(lo + 40, hi)):
+        stripped = lines[i].strip().lower().replace(" ", " ")
+        for pattern, factor in _SCALES:
+            if re.fullmatch(pattern, stripped):
+                return factor, lines[i].strip()
+    return 1.0, ""
+
+
+_PARENS = re.compile(r"\(\s*(\d[\d.,\s]*)\s*\)")
+
+
+def _unparen(line: str) -> str:
+    """Accounting notation: (144.395) means minus 144.395.
+
+    Only brackets containing nothing but a number are rewritten, so ordinary
+    parenthetical text in a label is left alone.
+    """
+    return _PARENS.sub(lambda m: "-" + m.group(1).strip(), line)
+
+
+def _is_amount_only(line: str) -> bool:
+    """A line holding nothing but a number -- a table cell on its own row."""
+    stripped = _unparen(line).strip().rstrip(".")
+    if not stripped or not re.search(r"\d", stripped):
+        return False
+    return re.fullmatch(r"-?\s?\d{1,3}(?:\.\d{3})*(?:,\d{1,2})?\s*(?:eur|€|teur|t€)?",
+                        stripped, re.I) is not None
+
+
+def _amount_near(lines: list[str], i: int, hi: int, used: set[int]) -> tuple[Optional[float], Optional[int]]:
+    """The amount belonging to the label on line `i`, and the line it came from.
+
+    Two layouts occur in the wild and both have to work:
+
+      "Sachanlagen        17.901,00   1.109,00"   -- label and columns on one line
+      "Sachanlagen"                               -- PDF text layers often emit
+      "17.901,00"                                    every table cell as its own
+      "1.109,00"                                     line, current year first
+
+    The second shape is what the Unternehmensregister produces, which is what
+    real filings look like. Only the first amount is taken: in a German balance
+    sheet the leading column is the reporting year, the next is the prior year.
+    """
+    same_line = _first_amount(lines[i])
+    if same_line is not None:
+        return same_line, None
+    for j in range(i + 1, min(i + 4, hi)):
+        if j in used:
+            break
+        if not _is_amount_only(lines[j]):
+            break                      # next label reached: this row has no figure
+        value = _first_amount(lines[j])
+        if value is not None:
+            return value, j
+    return None, None
+
+
 def _first_amount(line: str) -> Optional[float]:
     """The first amount on a line = the current-year column in German statements."""
+    line = _unparen(line)
     for m in _NUM.finditer(line):
         raw = m.group(1).replace(" ", "")
         digits = re.sub(r"\D", "", raw)
@@ -162,11 +234,38 @@ def extract_with_rules(text: str) -> ExtractionResult:
 
     i_pass = idx(r"^passiva") or idx(r"^passivseite")
     i_guv = idx(r"gewinn- und verlustrechnung")
-    ranges = {
-        "aktiva": (0, i_pass if i_pass is not None else len(lines)),
-        "passiva": (i_pass or 0, i_guv if i_guv is not None and (i_pass or 0) < i_guv else len(lines)),
-        "guv": (i_guv or 0, len(lines)),
-    }
+    # A published filing often opens with pages of Lagebericht prose, which is
+    # full of numbers that are not balance-sheet lines. Start the asset section
+    # at the balance sheet itself when the document says where that is.
+    i_bilanz = idx(r"^(konzern)?bilanz( zum| per|\b)") or idx(r"^aktiva$") or idx(r"^aktivseite")
+    start = min(i for i in (i_bilanz, i_guv) if i is not None) if (i_bilanz or i_guv) else 0
+
+    # Sections appear in either order -- plenty of statements put the P&L first --
+    # and a balance sheet printed as two columns side by side has its "Passiva"
+    # heading in the table's header row, only a line or two after "Aktiva",
+    # rather than below all the asset lines. Both shapes have to survive.
+    side_by_side = (i_bilanz is not None and i_pass is not None and 0 <= i_pass - i_bilanz <= 8)
+    marks = sorted((i, name) for i, name in
+                   ((i_bilanz, "aktiva"), (None if side_by_side else i_pass, "passiva"),
+                    (i_guv, "guv")) if i is not None)
+    ranges: dict[str, tuple[int, int]] = {}
+    for pos, (i, name) in enumerate(marks):
+        end = marks[pos + 1][0] if pos + 1 < len(marks) else len(lines)
+        ranges[name] = (i, end)
+    if side_by_side and "aktiva" in ranges:
+        ranges["passiva"] = ranges["aktiva"]          # one table holds both sides
+    for name in ("aktiva", "passiva", "guv"):         # unmarked section: search it all
+        ranges.setdefault(name, (start, len(lines)))
+
+    scale, scale_label = _detect_scale(lines, start, len(lines))
+    if scale != 1.0:
+        res.warnings.append(
+            f"Betraege sind in {scale_label} ausgewiesen und wurden mit "
+            f"{de(scale)} multipliziert. Bitte in der Bestaetigung pruefen.")
+    if re.search(r"konzernabschluss|konzernbilanz", text, re.I):
+        res.warnings.append(
+            "Das Dokument ist ein Konzernabschluss. Die Diagnostik bewertet "
+            "Einzelabschluesse; bitte den Einzelabschluss der Gesellschaft verwenden.")
     for m in re.finditer(r"(\d{2})\.(\d{2})\.(\d{4})", text):
         d, mth, y = m.groups()
         if (d, mth) in (("31", "12"), ("30", "06"), ("30", "09"), ("31", "03")):
@@ -186,12 +285,15 @@ def extract_with_rules(text: str) -> ExtractionResult:
             for i in range(lo, hi):
                 if i in used or not re.search(pattern, norm[i]):
                     continue
-                amount = _first_amount(lines[i])
+                amount, amount_line = _amount_near(lines, i, hi, used)
                 if amount is None:
                     continue
+                amount *= scale
                 if any(w in norm[i] for w in spec.negative_if):
                     amount = -abs(amount)
                 used.add(i)
+                if amount_line is not None:
+                    used.add(amount_line)
                 total = amount if total is None else total + amount
                 sources.append(lines[i])
                 if not summed:
@@ -205,7 +307,7 @@ def extract_with_rules(text: str) -> ExtractionResult:
     # split is a "davon" line or in the notes. Without it we propose everything
     # as short-term -- the CONSERVATIVE reading -- and ask the company to confirm.
     splits = (
-        (r"verbindlichkeiten gegenueber kreditinstituten", "verb_kreditinstitute_kurz", "verb_kreditinstitute_lang"),
+        (r"verb(indlichkeiten)?\.? (gegenueber|ggue\.?|geg\.?) kreditinstituten", "verb_kreditinstitute_kurz", "verb_kreditinstitute_lang"),
         (r"^sonstige verbindlichkeiten", "sonstige_verbindlichkeiten_kurz", "sonstige_verbindlichkeiten_lang"),
     )
     lo, hi = ranges["passiva"]
@@ -213,16 +315,28 @@ def extract_with_rules(text: str) -> ExtractionResult:
         for i in range(lo, hi):
             if i in used or not re.search(pattern, norm[i]):
                 continue
-            total = _first_amount(lines[i])
+            total, total_line = _amount_near(lines, i, hi, used)
             if total is None:
                 continue
+            total *= scale
             used.add(i)
+            if total_line is not None:
+                used.add(total_line)
             short = long_ = None
-            for j in range(i + 1, min(i + 3, hi)):
+            # A "davon" note belongs to the item directly above it, so the scan
+            # steps over the amount rows of that item and stops at the next
+            # label -- otherwise it would pick up the next item's note instead.
+            for j in range(i + 1, min(i + 8, hi)):
+                if _is_amount_only(lines[j]):
+                    continue
                 if re.search(r"davon .*(bis zu einem jahr|restlaufzeit bis)", norm[j]):
-                    short = _first_amount(lines[j])
+                    short, _ = _amount_near(lines, j, hi, used)
+                    short = None if short is None else short * scale
                 elif re.search(r"davon .*(mehr als (einem|1) jahr|ueber einem jahr)", norm[j]):
-                    long_ = _first_amount(lines[j])
+                    long_, _ = _amount_near(lines, j, hi, used)
+                    long_ = None if long_ is None else long_ * scale
+                elif not norm[j].startswith("davon"):
+                    break
             if short is None and long_ is not None:
                 short = total - long_
             if short is not None:
@@ -271,7 +385,16 @@ def check_figures(figures: dict[str, Any], period_months: int = 12) -> list[dict
         "de": f"Aktiva {de(aktiva)} EUR, Passiva {de(passiva)} EUR" + ("" if abs(diff) <= tol else f" - Differenz {de(diff)} EUR"),
         "en": f"Assets {aktiva:,.0f} EUR, equity and liabilities {passiva:,.0f} EUR" + ("" if abs(diff) <= tol else f" - difference {diff:,.0f} EUR"),
     })
-    if period_months == 12:
+    # Only comparable when the balance sheet reports the result separately.
+    # Abridged statements show one aggregated equity line instead, and then
+    # there is nothing to compare against -- which is not a discrepancy.
+    if period_months == 12 and fig["jahresueberschuss"] == 0:
+        checks.append({
+            "code": "ERGEBNIS", "ok": True,
+            "de": "Die Bilanz weist kein separates Jahresergebnis aus - Abgleich mit der GuV entfaellt.",
+            "en": "The balance sheet reports no separate result - no comparison with the P&L possible.",
+        })
+    elif period_months == 12:
         _, gu = to_statements(fig, date.today(), 12)
         gap = gu.jahresueberschuss - fig["jahresueberschuss"]
         ok = abs(gap) <= max(1.0, abs(aktiva) * 0.002)

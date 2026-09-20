@@ -27,7 +27,7 @@ from credit_readiness.ai import (
     violates_guardrails,
 )
 from credit_readiness.ai.explain import explain
-from credit_readiness.ai.extraction import FIELDS, extract_with_rules
+from credit_readiness.ai.extraction import FIELDS, check_figures, extract_with_rules
 from credit_readiness.ai.pdftext import _builtin, pdf_to_text
 from credit_readiness.auth import ROLE_BERATER, UserStore
 from credit_readiness.casefile import CaseStoreError, LocalCaseStore
@@ -412,3 +412,178 @@ def test_quick_check_explanation_never_mentions_a_missing_band():
     """The quick check has no after-remediation band; the text must not say 'None'."""
     text = template_explanation({"band": "B", "verdict": "behebbar", "findings": [{"rule": "R04"}]}, "en")
     assert "None" not in text and "band today is B" in text
+
+
+# ---------------------------------------------------------------------------
+# Layouts found in real published filings (Unternehmensregister extracts)
+# ---------------------------------------------------------------------------
+
+CELLS_ON_OWN_LINES = """Jahresabschluss zum Geschaeftsjahr vom 01.01.2017 bis zum 31.12.2017
+Bilanz
+Aktiva
+31.12.2017.
+EUR
+31.12.2016.
+EUR
+A. Anlagevermoegen
+17.901,00
+1.109,00
+I. Sachanlagen
+17.901,00
+1.109,00
+B. Umlaufvermoegen
+30.482,47
+38.810,00
+II. Kassenbestand, Bundesbankguthaben, Guthaben bei Kreditinstituten und Schecks
+842,73
+31.018,88
+Passiva
+A. Eigenkapital
+18.499,13
+7.536,24
+I. gezeichnetes Kapital
+25.100,00
+25.100,00
+II. Verlustvortrag
+17.563,76
+15.273,68
+III. Jahresueberschuss
+10.962,89
+-2.290,08
+B. Rueckstellungen
+3.735,66
+1.918,00
+"""
+
+
+def test_reads_figures_when_each_table_cell_is_its_own_line():
+    """PDF text layers usually emit the amount on the line after the label.
+
+    Every published filing we have behaves this way. Matching only on the
+    label's own line silently returned nothing at all.
+    """
+    res = extract_with_rules(CELLS_ON_OWN_LINES)
+    values = {k: v.value for k, v in res.fields.items() if v.value is not None}
+    assert values["sachanlagen"] == pytest.approx(17_901.00)
+    assert values["liquide_mittel"] == pytest.approx(842.73)
+    assert values["gezeichnetes_kapital"] == pytest.approx(25_100.00)
+    assert values["jahresueberschuss"] == pytest.approx(10_962.89)
+    assert values["rueckstellungen"] == pytest.approx(3_735.66)
+
+
+def test_loss_carried_forward_keeps_its_negative_sign():
+    """Published balance sheets print a Verlustvortrag unsigned; it deducts."""
+    res = extract_with_rules(CELLS_ON_OWN_LINES)
+    assert res.fields["gewinnvortrag"].value == pytest.approx(-17_563.76)
+
+
+TEUR_LAYOUT = """Konzernbilanz zum 30. Juni 2022
+AKTIVA
+30.6.2022.
+TEUR
+30.6.2021.
+TEUR
+II. Sachanlagen
+118.376
+125.605
+"""
+
+
+def test_thousands_columns_are_scaled_and_flagged():
+    """TEUR read as EUR is the one error that survives every other check.
+
+    The balance sheet still balances when every figure is 1000x too small, so
+    nothing downstream can catch it. Only the column header can.
+    """
+    res = extract_with_rules(TEUR_LAYOUT)
+    assert res.fields["sachanlagen"].value == pytest.approx(118_376_000)
+    assert any("TEUR" in w for w in res.warnings), res.warnings
+
+
+def test_consolidated_accounts_are_called_out():
+    """Group accounts are not what a single-entity diagnostic should score."""
+    res = extract_with_rules(TEUR_LAYOUT)
+    assert any("Konzernabschluss" in w for w in res.warnings), res.warnings
+
+
+def test_narrative_pages_before_the_balance_sheet_are_ignored():
+    """A published filing can open with pages of Lagebericht full of numbers."""
+    prose = ("Der Auftragseingang stieg um 32 %. Die Gesamtleistung betrag 500.000 EUR "
+             "im Berichtsjahr. Sachanlagen wurden erweitert 999.999,00\n") * 3
+    res = extract_with_rules(prose + CELLS_ON_OWN_LINES)
+    assert res.fields["sachanlagen"].value == pytest.approx(17_901.00)
+
+
+TWO_COLUMN_WITH_PL_FIRST = """Jahresabschluss zum 31.12.2025
+Gewinn- und Verlustrechnung (Gesamtkostenverfahren, EUR)
+Umsatzerloese
+4.200.000
+Materialaufwand
+2.436.000
+Personalaufwand
+865.757
+Abschreibungen auf Sachanlagen
+123.892
+Sonstige betriebliche Aufwendungen
+396.309
+Zinsen und aehnliche Aufwendungen
+42.535
+Steuern vom Einkommen und Ertrag
+100.652
+Bilanz (EUR)
+Aktiva
+2025
+Passiva
+2025
+Anlagevermoegen
+1.353.356
+Eigenkapital
+810.303
+Vorraete
+405.770
+Rueckstellungen
+139.253
+Forderungen aus L&L
+454.068
+Verb. ggue. Kreditinstituten
+471.199
+Liquide Mittel
+(319.004)
+Verb. aus L&L
+346.288
+Sonstige Verbindlichkeiten
+765.155
+Summe Aktiva
+2.532.198
+"""
+
+
+def test_balance_sheet_printed_as_two_columns_with_the_pl_first():
+    """Three real-world shapes at once, and all three broke the reader.
+
+    The P&L comes before the balance sheet; the balance sheet is one table with
+    assets and liabilities side by side, so "Passiva" sits in the header row
+    rather than below the assets; and the labels are abbreviated.
+    """
+    res = extract_with_rules(TWO_COLUMN_WITH_PL_FIRST)
+    values = {k: v.value for k, v in res.fields.items() if v.value is not None}
+    assert values["umsatzerloese"] == pytest.approx(4_200_000)
+    assert values["sachanlagen"] == pytest.approx(1_353_356)      # aggregated fixed assets
+    assert values["gezeichnetes_kapital"] == pytest.approx(810_303)  # aggregated equity
+    assert values["forderungen_ll"] == pytest.approx(454_068)      # "Forderungen aus L&L"
+    assert values["verb_ll"] == pytest.approx(346_288)             # "Verb. aus L&L"
+    assert values["verb_kreditinstitute_kurz"] == pytest.approx(471_199)
+
+
+def test_amounts_in_accounting_brackets_are_negative():
+    """(319.004) is minus 319.004 -- an overdrawn account on the asset side."""
+    res = extract_with_rules(TWO_COLUMN_WITH_PL_FIRST)
+    assert res.fields["liquide_mittel"].value == pytest.approx(-319_004)
+
+
+def test_aggregated_equity_does_not_fail_the_result_reconciliation():
+    """No separate result line in the balance sheet means nothing to compare."""
+    res = extract_with_rules(TWO_COLUMN_WITH_PL_FIRST)
+    values = {k: (v.value or 0.0) for k, v in res.fields.items()}
+    ergebnis = next(c for c in check_figures(values) if c["code"] == "ERGEBNIS")
+    assert ergebnis["ok"], ergebnis

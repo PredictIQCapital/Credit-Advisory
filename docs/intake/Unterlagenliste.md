@@ -2,7 +2,7 @@
 
 Welche Unterlagen wir benoetigen, von wem, in welchem Format -- und warum.
 
-Nur zwei Dokumenttypen werden automatisch ausgewertet: die DATEV-Summen- und Saldenliste (CSV) und die Kontoumsaetze (CSV). Alle PDF-Unterlagen lesen wir selbst; aus einem PDF wird nie automatisch eine Zahl uebernommen.
+Automatisch eingelesen werden die DATEV-Summen- und Saldenliste (CSV) und die Kontoumsaetze (CSV). Aus dem Jahresabschluss lesen wir Bilanz und GuV automatisch aus -- lokal, oder nur mit Ihrer gesonderten Einwilligung mit KI-Unterstuetzung. Gerechnet wird mit einer ausgelesenen Zahl erst, nachdem Sie sie bestaetigt haben. Alle uebrigen PDF-Unterlagen lesen wir selbst.
 
 ## Von: Unternehmen
 
