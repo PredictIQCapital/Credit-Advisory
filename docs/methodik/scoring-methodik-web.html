@@ -1,0 +1,811 @@
+<title>Scoring-Methodik &mdash; Credit Readiness Advisory</title>
+<style>
+:root{
+  --navy:#0d2440; --green:#0b8f73; --green-l:#39b894; --ink:#1a2430;
+  --muted:#5b6b7c; --line:#d8e0e8; --bg-soft:#f4f7fa; --amber:#b57500; --red:#a8323a;
+}
+*{box-sizing:border-box}
+html{-webkit-print-color-adjust:exact; print-color-adjust:exact}
+body{font-family:"Segoe UI","Helvetica Neue",Arial,sans-serif;
+     color:var(--ink); font-size:9.7pt; line-height:1.5; margin:0}
+h1,h2,h3{margin:0; line-height:1.25; color:var(--navy)}
+p{margin:0 0 8px}
+small{font-size:8.3pt}
+.muted{color:var(--muted)}
+.cover{background:var(--navy); color:#fff; padding:30mm 16mm 16mm; margin:-14mm -14mm 10mm}
+.cover h1{color:#fff; font-size:26pt; letter-spacing:-.4pt; margin-bottom:10px}
+.cover .sub{color:#a9c2dc; font-size:12pt; margin-bottom:16px}
+.cover .lede{color:#dce7f2; font-size:10.4pt; max-width:150mm}
+.logo{display:flex; align-items:center; gap:9px; margin-bottom:24mm}
+.logo .bars{display:flex; align-items:flex-end; gap:3px; height:22px}
+.logo .bars i{display:block; width:6px; border-radius:2px}
+.logo .bars i:nth-child(1){height:9px;  background:#6fd3b7}
+.logo .bars i:nth-child(2){height:15px; background:#39b894}
+.logo .bars i:nth-child(3){height:22px; background:#0b8f73}
+.logo span{color:#fff; font-weight:600; font-size:12pt}
+.factbar{display:flex; border-top:1px solid rgba(255,255,255,.22);
+         padding-top:12px; margin-top:22px}
+.factbar div{flex:1; padding-right:10px}
+.factbar b{display:block; color:#6fd3b7; font-size:13pt; line-height:1.2}
+.factbar small{color:#a9c2dc}
+.eyebrow{display:inline-block; font-size:7.6pt; font-weight:700; letter-spacing:1.1pt;
+         text-transform:uppercase; color:var(--green); margin-bottom:5px}
+h2{font-size:15pt; margin-bottom:4px; padding-bottom:5px; border-bottom:2px solid var(--green)}
+h2 .n{color:var(--green-l); font-weight:700; margin-right:7px}
+h3{font-size:10.6pt; margin:13px 0 5px}
+section{margin-bottom:13px}
+table{width:100%; border-collapse:collapse; margin:8px 0 10px; font-size:8.5pt}
+th{text-align:left; background:var(--navy); color:#fff; font-weight:600;
+   padding:5px 7px; font-size:8pt}
+td{padding:5px 7px; border-bottom:1px solid var(--line); vertical-align:top}
+table.thresholds td{padding:4px 7px}
+tr:nth-child(even) td{background:var(--bg-soft)}
+tr{page-break-inside:avoid}
+thead{display:table-header-group}
+td.num,th.num{text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap}
+code{font-family:"Cascadia Mono",Consolas,monospace; font-size:8.2pt;
+     background:var(--bg-soft); padding:1px 3px; border-radius:2px}
+th code{background:rgba(255,255,255,.16); color:#fff}
+.note{background:var(--bg-soft); border-left:3px solid var(--green);
+      padding:8px 11px; margin:10px 0; page-break-inside:avoid}
+.note.warn{border-left-color:var(--amber)}
+.note.stop{border-left-color:var(--red)}
+.note b{color:var(--navy)}
+.tag{display:inline-block; font-size:7.4pt; font-weight:700; padding:1px 5px;
+     border-radius:3px; letter-spacing:.3pt}
+.tag.cal{background:#d9f0e9; color:#0b6b57}
+.tag.con{background:#f2e6cc; color:#8a5a00}
+.tag.yes{background:#d9f0e9; color:#0b6b57}
+.tag.part{background:#f2e6cc; color:#8a5a00}
+.tag.no{background:#eceff2; color:#5b6b7c}
+.band{display:inline-block; width:17px; height:17px; line-height:17px; text-align:center;
+      border-radius:3px; color:#fff; font-weight:700; font-size:8.4pt}
+.band.A{background:#0b8f73} .band.B{background:#39b894} .band.C{background:#b57500}
+.band.D{background:#c2564e} .band.E{background:#a8323a}
+.pagebreak{page-break-before:always}
+ul{margin:4px 0 8px; padding-left:17px}
+li{margin-bottom:3px}
+.kv{display:flex; gap:14px; flex-wrap:wrap; margin:8px 0}
+.kv div{flex:1; min-width:52mm; background:var(--bg-soft); padding:8px 10px;
+        border-top:2px solid var(--green-l)}
+.kv b{display:block; font-size:12.5pt; color:var(--navy)}
+
+/* ---- screen adaptation (appended; the print CSS above is unchanged) ---- */
+:root{ --page:#ffffff; --ground:#eef2f6; color-scheme: light; }
+body{ background:var(--ground); margin:0; font-size:15px; line-height:1.55; }
+.sheet-wrap{ max-width:900px; margin:0 auto; background:var(--page);
+  padding:0 28px 48px; box-shadow:0 1px 3px rgba(13,36,64,.10); }
+.cover{ margin:0 -28px 26px; padding:44px 28px 28px; position:relative; }
+.cover h1{font-size:34px}
+.cover .sub{font-size:17px}
+.cover .lede{font-size:15px; max-width:none}
+.logo{margin-bottom:34px}
+h2{font-size:21px; margin-top:34px}
+h3{font-size:15.5px}
+section{margin-bottom:22px}
+.pagebreak{page-break-before:auto}
+.tablewrap{overflow-x:auto; -webkit-overflow-scrolling:touch; margin:10px 0 14px}
+.tablewrap table{margin:0; min-width:560px; font-size:13px}
+td,th{padding:7px 9px}
+.note{padding:11px 14px; margin:14px 0}
+.kv div{min-width:150px}
+code{font-size:12.5px}
+
+/* language toggle */
+.langbar{position:sticky; top:0; z-index:10; display:flex; justify-content:flex-end;
+  gap:8px; padding:9px 0; background:var(--ground);}
+.langbtn{font:inherit; font-size:13px; font-weight:600; cursor:pointer;
+  border:1px solid var(--line); background:var(--page); color:var(--ink);
+  border-radius:999px; padding:6px 15px;}
+.langbtn[aria-pressed="true"]{background:var(--navy); border-color:var(--navy); color:#fff;}
+
+@media (max-width:640px){
+  .sheet-wrap{padding:0 15px 34px}
+  .cover{margin:0 -15px 20px; padding:30px 15px 20px}
+  .cover h1{font-size:26px}
+  .factbar{flex-wrap:wrap; gap:12px 0}
+  .factbar div{flex:0 0 50%}
+  .kv{flex-direction:column}
+}
+
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --page:#111a24; --ground:#0a1119; --ink:#dde5ec; --muted:#9bacbd;
+    --line:#26333f; --bg-soft:#18222d; --navy:#c8dcf0; --green-l:#4fc6a3;
+    color-scheme: dark;
+  }
+  :root:not([data-theme="light"]) td{color:var(--ink)}
+  :root:not([data-theme="light"]) tr:nth-child(even) td{background:var(--bg-soft)}
+  :root:not([data-theme="light"]) .sheet-wrap{box-shadow:none}
+  :root:not([data-theme="light"]) .note b{color:var(--navy)}
+  :root:not([data-theme="light"]) code{background:var(--bg-soft); color:var(--ink)}
+  :root:not([data-theme="light"]) .langbtn[aria-pressed="true"]{color:#0a1119}
+}
+</style>
+<div class="sheet-wrap">
+<div class="langbar"><button type="button" class="langbtn" data-lang="de" aria-pressed="false">Deutsch</button><button type="button" class="langbtn" data-lang="en" aria-pressed="false">English</button></div>
+<div data-lang-pane="de" hidden>
+<div class="cover">
+  <div class="logo"><div class="bars"><i></i><i></i><i></i></div><span>Credit Readiness Advisory</span></div>
+  <h1>Scoring-Methodik</h1>
+  <div class="sub">Kennzahlen, Gewichte, Schwellenwerte und Szenariorechnung</div>
+  <div class="lede">Dieses Dokument beschreibt vollstaendig, wie die Bereitschaftsstufe eines Unternehmens zustande kommt: welche Kennzahlen eingehen, woher jeder einzelne Schwellenwert stammt und was bewusst nicht modelliert wird. Es ist so geschrieben, dass ein Steuerberater oder ein Kreditanalyst jeden Wert nachrechnen und jeder Annahme widersprechen kann.</div>
+  <div class="factbar">
+    <div><b>13</b><small>gewichtete Faktoren</small></div>
+    <div><b>6</b><small>davon empirisch kalibriert</small></div>
+    <div><b>46%</b><small>kalibriertes Gewicht</small></div>
+    <div><b>3</b><small>Stressszenarien</small></div>
+    <div><b>8</b><small>Ausschlusskriterien</small></div>
+  </div>
+</div>
+
+<section>
+  <span class="eyebrow">Abschnitt 1</span>
+  <h2><span class="n">01</span>Zweck und Abgrenzung</h2>
+  
+  <p>Das Verfahren erzeugt eine <b>indikative Bereitschaftsstufe</b> (A bis E).
+  Sie beschreibt, wie ein Kreditantrag mit dieser Datenlage bei einem typischen
+  Kreditgeber voraussichtlich gelesen wird &ndash; und was daran veraenderbar ist.</p>
+  <div class="note stop">
+    <b>Was dies ausdruecklich nicht ist.</b> Kein Rating im Sinne der
+    EU-Ratingverordnung (EG) Nr. 1060/2009, keine Ausfallwahrscheinlichkeit,
+    keine Kreditentscheidung und keine Zusage. Es wird keine PD geschaetzt und
+    keine ausgegeben. Jede Kreditentscheidung trifft ausschliesslich der
+    jeweilige Kreditgeber nach eigenen Massstaeben.
+  </div>
+  <p>Drei Konstruktionsregeln folgen daraus und sind im Code durchgesetzt, nicht
+  nur hier behauptet:</p>
+  <ul>
+    <li><b>Nachvollziehbarkeit.</b> Jeder Faktor gibt seinen Rohwert, seine
+    Stuetzstellen, sein Gewicht und seinen Punktbeitrag aus. Es gibt keine
+    Groesse, die nicht zeilenweise erklaerbar ist.</li>
+    <li><b>Kein maschinelles Lernen.</b> Ausschliesslich stueckweise lineare
+    Interpolation ueber offengelegte Schwellenwerte.</li>
+    <li><b>Keine Ratingsprache.</b> Die Begriffe sind &bdquo;Stufe&ldquo; und
+    &bdquo;indikativ&ldquo;.</li>
+  </ul>
+</section>
+
+<section>
+  <span class="eyebrow">Abschnitt 2</span>
+  <h2><span class="n">02</span>Regulatorische Grundlage</h2>
+  <p>Die Auswahl der Kennzahlen stammt nicht aus dem Lehrbuch,
+  sondern aus drei Quellen, die beschreiben, was Kreditgeber im Euroraum
+  tatsaechlich pruefen muessen beziehungsweise pruefen:</p>
+  <div class="tablewrap"><table><thead><tr><th style="width:52mm">Quelle</th><th>Was daraus uebernommen ist</th></tr></thead><tbody><tr><td><b>EBA/GL/2020/06</b><br><small class="muted">Leitlinien fuer die Kreditvergabe und Ueberwachung, gueltig seit 30.06.2021</small></td><td>Anhang 3 Abschnitt B nennt die Kennzahlen, die ein Institut bei
+        Unternehmenskrediten beruecksichtigen soll (Abschnitt 3). Tz. 121 und
+        128 regeln, was in die Analyse der Finanzlage gehoert; Tz. 120 stellt
+        klar, dass Sicherheiten <i>kein</i> vorrangiges Kriterium sein duerfen;
+        Tz. 131 und 156&ndash;158 verlangen die Szenariorechnung.</td></tr><tr><td><b>MaRisk (BaFin)</b><br><small class="muted">Rundschreiben 10/2021, Anlage 1, BTO 1.2</small></td><td>BTO 1.2.1 Tz. 1 verlangt die Analyse der Risikofaktoren
+        &bdquo;unter besonderer Beruecksichtigung der Kapitaldienstfaehigkeit&ldquo;
+        &ndash; daher traegt die Kapitaldienstfaehigkeit hier das groesste
+        Einzelgewicht. BTO 1.4 Tz. 3 verlangt qualitative neben quantitativen
+        Kriterien.</td></tr><tr><td><b>Bundesbank-Bonitaetsanalyse (ICAS)</b><br><small class="muted">Beschreibung des Verfahrens, Stand Dezember 2023</small></td><td>Die Kennzahlen, mit denen eine Zentralbank aus HGB-Abschluessen die
+        Bonitaet deutscher Unternehmen einschaetzt: EBITDA, Gesamtverschuldung
+        (bereinigt), Liquiditaet, Umsatzrendite, Entschuldungsfaehigkeit,
+        bereinigte Eigenmittelquote und Kreditorenziel. Ausserdem die
+        empirischen Verteilungen (Abschnitt 6) und die Methodik der
+        Szenariorechnung (Abschnitt 8).</td></tr></tbody></table></div>
+  <div class="note warn">
+    <b>Der wichtigste Befund aus der Auswertung dieser Quellen:
+    Schwellenwerte gibt keine von ihnen vor.</b>
+    EBA Anhang 1 verlangt vom Institut, &bdquo;acceptable ... ratio limits&ldquo;
+    <i>festzulegen</i>, nennt aber keine Zahlen. MaRisk regelt den Prozess, nicht
+    die Kennzahlenhoehe. Die Aufsicht bestimmt also <i>welche</i> Kennzahlen und
+    <i>dass</i> Grenzen existieren muessen &ndash; die Hoehe ist eine eigene,
+    begruendungspflichtige Entscheidung. Genau deshalb sind in diesem Dokument
+    Kennzahlenauswahl (Abschnitt 3) und Schwellenwerte (Abschnitte 5 und 6)
+    getrennt dargestellt und getrennt belegt.</div>
+</section>
+
+<section class="pagebreak">
+  <span class="eyebrow">Abschnitt 3</span>
+  <h2><span class="n">03</span>Abgleich mit EBA Anhang 3</h2>
+  <p>Anhang 3 Abschnitt B der EBA-Leitlinien listet zwanzig Kennzahlen fuer
+  Kredite an Unternehmen. Die Leitlinie verlangt, sie zu beruecksichtigen
+  &bdquo;to an extent that is applicable and appropriate to the specific credit
+  proposal&ldquo; (Tz. 128 e). Die folgende Tabelle sagt fuer jede einzelne, was
+  damit geschieht &ndash; einschliesslich der Faelle, in denen bewusst nichts
+  geschieht.</p>
+  <div class="tablewrap"><table><thead><tr><th class='num' style='width:9mm'>Nr.</th><th style='width:46mm'>Kennzahl laut EBA Anhang 3 B</th><th style='width:17mm'>Abgedeckt</th><th>Umsetzung</th></tr></thead><tbody><tr><td class='num'>6</td><td>Equity ratio</td><td><span class='tag yes'>ja</span></td><td><small>Eigenkapitalquote (wirtschaftlich), Gewicht 0,16</small></td></tr><tr><td class='num'>7</td><td>(Long-term) debt-to-equity ratio</td><td><span class='tag part'>teilweise</span></td><td><small>Ueber Eigenkapitalquote und dyn. Verschuldungsgrad abgedeckt; nicht zusaetzlich gewichtet, um Verschuldung nicht dreifach zu zaehlen.</small></td></tr><tr><td class='num'>8</td><td>EBITDA</td><td><span class='tag yes'>ja</span></td><td><small>Eingangsgroesse fuer DSCR, Verschuldungsgrad und Marge</small></td></tr><tr><td class='num'>9</td><td>Debt yield</td><td><span class='tag no'>nein</span></td><td><small>Objektkennzahl der Immobilienfinanzierung</small></td></tr><tr><td class='num'>10</td><td>Interest bearing debt / EBITDA</td><td><span class='tag yes'>ja</span></td><td><small>Dyn. Verschuldungsgrad, Gewicht 0,11</small></td></tr><tr><td class='num'>11</td><td>Enterprise value</td><td><span class='tag no'>nein</span></td><td><small>Setzt Marktwerte voraus; im Mittelstand nicht verfuegbar</small></td></tr><tr><td class='num'>12</td><td>Capitalisation rate</td><td><span class='tag no'>nein</span></td><td><small>Objektkennzahl der Immobilienfinanzierung</small></td></tr><tr><td class='num'>13</td><td>Asset quality</td><td><span class='tag part'>teilweise</span></td><td><small>Ueber Debitoren- und Kreditorenlaufzeit sowie Anlagendeckung; keine eigene Kennzahl</small></td></tr><tr><td class='num'>14</td><td>Total debt service coverage ratio</td><td><span class='tag yes'>ja</span></td><td><small>Kapitaldienstfaehigkeit, Gewicht 0,20</small></td></tr><tr><td class='num'>15</td><td>Cash debt coverage ratio</td><td><span class='tag no'>nein</span></td><td><small>Setzt eine Kapitalflussrechnung voraus; kleine Gesellschaften erstellen keine</small></td></tr><tr><td class='num'>16</td><td>Coverage ratio (current assets / short-term debt)</td><td><span class='tag yes'>ja</span></td><td><small>Liquiditaet 2. Grades, Gewicht 0,07 (strenger als Liquiditaet 3. Grades)</small></td></tr><tr><td class='num'>17</td><td>Future cash flow analysis</td><td><span class='tag part'>teilweise</span></td><td><small>Ueber die Szenariorechnung, nicht ueber eine Planungsrechnung</small></td></tr><tr><td class='num'>18</td><td>Return on assets</td><td><span class='tag yes'>ja</span></td><td><small>Gesamtkapitalrentabilitaet, Gewicht 0,05</small></td></tr><tr><td class='num'>19</td><td>Debt service</td><td><span class='tag yes'>ja</span></td><td><small>Nenner der Kapitaldienstfaehigkeit</small></td></tr><tr><td class='num'>20</td><td>Loan to cost</td><td><span class='tag no'>nein</span></td><td><small>Projektfinanzierungskennzahl</small></td></tr><tr><td class='num'>21</td><td>Interest coverage ratio</td><td><span class='tag yes'>ja</span></td><td><small>Zinsdeckungsgrad, Gewicht 0,05</small></td></tr><tr><td class='num'>22</td><td>Return on equity ratio</td><td><span class='tag no'>nein</span></td><td><small>Bei duennem oder negativem Buchkapital instabil bis irrefuehrend - und genau das ist im inhabergefuehrten Mittelstand haeufig</small></td></tr><tr><td class='num'>23</td><td>Return on capital employed</td><td><span class='tag part'>teilweise</span></td><td><small>Ueber die Gesamtkapitalrentabilitaet</small></td></tr><tr><td class='num'>24</td><td>Net profit margin</td><td><span class='tag yes'>ja</span></td><td><small>EBIT-Marge, Gewicht 0,09</small></td></tr><tr><td class='num'>25</td><td>Turnover evolution</td><td><span class='tag part'>teilweise</span></td><td><small>Wird berechnet und im Bericht ausgewiesen, aber nicht gewichtet: ein Jahresvergleich traegt keine Gewichtung</small></td></tr></tbody></table></div>
+</section>
+
+<section class="pagebreak">
+  <span class="eyebrow">Abschnitt 4</span>
+  <h2><span class="n">04</span>Faktoren und Gewichte</h2>
+  <p>Die Gewichte summieren sich auf 100%. Faellt ein Faktor mangels
+  Daten aus, werden die verbleibenden Gewichte proportional hochgerechnet; der
+  Bericht weist die erreichte Abdeckung aus. Eine duenne Akte wird dadurch nicht
+  bestraft &ndash; sie wird als duenn gekennzeichnet.</p>
+  <div class="tablewrap"><table><thead><tr><th>Faktor</th><th class='num'>Gewicht</th><th>Art</th><th>Regulatorische Herkunft</th></tr></thead><tbody><tr><td><b>Eigenkapitalquote (wirtschaftlich)</b><br><small class='muted'><code>eigenkapitalquote</code></small></td><td class='num'>16%</td><td><span class="tag cal">kalibriert</span></td><td><small>EBA Anh. 3 Nr. 6; Bundesbank-Modellkennzahl</small></td></tr><tr><td><b>Kapitaldienstfaehigkeit inkl. neuer Finanzierung (DSCR)</b><br><small class='muted'><code>kapitaldienstfaehigkeit_inkl_neu</code></small></td><td class='num'>20%</td><td><span class="tag con">Konvention</span></td><td><small>EBA Anh. 3 Nr. 14, 19; MaRisk BTO 1.2.1 Tz. 1</small></td></tr><tr><td><b>Dynamischer Verschuldungsgrad (Nettoverschuldung / EBITDA)</b><br><small class='muted'><code>dynamischer_verschuldungsgrad</code></small></td><td class='num'>11%</td><td><span class="tag con">Konvention</span></td><td><small>EBA Anh. 3 Nr. 10; Bundesbank-Zusatzkennzahl</small></td></tr><tr><td><b>EBIT-Marge</b><br><small class='muted'><code>ebit_marge</code></small></td><td class='num'>9%</td><td><span class="tag cal">kalibriert</span></td><td><small>EBA Anh. 3 Nr. 24; Bundesbank-Modellkennzahl</small></td></tr><tr><td><b>Liquiditaet 2. Grades</b><br><small class='muted'><code>liquiditaet_2_grades</code></small></td><td class='num'>7%</td><td><span class="tag cal">kalibriert</span></td><td><small>EBA Anh. 3 Nr. 16; Bundesbank-Modellkennzahl</small></td></tr><tr><td><b>Zinsdeckungsgrad (EBIT / Zinsaufwand)</b><br><small class='muted'><code>zinsdeckungsgrad</code></small></td><td class='num'>5%</td><td><span class="tag con">Konvention</span></td><td><small>EBA Anh. 3 Nr. 21</small></td></tr><tr><td><b>Gesamtkapitalrentabilitaet (Jahresergebnis + Zinsaufwand)</b><br><small class='muted'><code>gesamtkapitalrentabilitaet_bbk</code></small></td><td class='num'>5%</td><td><span class="tag cal">kalibriert</span></td><td><small>EBA Anh. 3 Nr. 18</small></td></tr><tr><td><b>Anlagendeckungsgrad II</b><br><small class='muted'><code>anlagendeckungsgrad_ii</code></small></td><td class='num'>5%</td><td><span class="tag cal">kalibriert</span></td><td><small>Goldene Bilanzregel; Bundesbank-Verhaeltniszahl</small></td></tr><tr><td><b>Kreditorenlaufzeit</b><br><small class='muted'><code>kreditorenlaufzeit_tage</code></small></td><td class='num'>4%</td><td><span class="tag cal">kalibriert</span></td><td><small>Bundesbank-Zusatzkennzahl (Kreditorenziel)</small></td></tr><tr><td><b>Kontokorrent-Auslastung</b><br><small class='muted'><code>kontokorrent_auslastung</code></small></td><td class='num'>5%</td><td><span class="tag con">Konvention</span></td><td><small>EBA Tz. 121 d (Inanspruchnahme zugesagter Linien)</small></td></tr><tr><td><b>Aktualitaet der BWA</b><br><small class='muted'><code>bwa_age_months</code></small></td><td class='num'>4%</td><td><span class="tag con">Konvention</span></td><td><small>EBA Anh. 2 B Nr. 3 (Aktualitaet der Rechnungslegung)</small></td></tr><tr><td><b>Creditreform Bonitaetsindex</b><br><small class='muted'><code>creditreform_bonitaetsindex</code></small></td><td class='num'>5%</td><td><span class="tag con">Konvention</span></td><td><small>EBA Anh. 2 B Nr. 8, 9 (externe Auskunft/Rating)</small></td></tr><tr><td><b>Zahlungsverhalten</b><br><small class='muted'><code>zahlungsverhalten</code></small></td><td class='num'>4%</td><td><span class="tag con">Konvention</span></td><td><small>EBA Tz. 121 d (Zahlungsverhalten, Steuer-/Sozialabgaben)</small></td></tr></tbody></table></div>
+  <div class="note ">
+    <b>Eine Ausnahme von der Umverteilung.</b> Ist das EBITDA null oder negativ,
+    ist der dynamische Verschuldungsgrad rechnerisch nicht definiert. Der Faktor
+    wird dann nicht weggelassen, sondern mit null Punkten bewertet: ein
+    Unternehmen ohne operativen Ueberschuss kann seine Schulden nicht aus dem
+    Geschaeft zurueckfuehren, und ein Weglassen wuerde genau den Fall
+    schoenrechnen, auf den es ankommt.</div>
+  <div class="note ">
+    <b>Warum Sicherheiten nicht bewertet werden.</b> EBA Tz. 120: Sicherheiten
+    sind der zweite Ausweg, nicht die primaere Rueckzahlungsquelle, und duerfen
+    eine Kreditvergabe nicht fuer sich rechtfertigen. Eine Besicherungsluecke
+    erscheint deshalb als Befund und Massnahme im Bericht, aber nicht als
+    punktewirksamer Faktor.</div>
+</section>
+
+<section class="pagebreak">
+  <span class="eyebrow">Abschnitt 5</span>
+  <h2><span class="n">05</span>Schwellenwerte im Einzelnen</h2>
+  <p>Zwischen zwei Stuetzstellen wird linear interpoliert, ausserhalb wird
+  gekappt. Damit ist jeder Punktwert von Hand nachrechenbar &ndash; das ist der
+  Grund fuer diese Konstruktion und nicht ein Nebeneffekt.</p>
+  <div class="tablewrap"><table class='thresholds'><thead><tr><th style='width:48mm'>Faktor</th><th>Stuetzstellen (Kennzahlenwert = Punkte, linear interpoliert)</th></tr></thead><tbody><tr><td><b>Eigenkapitalquote (wirtschaftlich)</b><br><small class='muted'>Bundesbank: Eigenmittel / Bilanzsumme</small></td><td><code>-20,0%</code> = 0 &nbsp;&rarr;&nbsp; <code>0,0%</code> = 25 &nbsp;&rarr;&nbsp; <code>5,0%</code> = 38 &nbsp;&rarr;&nbsp; <code>14,8%</code> = 58 &nbsp;&rarr;&nbsp; <code>35,1%</code> = 70 &nbsp;&rarr;&nbsp; <code>56,9%</code> = 82 &nbsp;&rarr;&nbsp; <code>80,0%</code> = 95 &nbsp;&rarr;&nbsp; <code>100,0%</code> = 100</td></tr><tr><td><b>Kapitaldienstfaehigkeit inkl. neuer Finanzierung (DSCR)</b><br><small class='muted'>Konvention</small></td><td><code>0,70x</code> = 0 &nbsp;&rarr;&nbsp; <code>0,90x</code> = 12 &nbsp;&rarr;&nbsp; <code>1,00x</code> = 25 &nbsp;&rarr;&nbsp; <code>1,10x</code> = 42 &nbsp;&rarr;&nbsp; <code>1,20x</code> = 58 &nbsp;&rarr;&nbsp; <code>1,30x</code> = 72 &nbsp;&rarr;&nbsp; <code>1,50x</code> = 88 &nbsp;&rarr;&nbsp; <code>2,00x</code> = 100</td></tr><tr><td><b>Dynamischer Verschuldungsgrad (Nettoverschuldung / EBITDA)</b><br><small class='muted'>Konvention</small></td><td><code>0,00x</code> = 100 &nbsp;&rarr;&nbsp; <code>1,00x</code> = 95 &nbsp;&rarr;&nbsp; <code>2,00x</code> = 88 &nbsp;&rarr;&nbsp; <code>3,00x</code> = 75 &nbsp;&rarr;&nbsp; <code>3,50x</code> = 65 &nbsp;&rarr;&nbsp; <code>4,00x</code> = 55 &nbsp;&rarr;&nbsp; <code>5,00x</code> = 38 &nbsp;&rarr;&nbsp; <code>6,00x</code> = 25 &nbsp;&rarr;&nbsp; <code>8,00x</code> = 10 &nbsp;&rarr;&nbsp; <code>12,00x</code> = 0</td></tr><tr><td><b>EBIT-Marge</b><br><small class='muted'>Bundesbank: Ergebnis vor Steuern / Umsatz</small></td><td><code>-10,0%</code> = 0 &nbsp;&rarr;&nbsp; <code>-5,0%</code> = 12 &nbsp;&rarr;&nbsp; <code>-2,0%</code> = 28 &nbsp;&rarr;&nbsp; <code>0,0%</code> = 45 &nbsp;&rarr;&nbsp; <code>1,4%</code> = 58 &nbsp;&rarr;&nbsp; <code>4,8%</code> = 70 &nbsp;&rarr;&nbsp; <code>10,0%</code> = 82 &nbsp;&rarr;&nbsp; <code>18,0%</code> = 95 &nbsp;&rarr;&nbsp; <code>25,0%</code> = 100</td></tr><tr><td><b>Liquiditaet 2. Grades</b><br><small class='muted'>Bundesbank: Liquiditaet 2. Grades</small></td><td><code>0,0%</code> = 0 &nbsp;&rarr;&nbsp; <code>20,0%</code> = 25 &nbsp;&rarr;&nbsp; <code>30,0%</code> = 40 &nbsp;&rarr;&nbsp; <code>45,8%</code> = 58 &nbsp;&rarr;&nbsp; <code>91,7%</code> = 70 &nbsp;&rarr;&nbsp; <code>216,3%</code> = 82 &nbsp;&rarr;&nbsp; <code>400,0%</code> = 95 &nbsp;&rarr;&nbsp; <code>600,0%</code> = 100</td></tr><tr><td><b>Zinsdeckungsgrad (EBIT / Zinsaufwand)</b><br><small class='muted'>Konvention</small></td><td><code>0,00x</code> = 0 &nbsp;&rarr;&nbsp; <code>1,00x</code> = 20 &nbsp;&rarr;&nbsp; <code>1,50x</code> = 35 &nbsp;&rarr;&nbsp; <code>2,00x</code> = 50 &nbsp;&rarr;&nbsp; <code>3,00x</code> = 70 &nbsp;&rarr;&nbsp; <code>5,00x</code> = 88 &nbsp;&rarr;&nbsp; <code>8,00x</code> = 100</td></tr><tr><td><b>Gesamtkapitalrentabilitaet (Jahresergebnis + Zinsaufwand)</b><br><small class='muted'>Bundesbank: (Jahresergebnis + Zins) / Bilanzsumme</small></td><td><code>-5,0%</code> = 0 &nbsp;&rarr;&nbsp; <code>0,0%</code> = 30 &nbsp;&rarr;&nbsp; <code>2,4%</code> = 58 &nbsp;&rarr;&nbsp; <code>6,9%</code> = 70 &nbsp;&rarr;&nbsp; <code>13,4%</code> = 82 &nbsp;&rarr;&nbsp; <code>22,0%</code> = 95 &nbsp;&rarr;&nbsp; <code>30,0%</code> = 100</td></tr><tr><td><b>Anlagendeckungsgrad II</b><br><small class='muted'>Bundesbank: Langfr. Kapital / Anlagevermoegen</small></td><td><code>50,0%</code> = 0 &nbsp;&rarr;&nbsp; <code>80,0%</code> = 12 &nbsp;&rarr;&nbsp; <code>100,0%</code> = 30 &nbsp;&rarr;&nbsp; <code>122,0%</code> = 58 &nbsp;&rarr;&nbsp; <code>218,2%</code> = 70 &nbsp;&rarr;&nbsp; <code>464,4%</code> = 82 &nbsp;&rarr;&nbsp; <code>800,0%</code> = 95 &nbsp;&rarr;&nbsp; <code>1.200,0%</code> = 100</td></tr><tr><td><b>Kreditorenlaufzeit</b><br><small class='muted'>Bundesbank: Verb. aus LuL / Materialaufwand</small></td><td><code>0,0</code> = 82 &nbsp;&rarr;&nbsp; <code>15,1</code> = 82 &nbsp;&rarr;&nbsp; <code>27,2</code> = 70 &nbsp;&rarr;&nbsp; <code>49,5</code> = 58 &nbsp;&rarr;&nbsp; <code>75,0</code> = 38 &nbsp;&rarr;&nbsp; <code>100,0</code> = 20 &nbsp;&rarr;&nbsp; <code>120,0</code> = 0</td></tr><tr><td><b>Kontokorrent-Auslastung</b><br><small class='muted'>Konvention</small></td><td><code>0,0%</code> = 100 &nbsp;&rarr;&nbsp; <code>30,0%</code> = 92 &nbsp;&rarr;&nbsp; <code>50,0%</code> = 80 &nbsp;&rarr;&nbsp; <code>70,0%</code> = 62 &nbsp;&rarr;&nbsp; <code>80,0%</code> = 45 &nbsp;&rarr;&nbsp; <code>90,0%</code> = 28 &nbsp;&rarr;&nbsp; <code>100,0%</code> = 10 &nbsp;&rarr;&nbsp; <code>110,0%</code> = 0</td></tr><tr><td><b>Aktualitaet der BWA</b><br><small class='muted'>Konvention</small></td><td><code>1,0</code> = 100 &nbsp;&rarr;&nbsp; <code>2,0</code> = 90 &nbsp;&rarr;&nbsp; <code>3,0</code> = 72 &nbsp;&rarr;&nbsp; <code>4,0</code> = 55 &nbsp;&rarr;&nbsp; <code>6,0</code> = 32 &nbsp;&rarr;&nbsp; <code>9,0</code> = 12 &nbsp;&rarr;&nbsp; <code>12,0</code> = 0</td></tr><tr><td><b>Creditreform Bonitaetsindex</b><br><small class='muted'>Konvention</small></td><td><code>100</code> = 100 &nbsp;&rarr;&nbsp; <code>150</code> = 95 &nbsp;&rarr;&nbsp; <code>200</code> = 85 &nbsp;&rarr;&nbsp; <code>250</code> = 72 &nbsp;&rarr;&nbsp; <code>300</code> = 55 &nbsp;&rarr;&nbsp; <code>350</code> = 35 &nbsp;&rarr;&nbsp; <code>400</code> = 18 &nbsp;&rarr;&nbsp; <code>500</code> = 5 &nbsp;&rarr;&nbsp; <code>600</code> = 0</td></tr><tr><td><b>Zahlungsverhalten</b><br><small class='muted'>Konvention</small></td><td><code>0</code> = 0 &nbsp;&rarr;&nbsp; <code>100</code> = 100</td></tr></tbody></table></div>
+</section>
+
+<section class="pagebreak">
+  <span class="eyebrow">Abschnitt 6</span>
+  <h2><span class="n">06</span>Woher die Schwellenwerte stammen</h2>
+  <h3>Kalibrierte Faktoren</h3>
+  <p>Sechs der 13 Faktoren &ndash; zusammen 46% des
+  Gewichts &ndash; sind an die <b>Quartilswerte der Jahresabschlussstatistik der
+  Deutschen Bundesbank</b> (Verhaeltniszahlen) gebunden: alle Branchen, die
+  Umsatzgroessenklassen 2&ndash;10 Mio. und 10&ndash;50 Mio. EUR im Mittel,
+  juengstes Berichtsjahr. Datenstand: Deutsche Bundesbank, Jahresabschlussstatistik (Verhaeltniszahlen), Ausgabe 2026, Berichtsjahr 2023, Quartilswerte.</p>
+  <p>Die Verankerung lautet:</p>
+  <div class="kv"><div><b>25. Perzentil</b><small>= 58 Punkte (Untergrenze Stufe C)</small></div><div><b>Median</b><small>= 70 Punkte (Mitte Stufe B)</small></div><div><b>75. Perzentil</b><small>= 82 Punkte (Stufe A)</small></div></div>
+  <p>Die Begruendung ist einen Schritt lang: die EZB-Unternehmensbefragung
+  SAFE weist rund 14% der Antragsteller als in erheblichen
+  Finanzierungsschwierigkeiten aus. Ein Unternehmen im Median seiner
+  Groessenklasse gehoert also nicht zu den Problemfaellen, sondern ist
+  finanzierbar &ndash; Stufe B. Eine reine Perzentilabbildung wuerde den
+  Medianbetrieb auf 50 Punkte setzen und damit behaupten, die Haelfte des
+  deutschen Mittelstands sei ein Grenzfall. Das waere empirisch falsch.</p>
+  <div class="note ">
+    <b>Bei &bdquo;je niedriger, desto besser&ldquo; drehen sich die Anker um.</b>
+    Fuer die Kreditorenlaufzeit ist das 25. Perzentil das gute Ende; die
+    Zuordnung lautet dort 25. Perzentil = 82, Median = 70, 75. Perzentil = 58.
+    Diese Kurve ist ausserdem die einzige, die bei 82 Punkten gedeckelt ist:
+    schnelles Bezahlen ist kein Bonitaetsbeleg, sondern nur das Fehlen eines
+    Warnsignals.</div>
+  <p><b>Enden jenseits der Quartile.</b> Die Statistik liefert drei Punkte,
+  keine Verteilung. Die Kurvenenden sind daher nicht extrapoliert, sondern auf
+  wirtschaftlich bedeutsame Grenzen gezogen &ndash; Eigenkapital null, Marge
+  negativ, Anlagendeckung unter 100%.</p>
+  <h3>Nicht kalibrierte Faktoren</h3>
+  <p>Fuer die uebrigen Faktoren enthaelt die Publikation keine vergleichbare
+  Reihe. Ihre Kurven sind begruendete Konvention und als solche gekennzeichnet:
+  Kapitaldienstfaehigkeit, dynamischer Verschuldungsgrad, Zinsdeckungsgrad,
+  Kontokorrent-Auslastung, Aktualitaet der BWA, Creditreform-Index und
+  Zahlungsverhalten.</p>
+  <div class="note ">
+    <b>Eine Uebersetzung, die bewusst unterbleibt.</b> Die Bundesbank
+    veroeffentlicht &bdquo;Cashflow in % der Nettofremdmittel&ldquo;. Das ist
+    <i>nicht</i> unser dynamischer Verschuldungsgrad: anderer Zaehler (Cashflow
+    nach Zins und Steuern statt EBITDA) und ein weit breiterer Nenner
+    (saemtliche Verbindlichkeiten statt nur der Finanzschulden). Eine Umrechnung
+    waere eine als Kalibrierung verkleidete Schaetzung. Der Faktor bleibt daher
+    Konvention &ndash; und ist der erste Kandidat fuer eine Revision, sobald das
+    Ergebnisprotokoll genug echte Platzierungen enthaelt.</div>
+</section>
+
+<section class="pagebreak">
+  <span class="eyebrow">Abschnitt 7</span>
+  <h2><span class="n">07</span>Von Punkten zu Stufen</h2>
+  <div class="tablewrap"><table><thead><tr><th style='width:14mm'>Stufe</th><th class='num' style='width:26mm'>Punkte</th><th>Bedeutung</th></tr></thead><tbody><tr><td><span class='band A'>A</span></td><td class='num'>78,0 &ndash; 100,0</td><td>Voraussichtlich zu Standardkonditionen finanzierbar</td></tr><tr><td><span class='band B'>B</span></td><td class='num'>65,0 &ndash; 78,0</td><td>Finanzierbar; Konditionen wahrscheinlich verbesserbar</td></tr><tr><td><span class='band C'>C</span></td><td class='num'>52,0 &ndash; 65,0</td><td>Grenzfall - typische Ablehnungs- und Fehlbepreisungszone</td></tr><tr><td><span class='band D'>D</span></td><td class='num'>38,0 &ndash; 52,0</td><td>Ablehnung wahrscheinlich ohne Restrukturierung oder Buergschaft</td></tr><tr><td><span class='band E'>E</span></td><td class='num'>0,0 &ndash; 38,0</td><td>Substanzielle Bonitaetsschwaeche</td></tr></tbody></table></div>
+  <div class="note warn">
+    <b>Die Stufengrenzen selbst sind nicht empirisch hergeleitet.</b> Sie sind
+    so gesetzt, dass der Medianbetrieb in Stufe B und das untere Quartil in
+    Stufe C liegt &ndash; also aus derselben SAFE-Ueberlegung wie die
+    Faktorenanker, nicht aus beobachteten Ablehnungsquoten. Wer diese Zuordnung
+    angreift, greift zu Recht die schwaechste Stelle des Verfahrens an. Sie
+    aendert sich, sobald genug dokumentierte Kreditentscheidungen vorliegen.</div>
+</section>
+
+<section>
+  <span class="eyebrow">Abschnitt 8</span>
+  <h2><span class="n">08</span>Szenariorechnung</h2>
+  <p>Eine Stichtagskennzahl aus dem Vorjahresabschluss beantwortet die
+  falsche Frage. Der Kreditgeber will nicht wissen, wie das Unternehmen am 31.
+  Dezember aussah, sondern ob es den Kapitaldienst auch dann noch traegt, wenn
+  es schlechter laeuft. Beide Aufsichtsquellen verlangen das ausdruecklich
+  (EBA Tz. 131 und 156&ndash;158, MaRisk BTO 1.2.1 Tz. 1).</p>
+  <div class="tablewrap"><table><thead><tr><th style='width:52mm'>Szenario</th><th>Annahme und Fundstelle</th></tr></thead><tbody><tr><td><b>Zinsanstieg +200 Basispunkte</b></td><td><small>Alle Kreditlinien verteuern sich um 2,00 Prozentpunkte (EBA/GL/2020/06 Tz. 158 k). Zum Vergleich: im adversen Szenario des EU-weiten Stresstests 2025 steigen die deutschen Langfristzinsen um rund 1,1 Prozentpunkte - hier wird also haerter gerechnet.</small></td></tr><tr><td><b>Umsatzrueckgang 10%</b></td><td><small>Umsatz -10%, davon 65% variable Kosten, die mitgehen; Fixkosten bleiben (EBA/GL/2020/06 Tz. 158 a). Groessenordnung angelehnt an das adverse Szenario des EU-weiten Stresstests 2025, das fuer Deutschland ein kumuliert 7,5% niedrigeres BIP unterstellt.</small></td></tr><tr><td><b>Kombiniert: Umsatz -10% und Zins +200 bp</b></td><td><small>Beide Ereignisse gleichzeitig (EBA/GL/2020/06 Tz. 156 laesst die Mehrfaktor-Betrachtung ausdruecklich zu).</small></td></tr></tbody></table></div>
+  <h3>Wie der Schock durch den Abschluss gerechnet wird</h3>
+  <p>Der Mechanismus folgt dem veroeffentlichten Vorgehen der Deutschen
+  Bundesbank zur Stressrechnung im eigenen Bonitaetsanalysesystem
+  (Technical Paper 02/2023, Abschnitt 5.2). Dort wird eine Kostenposition
+  gestresst; die Verrechnung ist unabhaengig davon, welcher Schock es ist:</p>
+  <ul>
+    <li>Mehrkosten beziehungsweise Deckungsbeitragsverlust ermitteln;</li>
+    <li>Finanzierung zuerst aus liquiden Mitteln, danach ueber eine kurzfristige
+      Bankverbindlichkeit;</li>
+    <li>Zinsaufwand auf die neue Inanspruchnahme zum bisherigen Durchschnittssatz
+      erhoehen, weil die Zinslast selbst bonitaetsrelevant ist;</li>
+    <li>Steueraufwand mit dem unternehmenseigenen effektiven Satz mindern
+      (nie unter null);</li>
+    <li>vermindertes Ergebnis ins Eigenkapital durchbuchen;</li>
+    <li>saemtliche Kennzahlen auf dem gestressten Abschluss neu rechnen.</li>
+  </ul>
+  <div class="note ">
+    <b>Der Zinsschock trifft die Kreditvertraege, nicht nur die GuV.</b>
+    Tz. 158 k spricht von einer Erhoehung &bdquo;on all credit facilities of the
+    borrower&ldquo;. Verteuert wuerde nur die Zinszeile, bliebe der Kapitaldienst
+    &ndash; und damit die Kapitaldienstfaehigkeit, die entscheidende Kennzahl
+    &ndash; unveraendert. Deshalb wird der Zinssatz jedes einzelnen Darlehens
+    erhoeht.</div>
+  <div class="note warn">
+    <b>Was die Szenariorechnung nicht ist.</b> Keine Prognose und keine
+    Wahrscheinlichkeitsaussage. Sie sagt: unter diesen benannten Annahmen
+    verschiebt sich die Stufe von X nach Y. Die Annahmen stehen im Bericht neben
+    dem Ergebnis, damit der Unternehmer ihnen widersprechen kann &ndash; er kennt
+    seinen variablen Kostenanteil besser als wir.</div>
+</section>
+
+<section>
+  <span class="eyebrow">Abschnitt 9</span>
+  <h2><span class="n">09</span>Ausschlusskriterien</h2>
+  <p>Eine gewichtete Punktzahl beantwortet die Frage, wie sich eine Akte
+  insgesamt liest. Sie kann nicht beantworten, ob darin etwas steht, das das
+  Gespraech unabhaengig vom Gesamtergebnis beendet &ndash; ein gewichteter
+  Mittelwert laesst einen starken Faktor einen fatalen ausgleichen. Das sind
+  zwei verschiedene Fragen und sie brauchen zwei verschiedene Verfahren.</p>
+  <p>Diese 8 Kriterien werden deshalb getrennt geprueft und getrennt
+  berichtet, vor den Kennzahlen. Keiner der Schwellenwerte stammt von uns:</p>
+  <div class="tablewrap"><table><thead><tr><th class='num' style='width:13mm'>Code</th><th style='width:44mm'>Kriterium</th><th style='width:48mm'>Bedingung</th><th>Grundlage</th></tr></thead><tbody><tr><td class='num'>KO01</td><td><b>Verlust der Haelfte des Stammkapitals</b></td><td><small>Bilanzielles Eigenkapital &lt; 50% des gezeichneten Kapitals</small></td><td><small>49 Abs. 3 GmbHG; Banque de France Note 4-/6</small></td></tr><tr><td class='num'>KO02</td><td><b>Bilanzielle Ueberschuldung</b></td><td><small>Bilanzielles Eigenkapital negativ</small></td><td><small>19 InsO; EBA/GL/2020/06 Tz. 128 a</small></td></tr><tr><td class='num'>KO03</td><td><b>Kontokorrentlinie ueberzogen</b></td><td><small>Inanspruchnahme &gt; eingeraeumte Linie</small></td><td><small>Artikel 178 CRR (Ausfalldefinition)</small></td></tr><tr><td class='num'>KO04</td><td><b>Steuerrueckstaende</b></td><td><small>Rueckstaende gegenueber dem Finanzamt</small></td><td><small>EBA/GL/2020/06 Tz. 121 d</small></td></tr><tr><td class='num'>KO05</td><td><b>Ruecklastschriften</b></td><td><small>Ruecklastschriften in den letzten 12 Monaten; ab 3 schwerwiegend</small></td><td><small>Banque de France Note 8</small></td></tr><tr><td class='num'>KO06</td><td><b>Verlustserie</b></td><td><small>Jahresfehlbetrag im laufenden und im Vorjahr</small></td><td><small>Banque de France Note 6</small></td></tr><tr><td class='num'>KO07</td><td><b>Zinslast bindet das EBITDA</b></td><td><small>Zinsaufwand &gt;= 50% des EBITDA; ab 100% schwerwiegend</small></td><td><small>Banque de France Note 6</small></td></tr><tr><td class='num'>KO08</td><td><b>Jahresabschluss zu alt</b></td><td><small>Juengster Abschluss &gt;= 23 Monate alt</small></td><td><small>Banque de France Note X</small></td></tr></tbody></table></div>
+  <div class="note stop">
+    <b>Diese Pruefung ist keine rechtliche Beurteilung.</b> Ob sich aus einem
+    Befund Pflichten ergeben &ndash; etwa nach 49 Abs. 3 GmbHG oder 15a InsO
+    &ndash; haengt an einer Fortfuehrungsprognose, die dieses Verfahren nicht
+    leisten kann und nicht zu leisten vorgibt. Der Bericht benennt den Zustand
+    und verweist die Bewertung an den Steuerberater oder einen Rechtsanwalt.</div>
+  <div class="note ">
+    <b>Warum ein sauberes Ergebnis eine eigene Aussage ist.</b> &bdquo;Keines
+    dieser Kriterien liegt vor&ldquo; ist nicht dasselbe wie eine gute
+    Bewertung. Es bedeutet, dass ueber Konditionen ueberhaupt gesprochen werden
+    kann &ndash; und genau das ist die Information, die ein Unternehmer vor der
+    Antragstellung braucht.</div>
+</section>
+
+<section class="pagebreak">
+  <span class="eyebrow">Abschnitt 10</span>
+  <h2><span class="n">10</span>Rechenweg an einem Beispiel</h2>
+  <p>Vollstaendiger Durchlauf am fiktiven Musterfall Mueller
+  Praezisionstechnik GmbH. Alle Werte sind aus dem laufenden System erzeugt,
+  nicht abgeschrieben.</p>
+  <div class="tablewrap"><table><thead><tr><th>Faktor</th><th class='num'>Wert</th><th class='num'>Punkte</th><th class='num'>Gewicht</th><th class='num'>Beitrag</th><th></th></tr></thead><tbody><tr><td>Eigenkapitalquote (wirtschaftlich)</td><td class='num'>10,1%</td><td class='num'>48,5</td><td class='num'>16%</td><td class='num'><b>7,76</b></td><td></td></tr><tr><td>Kapitaldienstfaehigkeit inkl. neuer Finanzierung (DSCR)</td><td class='num'>1,50x</td><td class='num'>88,0</td><td class='num'>20%</td><td class='num'><b>17,60</b></td><td></td></tr><tr><td>Dynamischer Verschuldungsgrad (Nettoverschuldung / EBITDA)</td><td class='num'>3,34x</td><td class='num'>68,1</td><td class='num'>11%</td><td class='num'><b>7,49</b></td><td></td></tr><tr><td>EBIT-Marge</td><td class='num'>4,6%</td><td class='num'>69,6</td><td class='num'>9%</td><td class='num'><b>6,26</b></td><td></td></tr><tr><td>Liquiditaet 2. Grades</td><td class='num'>99,3%</td><td class='num'>70,7</td><td class='num'>7%</td><td class='num'><b>4,95</b></td><td></td></tr><tr><td>Zinsdeckungsgrad (EBIT / Zinsaufwand)</td><td class='num'>4,00x</td><td class='num'>79,0</td><td class='num'>5%</td><td class='num'><b>3,95</b></td><td></td></tr><tr><td>Gesamtkapitalrentabilitaet (Jahresergebnis + Zinsaufwand)</td><td class='num'>7,4%</td><td class='num'>71,0</td><td class='num'>5%</td><td class='num'><b>3,55</b></td><td></td></tr><tr><td>Anlagendeckungsgrad II</td><td class='num'>97,0%</td><td class='num'>27,3</td><td class='num'>5%</td><td class='num'><b>1,36</b></td><td></td></tr><tr><td>Kreditorenlaufzeit</td><td class='num'>59,4</td><td class='num'>50,3</td><td class='num'>4%</td><td class='num'><b>2,01</b></td><td></td></tr><tr><td>Kontokorrent-Auslastung</td><td class='num'>84,0%</td><td class='num'>38,2</td><td class='num'>5%</td><td class='num'><b>1,91</b></td><td></td></tr><tr><td>Aktualitaet der BWA</td><td class='num'>5,0</td><td class='num'>43,5</td><td class='num'>4%</td><td class='num'><b>1,74</b></td><td></td></tr><tr><td>Creditreform Bonitaetsindex</td><td class='num'>248</td><td class='num'>72,5</td><td class='num'>5%</td><td class='num'><b>3,63</b></td><td></td></tr><tr><td>Zahlungsverhalten</td><td class='num'>70</td><td class='num'>70,0</td><td class='num'>4%</td><td class='num'><b>2,80</b></td><td></td></tr><tr><td colspan='4'><b>Gesamtergebnis</b></td><td class='num'><b>65,0</b></td><td><span class='band B'>B</span></td></tr></tbody></table></div>
+  <p>Die Szenariorechnung zum selben Fall:</p>
+  <div class="tablewrap"><table><thead><tr><th>Szenario</th><th class='num'>Punkte</th><th>Stufe</th><th class='num'>Delta</th></tr></thead><tbody><tr><td>Ausgangslage</td><td class='num'>65,0</td><td><span class='band B'>B</span></td><td class='num'>&ndash;</td></tr><tr><td>Zinsanstieg +200 Basispunkte</td><td class='num'>62,4</td><td><span class='band C'>C</span></td><td class='num'>-2,6</td></tr><tr><td>Umsatzrueckgang 10%</td><td class='num'>35,8</td><td><span class='band E'>E</span></td><td class='num'>-29,2</td></tr><tr><td>Kombiniert: Umsatz -10% und Zins +200 bp</td><td class='num'>34,5</td><td><span class='band E'>E</span></td><td class='num'>-30,5</td></tr></tbody></table></div>
+  <p>Die Lesart: der Betrieb ist zum Stichtag finanzierbar (Stufe B), haelt
+  aber einen Umsatzrueckgang von 10% nicht aus, weil die Kapitaldienstfaehigkeit
+  dann unter 1,0 faellt. Das ist die Information, die im Kreditgespraech ohnehin
+  auftaucht &ndash; nur eben ohne Vorbereitung.</p>
+</section>
+
+<section>
+  <span class="eyebrow">Abschnitt 11</span>
+  <h2><span class="n">11</span>Grenzen des Verfahrens</h2>
+  <p>Vollstaendige Aufzaehlung dessen, was dieses Verfahren nicht kann. Sie
+  gehoert in dieses Dokument, weil eine Methodenbeschreibung ohne
+  Schwaechenliste als Verkaufsunterlage taugt und sonst zu nichts.</p>
+  <ul>
+    <li><b>Keine Ausfallvalidierung.</b> Die Gewichte und Stufengrenzen sind an
+    Verteilungen und an Fachurteil verankert, nicht an beobachteten Ausfaellen.
+    Es gibt bislang keine Ergebnisdaten, gegen die sich das Verfahren
+    zurueckrechnen liesse.</li>
+    <li><b>Datenstand der Vergleichswerte.</b> Deutsche Bundesbank, Jahresabschlussstatistik (Verhaeltniszahlen), Ausgabe 2026, Berichtsjahr 2023, Quartilswerte. Erfassungsgrad der Umsatzklasse 2-10 Mio EUR rund 14%, 10-50 Mio EUR rund 42% -- kleinere Unternehmen sind im Datenpool der Bundesbank unterrepraesentiert.</li>
+    <li><b>Qualitative Faktoren fehlen weitgehend.</b> MaRisk BTO 1.4 Tz. 3
+    verlangt qualitative Kriterien. Abgedeckt sind nur Aktualitaet der
+    Rechnungslegung, externe Auskunft und Zahlungsverhalten. Managementqualitaet,
+    Marktstellung, Kunden- und Lieferantenabhaengigkeit (EBA Tz. 132&ndash;136)
+    gehen nicht in die Punktzahl ein; sie erscheinen als Befund.</li>
+    <li><b>Keine ESG-Bewertung.</b> EBA Tz. 126&ndash;127 verlangt die Beurteilung
+    von ESG-Risiken. Das Verfahren leistet das derzeit nicht.</li>
+    <li><b>Keine Planungsrechnung.</b> EBA Tz. 129 erwartet Finanzprojektionen.
+    Bewertet wird der letzte Abschluss zuzueglich Szenarien; eine fehlende
+    integrierte Planung wird als Befund ausgewiesen, nicht ersetzt.</li>
+    <li><b>Branchenunterscheidung nur im Vergleich.</b> Die Schwellenwerte gelten
+    branchenuebergreifend; nur der Branchenvergleich im Bericht ist
+    branchenspezifisch. Die Bundesbank waehlt ihre Modellkennzahlen dagegen je
+    Branche neu aus.</li>
+    <li><b>Ein Faktor kann ausfallen.</b> Dienstleister ohne Materialaufwand
+    haben keine Kreditorenlaufzeit; das Gewicht wird dann umverteilt und die
+    Abdeckung sinkt entsprechend.</li>
+  </ul>
+</section>
+
+<section>
+  <span class="eyebrow">Abschnitt 12</span>
+  <h2><span class="n">12</span>Aenderungen dieser Fassung</h2>
+  <p>Ergebnis der Auswertung der EBA-Leitlinien, der MaRisk-Erlaeuterungen
+  und der Bundesbank-Veroeffentlichungen:</p>
+  <ul>
+    <li><b>Drei Faktoren neu aufgenommen</b>, alle drei empirisch kalibriert:
+    Gesamtkapitalrentabilitaet (EBA Anhang 3 Nr. 18), Anlagendeckungsgrad II und
+    Kreditorenlaufzeit (beide Bundesbank-Verhaeltniszahlen). Der kalibrierte
+    Gewichtsanteil steigt damit von 40% auf 46%.</li>
+    <li><b>Gewichte neu austariert</b>, damit die Summe 100% bleibt. Die
+    Kapitaldienstfaehigkeit bleibt unveraendert bei 20% und damit das groesste
+    Einzelgewicht &ndash; MaRisk BTO 1.2.1 Tz. 1.</li>
+    <li><b>Szenariorechnung neu eingefuehrt</b> (Abschnitt 8). Das war die
+    groesste Luecke gegenueber den Leitlinien: gefordert in Tz. 131 und
+    156&ndash;158, bisher gar nicht abgebildet.</li>
+    <li><b>Gesamtkapitalrentabilitaet in der Bundesbank-Definition</b>
+    (Jahresergebnis zuzueglich Zinsaufwand) statt auf EBIT-Basis, damit die
+    veroeffentlichten Quartile ohne Umrechnung gelten. Beide Varianten werden
+    berechnet; bewertet wird die uebernommene.</li>
+    <li><b>Zwei bisher ungenutzte Bundesbank-Reihen</b> in den Datensatz
+    aufgenommen, den die Anwendung zur Laufzeit laedt.</li>
+    <li><b>Ausschlusskriterien neu eingefuehrt</b> (Abschnitt 9). Auswertung der
+    EBA-Benchmarking-Berichte, des Rating-Leitfadens der Banque de France und
+    der Ausfalldefinition nach Artikel 178 CRR. Die Punktzahl allein kann
+    K.-o.-Befunde nicht abbilden, weil ein gewichteter Mittelwert sie
+    ausgleicht.</li>
+    <li><b>Kontokorrent-Ueberziehung heraufgestuft.</b> Bisher eine blosse
+    Warnung in der Plausibilitaetspruefung. Nach Artikel 178 CRR gilt ein
+    Kontokorrent als ueberfaellig, sobald die eingeraeumte Linie ueberschritten
+    ist &ndash; das ist ein Ausfallmerkmal, keine Auffaelligkeit.</li>
+    <li><b>Szenariogroessen an der Aufsicht verankert.</b> Der Umsatzrueckgang
+    von 10% war bisher gesetzt; er steht jetzt neben dem adversen Szenario des
+    EU-weiten Stresstests 2025, das fuer Deutschland ein kumuliert 7,5%
+    niedrigeres BIP unterstellt. Umgekehrt zeigt derselbe Vergleich, dass
+    unser Zinsschock von 200 Basispunkten fast doppelt so hart ist wie die
+    dort unterstellten rund 110 Basispunkte.</li>
+  </ul>
+  <div class="note ">
+    <b>Dieses Dokument wird erzeugt, nicht gepflegt.</b> Saemtliche Faktoren,
+    Gewichte, Stuetzstellen, Stufengrenzen, Szenarien und das Rechenbeispiel
+    werden bei jedem Lauf aus den produktiven Modulen gelesen
+    (<code>scripts/build_methodology_pdf.py</code>). Eine Abweichung zwischen
+    diesem Papier und der Anwendung kann es nicht geben.</div>
+</section>
+</div>
+<div data-lang-pane="en" hidden>
+<div class="cover">
+  <div class="logo"><div class="bars"><i></i><i></i><i></i></div><span>Credit Readiness Advisory</span></div>
+  <h1>Scoring Methodology</h1>
+  <div class="sub">Ratios, weights, thresholds and scenario analysis</div>
+  <div class="lede">This document sets out in full how a company's readiness band comes about: which ratios feed it, where every single threshold comes from, and what is deliberately not modelled. It is written so that a tax adviser or a credit analyst can recompute every value and disagree with every assumption.</div>
+  <div class="factbar">
+    <div><b>13</b><small>weighted factors</small></div>
+    <div><b>6</b><small>empirically calibrated</small></div>
+    <div><b>46%</b><small>calibrated weight</small></div>
+    <div><b>3</b><small>stress scenarios</small></div>
+    <div><b>8</b><small>knock-out criteria</small></div>
+  </div>
+</div>
+
+<section>
+  <span class="eyebrow">Section 1</span>
+  <h2><span class="n">01</span>Purpose and scope</h2>
+  
+  <p>The method produces an <b>indicative readiness band</b> (A to E). It
+  describes how a credit application with this data behind it is likely to read
+  to a typical lender &ndash; and which parts of that are changeable.</p>
+  <div class="note stop">
+    <b>What this explicitly is not.</b> Not a rating within the meaning of EU
+    Regulation (EC) No 1060/2009, not a probability of default, not a credit
+    decision and not an offer. No PD is estimated and none is published. Every
+    credit decision is taken solely by the lender concerned, on its own
+    standards.
+  </div>
+  <p>Three construction rules follow from that, and they are enforced in code,
+  not merely asserted here:</p>
+  <ul>
+    <li><b>Traceability.</b> Every factor exposes its raw value, its
+    breakpoints, its weight and the points it contributed. There is no figure
+    that cannot be explained line by line.</li>
+    <li><b>No machine learning.</b> Piecewise-linear interpolation over
+    published thresholds, and nothing else.</li>
+    <li><b>No rating vocabulary.</b> The words are &bdquo;band&ldquo; and
+    &bdquo;indicative&ldquo;.</li>
+  </ul>
+</section>
+
+<section>
+  <span class="eyebrow">Section 2</span>
+  <h2><span class="n">02</span>Regulatory basis</h2>
+  <p>The choice of ratios does not come from a textbook. It comes from
+  three sources that describe what lenders in the euro area are required to
+  examine, and what they in fact examine:</p>
+  <div class="tablewrap"><table><thead><tr><th style="width:52mm">Source</th><th>What is taken from it</th></tr></thead><tbody><tr><td><b>EBA/GL/2020/06</b><br><small class="muted">Guidelines on loan origination and monitoring, in force since 30 June 2021</small></td><td>Annex 3 section B names the metrics an institution should consider for
+        lending to enterprises (section 3). Paragraphs 121 and 128 govern what
+        belongs in the analysis of the financial position; paragraph 120 makes
+        clear that collateral must <i>not</i> be a predominant criterion;
+        paragraphs 131 and 156&ndash;158 require the scenario analysis.</td></tr><tr><td><b>MaRisk (BaFin)</b><br><small class="muted">Circular 10/2021, Annex 1, BTO 1.2</small></td><td>BTO 1.2.1 para. 1 requires the risk factors to be analysed
+        &bdquo;with particular regard to debt service capacity&ldquo; &ndash;
+        which is why debt service coverage carries the largest single weight
+        here. BTO 1.4 para. 3 requires qualitative criteria alongside
+        quantitative ones.</td></tr><tr><td><b>Bundesbank credit assessment system (ICAS)</b><br><small class="muted">Description of the procedure, as at December 2023</small></td><td>The ratios with which a central bank assesses the creditworthiness of
+        German companies from HGB accounts: EBITDA, adjusted total debt,
+        liquidity, return on sales, debt repayment capability, adjusted equity
+        ratio and days payable. Also the empirical distributions (section 6)
+        and the method behind the scenario analysis (section 8).</td></tr></tbody></table></div>
+  <div class="note warn">
+    <b>The most important finding from reading these sources: none of them sets
+    threshold values.</b>
+    EBA Annex 1 requires the institution to <i>define</i> &bdquo;acceptable ...
+    ratio limits&ldquo;, but names no figures. MaRisk governs the process, not
+    the level of any ratio. The supervisor therefore settles <i>which</i> ratios
+    and <i>that</i> limits must exist &ndash; how high is a separate decision
+    that has to be justified on its own. That is precisely why this document
+    presents and evidences the choice of ratios (section 3) and the thresholds
+    (sections 5 and 6) separately.</div>
+</section>
+
+<section class="pagebreak">
+  <span class="eyebrow">Section 3</span>
+  <h2><span class="n">03</span>Mapped against EBA Annex 3</h2>
+  <p>Annex 3 section B of the EBA guidelines lists twenty metrics for
+  lending to enterprises. The guideline requires them to be considered
+  &bdquo;to an extent that is applicable and appropriate to the specific credit
+  proposal&ldquo; (para. 128 e). The table below states, for every one of them,
+  what happens &ndash; including the cases where deliberately nothing does.</p>
+  <div class="tablewrap"><table><thead><tr><th class='num' style='width:9mm'>No.</th><th style='width:46mm'>Metric per EBA Annex 3 B</th><th style='width:17mm'>Covered</th><th>How it is handled</th></tr></thead><tbody><tr><td class='num'>6</td><td>Equity ratio</td><td><span class='tag yes'>yes</span></td><td><small>Equity ratio (economic), weight 0.16</small></td></tr><tr><td class='num'>7</td><td>(Long-term) debt-to-equity ratio</td><td><span class='tag part'>partly</span></td><td><small>Covered through the equity ratio and dynamic gearing; not weighted separately, so that leverage is not counted three times.</small></td></tr><tr><td class='num'>8</td><td>EBITDA</td><td><span class='tag yes'>yes</span></td><td><small>Input to the DSCR, to gearing and to the margin</small></td></tr><tr><td class='num'>9</td><td>Debt yield</td><td><span class='tag no'>no</span></td><td><small>A property metric, for real estate finance</small></td></tr><tr><td class='num'>10</td><td>Interest bearing debt / EBITDA</td><td><span class='tag yes'>yes</span></td><td><small>Dynamic gearing, weight 0.11</small></td></tr><tr><td class='num'>11</td><td>Enterprise value</td><td><span class='tag no'>no</span></td><td><small>Requires market values; not available for private SMEs</small></td></tr><tr><td class='num'>12</td><td>Capitalisation rate</td><td><span class='tag no'>no</span></td><td><small>A property metric, for real estate finance</small></td></tr><tr><td class='num'>13</td><td>Asset quality</td><td><span class='tag part'>partly</span></td><td><small>Through days receivable, days payable and fixed-asset coverage; no metric of its own</small></td></tr><tr><td class='num'>14</td><td>Total debt service coverage ratio</td><td><span class='tag yes'>yes</span></td><td><small>Debt service coverage, weight 0.20</small></td></tr><tr><td class='num'>15</td><td>Cash debt coverage ratio</td><td><span class='tag no'>no</span></td><td><small>Requires a cash flow statement; small companies do not prepare one</small></td></tr><tr><td class='num'>16</td><td>Coverage ratio (current assets / short-term debt)</td><td><span class='tag yes'>yes</span></td><td><small>Quick ratio, weight 0.07 (stricter than the current ratio)</small></td></tr><tr><td class='num'>17</td><td>Future cash flow analysis</td><td><span class='tag part'>partly</span></td><td><small>Through the scenario analysis, not through a forecast</small></td></tr><tr><td class='num'>18</td><td>Return on assets</td><td><span class='tag yes'>yes</span></td><td><small>Return on assets, weight 0.05</small></td></tr><tr><td class='num'>19</td><td>Debt service</td><td><span class='tag yes'>yes</span></td><td><small>The denominator of debt service coverage</small></td></tr><tr><td class='num'>20</td><td>Loan to cost</td><td><span class='tag no'>no</span></td><td><small>A project finance metric</small></td></tr><tr><td class='num'>21</td><td>Interest coverage ratio</td><td><span class='tag yes'>yes</span></td><td><small>Interest coverage, weight 0.05</small></td></tr><tr><td class='num'>22</td><td>Return on equity ratio</td><td><span class='tag no'>no</span></td><td><small>Unstable to the point of being misleading where book equity is thin or negative - which is common in owner-managed SMEs</small></td></tr><tr><td class='num'>23</td><td>Return on capital employed</td><td><span class='tag part'>partly</span></td><td><small>Through return on assets</small></td></tr><tr><td class='num'>24</td><td>Net profit margin</td><td><span class='tag yes'>yes</span></td><td><small>EBIT margin, weight 0.09</small></td></tr><tr><td class='num'>25</td><td>Turnover evolution</td><td><span class='tag part'>partly</span></td><td><small>Computed and shown in the report, but not weighted: a single year-on-year comparison does not carry a weight</small></td></tr></tbody></table></div>
+</section>
+
+<section class="pagebreak">
+  <span class="eyebrow">Section 4</span>
+  <h2><span class="n">04</span>Factors and weights</h2>
+  <p>The weights sum to 100%. Where a factor cannot be computed for
+  want of data, the remaining weights are scaled up proportionally and the
+  report states the coverage achieved. A thin file is not punished for being
+  thin &ndash; it is labelled as thin.</p>
+  <div class="tablewrap"><table><thead><tr><th>Factor</th><th class='num'>Weight</th><th>Type</th><th>Regulatory origin</th></tr></thead><tbody><tr><td><b>Equity ratio (economic)</b><br><small class='muted'><code>eigenkapitalquote</code></small></td><td class='num'>16%</td><td><span class="tag cal">calibrated</span></td><td><small>EBA Annex 3 no. 6; Bundesbank model ratio</small></td></tr><tr><td><b>Debt service coverage incl. new facility (DSCR)</b><br><small class='muted'><code>kapitaldienstfaehigkeit_inkl_neu</code></small></td><td class='num'>20%</td><td><span class="tag con">convention</span></td><td><small>EBA Annex 3 no. 14, 19; MaRisk BTO 1.2.1 para. 1</small></td></tr><tr><td><b>Dynamic gearing (net debt / EBITDA)</b><br><small class='muted'><code>dynamischer_verschuldungsgrad</code></small></td><td class='num'>11%</td><td><span class="tag con">convention</span></td><td><small>EBA Annex 3 no. 10; Bundesbank additional ratio</small></td></tr><tr><td><b>EBIT margin</b><br><small class='muted'><code>ebit_marge</code></small></td><td class='num'>9%</td><td><span class="tag cal">calibrated</span></td><td><small>EBA Annex 3 no. 24; Bundesbank model ratio</small></td></tr><tr><td><b>Quick ratio</b><br><small class='muted'><code>liquiditaet_2_grades</code></small></td><td class='num'>7%</td><td><span class="tag cal">calibrated</span></td><td><small>EBA Annex 3 no. 16; Bundesbank model ratio</small></td></tr><tr><td><b>Interest coverage (EBIT / interest)</b><br><small class='muted'><code>zinsdeckungsgrad</code></small></td><td class='num'>5%</td><td><span class="tag con">convention</span></td><td><small>EBA Annex 3 no. 21</small></td></tr><tr><td><b>Return on assets (net result + interest)</b><br><small class='muted'><code>gesamtkapitalrentabilitaet_bbk</code></small></td><td class='num'>5%</td><td><span class="tag cal">calibrated</span></td><td><small>EBA Annex 3 no. 18</small></td></tr><tr><td><b>Fixed-asset coverage II</b><br><small class='muted'><code>anlagendeckungsgrad_ii</code></small></td><td class='num'>5%</td><td><span class="tag cal">calibrated</span></td><td><small>Golden balance-sheet rule; Bundesbank ratio</small></td></tr><tr><td><b>Days payable outstanding</b><br><small class='muted'><code>kreditorenlaufzeit_tage</code></small></td><td class='num'>4%</td><td><span class="tag cal">calibrated</span></td><td><small>Bundesbank additional ratio (days payable)</small></td></tr><tr><td><b>Overdraft utilisation</b><br><small class='muted'><code>kontokorrent_auslastung</code></small></td><td class='num'>5%</td><td><span class="tag con">convention</span></td><td><small>EBA para. 121 d (drawings on committed lines)</small></td></tr><tr><td><b>Currency of the monthly accounts (BWA)</b><br><small class='muted'><code>bwa_age_months</code></small></td><td class='num'>4%</td><td><span class="tag con">convention</span></td><td><small>EBA Annex 2 B no. 3 (currency of the accounts)</small></td></tr><tr><td><b>Creditreform credit index</b><br><small class='muted'><code>creditreform_bonitaetsindex</code></small></td><td class='num'>5%</td><td><span class="tag con">convention</span></td><td><small>EBA Annex 2 B no. 8, 9 (external report/rating)</small></td></tr><tr><td><b>Payment behaviour</b><br><small class='muted'><code>zahlungsverhalten</code></small></td><td class='num'>4%</td><td><span class="tag con">convention</span></td><td><small>EBA para. 121 d (payment behaviour, tax and social security)</small></td></tr></tbody></table></div>
+  <div class="note ">
+    <b>One exception to the redistribution.</b> Where EBITDA is zero or
+    negative, dynamic gearing is arithmetically undefined. The factor is then
+    not dropped but scored at zero: a company with no operating surplus cannot
+    repay its debt out of the business, and dropping the factor would flatter
+    exactly the case that matters.</div>
+  <div class="note ">
+    <b>Why collateral is not scored.</b> EBA para. 120: collateral is the
+    second way out, not the primary source of repayment, and cannot by itself
+    justify a lending decision. A collateral shortfall therefore appears as a
+    finding and an action in the report, but not as a factor that moves
+    points.</div>
+</section>
+
+<section class="pagebreak">
+  <span class="eyebrow">Section 5</span>
+  <h2><span class="n">05</span>The thresholds in full</h2>
+  <p>Between two breakpoints the score is interpolated linearly; beyond
+  them it is clamped. Every point value can therefore be recomputed by hand
+  &ndash; that is the reason for this construction, not a side effect of it.</p>
+  <div class="tablewrap"><table class='thresholds'><thead><tr><th style='width:48mm'>Factor</th><th>Breakpoints (ratio value = points, linearly interpolated)</th></tr></thead><tbody><tr><td><b>Equity ratio (economic)</b><br><small class='muted'>Bundesbank: Equity / total assets</small></td><td><code>-20,0%</code> = 0 &nbsp;&rarr;&nbsp; <code>0,0%</code> = 25 &nbsp;&rarr;&nbsp; <code>5,0%</code> = 38 &nbsp;&rarr;&nbsp; <code>14,8%</code> = 58 &nbsp;&rarr;&nbsp; <code>35,1%</code> = 70 &nbsp;&rarr;&nbsp; <code>56,9%</code> = 82 &nbsp;&rarr;&nbsp; <code>80,0%</code> = 95 &nbsp;&rarr;&nbsp; <code>100,0%</code> = 100</td></tr><tr><td><b>Debt service coverage incl. new facility (DSCR)</b><br><small class='muted'>Convention</small></td><td><code>0,70x</code> = 0 &nbsp;&rarr;&nbsp; <code>0,90x</code> = 12 &nbsp;&rarr;&nbsp; <code>1,00x</code> = 25 &nbsp;&rarr;&nbsp; <code>1,10x</code> = 42 &nbsp;&rarr;&nbsp; <code>1,20x</code> = 58 &nbsp;&rarr;&nbsp; <code>1,30x</code> = 72 &nbsp;&rarr;&nbsp; <code>1,50x</code> = 88 &nbsp;&rarr;&nbsp; <code>2,00x</code> = 100</td></tr><tr><td><b>Dynamic gearing (net debt / EBITDA)</b><br><small class='muted'>Convention</small></td><td><code>0,00x</code> = 100 &nbsp;&rarr;&nbsp; <code>1,00x</code> = 95 &nbsp;&rarr;&nbsp; <code>2,00x</code> = 88 &nbsp;&rarr;&nbsp; <code>3,00x</code> = 75 &nbsp;&rarr;&nbsp; <code>3,50x</code> = 65 &nbsp;&rarr;&nbsp; <code>4,00x</code> = 55 &nbsp;&rarr;&nbsp; <code>5,00x</code> = 38 &nbsp;&rarr;&nbsp; <code>6,00x</code> = 25 &nbsp;&rarr;&nbsp; <code>8,00x</code> = 10 &nbsp;&rarr;&nbsp; <code>12,00x</code> = 0</td></tr><tr><td><b>EBIT margin</b><br><small class='muted'>Bundesbank: Pre-tax result / revenue</small></td><td><code>-10,0%</code> = 0 &nbsp;&rarr;&nbsp; <code>-5,0%</code> = 12 &nbsp;&rarr;&nbsp; <code>-2,0%</code> = 28 &nbsp;&rarr;&nbsp; <code>0,0%</code> = 45 &nbsp;&rarr;&nbsp; <code>1,4%</code> = 58 &nbsp;&rarr;&nbsp; <code>4,8%</code> = 70 &nbsp;&rarr;&nbsp; <code>10,0%</code> = 82 &nbsp;&rarr;&nbsp; <code>18,0%</code> = 95 &nbsp;&rarr;&nbsp; <code>25,0%</code> = 100</td></tr><tr><td><b>Quick ratio</b><br><small class='muted'>Bundesbank: Quick ratio</small></td><td><code>0,0%</code> = 0 &nbsp;&rarr;&nbsp; <code>20,0%</code> = 25 &nbsp;&rarr;&nbsp; <code>30,0%</code> = 40 &nbsp;&rarr;&nbsp; <code>45,8%</code> = 58 &nbsp;&rarr;&nbsp; <code>91,7%</code> = 70 &nbsp;&rarr;&nbsp; <code>216,3%</code> = 82 &nbsp;&rarr;&nbsp; <code>400,0%</code> = 95 &nbsp;&rarr;&nbsp; <code>600,0%</code> = 100</td></tr><tr><td><b>Interest coverage (EBIT / interest)</b><br><small class='muted'>Convention</small></td><td><code>0,00x</code> = 0 &nbsp;&rarr;&nbsp; <code>1,00x</code> = 20 &nbsp;&rarr;&nbsp; <code>1,50x</code> = 35 &nbsp;&rarr;&nbsp; <code>2,00x</code> = 50 &nbsp;&rarr;&nbsp; <code>3,00x</code> = 70 &nbsp;&rarr;&nbsp; <code>5,00x</code> = 88 &nbsp;&rarr;&nbsp; <code>8,00x</code> = 100</td></tr><tr><td><b>Return on assets (net result + interest)</b><br><small class='muted'>Bundesbank: (Net result + interest) / total assets</small></td><td><code>-5,0%</code> = 0 &nbsp;&rarr;&nbsp; <code>0,0%</code> = 30 &nbsp;&rarr;&nbsp; <code>2,4%</code> = 58 &nbsp;&rarr;&nbsp; <code>6,9%</code> = 70 &nbsp;&rarr;&nbsp; <code>13,4%</code> = 82 &nbsp;&rarr;&nbsp; <code>22,0%</code> = 95 &nbsp;&rarr;&nbsp; <code>30,0%</code> = 100</td></tr><tr><td><b>Fixed-asset coverage II</b><br><small class='muted'>Bundesbank: Long-term capital / fixed assets</small></td><td><code>50,0%</code> = 0 &nbsp;&rarr;&nbsp; <code>80,0%</code> = 12 &nbsp;&rarr;&nbsp; <code>100,0%</code> = 30 &nbsp;&rarr;&nbsp; <code>122,0%</code> = 58 &nbsp;&rarr;&nbsp; <code>218,2%</code> = 70 &nbsp;&rarr;&nbsp; <code>464,4%</code> = 82 &nbsp;&rarr;&nbsp; <code>800,0%</code> = 95 &nbsp;&rarr;&nbsp; <code>1.200,0%</code> = 100</td></tr><tr><td><b>Days payable outstanding</b><br><small class='muted'>Bundesbank: Trade payables / materials expense</small></td><td><code>0,0</code> = 82 &nbsp;&rarr;&nbsp; <code>15,1</code> = 82 &nbsp;&rarr;&nbsp; <code>27,2</code> = 70 &nbsp;&rarr;&nbsp; <code>49,5</code> = 58 &nbsp;&rarr;&nbsp; <code>75,0</code> = 38 &nbsp;&rarr;&nbsp; <code>100,0</code> = 20 &nbsp;&rarr;&nbsp; <code>120,0</code> = 0</td></tr><tr><td><b>Overdraft utilisation</b><br><small class='muted'>Convention</small></td><td><code>0,0%</code> = 100 &nbsp;&rarr;&nbsp; <code>30,0%</code> = 92 &nbsp;&rarr;&nbsp; <code>50,0%</code> = 80 &nbsp;&rarr;&nbsp; <code>70,0%</code> = 62 &nbsp;&rarr;&nbsp; <code>80,0%</code> = 45 &nbsp;&rarr;&nbsp; <code>90,0%</code> = 28 &nbsp;&rarr;&nbsp; <code>100,0%</code> = 10 &nbsp;&rarr;&nbsp; <code>110,0%</code> = 0</td></tr><tr><td><b>Currency of the monthly accounts (BWA)</b><br><small class='muted'>Convention</small></td><td><code>1,0</code> = 100 &nbsp;&rarr;&nbsp; <code>2,0</code> = 90 &nbsp;&rarr;&nbsp; <code>3,0</code> = 72 &nbsp;&rarr;&nbsp; <code>4,0</code> = 55 &nbsp;&rarr;&nbsp; <code>6,0</code> = 32 &nbsp;&rarr;&nbsp; <code>9,0</code> = 12 &nbsp;&rarr;&nbsp; <code>12,0</code> = 0</td></tr><tr><td><b>Creditreform credit index</b><br><small class='muted'>Convention</small></td><td><code>100</code> = 100 &nbsp;&rarr;&nbsp; <code>150</code> = 95 &nbsp;&rarr;&nbsp; <code>200</code> = 85 &nbsp;&rarr;&nbsp; <code>250</code> = 72 &nbsp;&rarr;&nbsp; <code>300</code> = 55 &nbsp;&rarr;&nbsp; <code>350</code> = 35 &nbsp;&rarr;&nbsp; <code>400</code> = 18 &nbsp;&rarr;&nbsp; <code>500</code> = 5 &nbsp;&rarr;&nbsp; <code>600</code> = 0</td></tr><tr><td><b>Payment behaviour</b><br><small class='muted'>Convention</small></td><td><code>0</code> = 0 &nbsp;&rarr;&nbsp; <code>100</code> = 100</td></tr></tbody></table></div>
+</section>
+
+<section class="pagebreak">
+  <span class="eyebrow">Section 6</span>
+  <h2><span class="n">06</span>Where the thresholds come from</h2>
+  <h3>Calibrated factors</h3>
+  <p>Six of the 13 factors &ndash; together 46% of the
+  weight &ndash; are tied to the <b>quartile values of the Deutsche Bundesbank's
+  annual accounts statistics</b> (Verhaeltniszahlen): all sectors, the
+  EUR 2&ndash;10m and 10&ndash;50m revenue size classes averaged, latest
+  reporting year. Data as at: Deutsche Bundesbank, Jahresabschlussstatistik (Verhaeltniszahlen), Ausgabe 2026, Berichtsjahr 2023, Quartilswerte.</p>
+  <p>The anchoring is:</p>
+  <div class="kv"><div><b>25th percentile</b><small>= 58 points (lower edge of band C)</small></div><div><b>Median</b><small>= 70 points (middle of band B)</small></div><div><b>75th percentile</b><small>= 82 points (band A)</small></div></div>
+  <p>The reasoning is one step long: the ECB's SAFE survey puts roughly
+  14% of applicants in significant financing difficulty. A company at the median
+  of its size class is therefore not a problem case but financeable &ndash; band
+  B. Mapping percentiles directly would put the median firm at 50 points and so
+  assert that half of the German Mittelstand is a borderline case. That would be
+  empirically wrong.</p>
+  <div class="note ">
+    <b>For &bdquo;lower is better&ldquo; ratios the anchors invert.</b> For days
+    payable the 25th percentile is the good end, so the mapping there is 25th
+    percentile = 82, median = 70, 75th percentile = 58. That curve is also the
+    only one capped below 100: paying suppliers quickly is not evidence of
+    creditworthiness, only the absence of a warning sign.</div>
+  <p><b>The ends beyond the quartiles.</b> The statistics give three points,
+  not a distribution. The ends of each curve are therefore not extrapolated but
+  drawn to economically meaningful limits &ndash; zero equity, a negative
+  margin, fixed-asset coverage below 100%.</p>
+  <h3>Factors that are not calibrated</h3>
+  <p>For the remaining factors the publication carries no comparable
+  series. Their curves are reasoned convention and are labelled as such: debt
+  service coverage, dynamic gearing, interest coverage, overdraft utilisation,
+  currency of the monthly accounts, the Creditreform index and payment
+  behaviour.</p>
+  <div class="note ">
+    <b>One translation deliberately not made.</b> The Bundesbank publishes
+    &bdquo;cash flow as a percentage of net borrowed funds&ldquo;. That is
+    <i>not</i> our dynamic gearing: a different numerator (cash flow after
+    interest and tax, rather than EBITDA) and a far wider denominator (all
+    liabilities, rather than financial debt alone). Converting one into the
+    other would be a guess dressed up as a calibration. The factor therefore
+    stays convention &ndash; and is the first candidate for revision once the
+    outcome log holds enough real placements.</div>
+</section>
+
+<section class="pagebreak">
+  <span class="eyebrow">Section 7</span>
+  <h2><span class="n">07</span>From points to bands</h2>
+  <div class="tablewrap"><table><thead><tr><th style='width:14mm'>Band</th><th class='num' style='width:26mm'>Points</th><th>Meaning</th></tr></thead><tbody><tr><td><span class='band A'>A</span></td><td class='num'>78,0 &ndash; 100,0</td><td>Likely financeable on standard terms</td></tr><tr><td><span class='band B'>B</span></td><td class='num'>65,0 &ndash; 78,0</td><td>Financeable; terms probably improvable</td></tr><tr><td><span class='band C'>C</span></td><td class='num'>52,0 &ndash; 65,0</td><td>Borderline - the typical decline and mispricing zone</td></tr><tr><td><span class='band D'>D</span></td><td class='num'>38,0 &ndash; 52,0</td><td>Decline likely without restructuring or a guarantee</td></tr><tr><td><span class='band E'>E</span></td><td class='num'>0,0 &ndash; 38,0</td><td>Substantial credit weakness</td></tr></tbody></table></div>
+  <div class="note warn">
+    <b>The band thresholds themselves are not empirically derived.</b> They are
+    set so that the median firm lands in band B and the lower quartile in band C
+    &ndash; that is, from the same SAFE reasoning as the factor anchors, not
+    from observed decline rates. Anyone attacking this mapping is attacking the
+    weakest point of the method, and rightly so. It changes once enough
+    documented credit decisions exist.</div>
+</section>
+
+<section>
+  <span class="eyebrow">Section 8</span>
+  <h2><span class="n">08</span>Scenario analysis</h2>
+  <p>A point-in-time ratio from last year's accounts answers the wrong
+  question. The lender does not want to know how the company looked on 31
+  December, but whether it still carries the debt service when things go
+  against it. Both supervisory sources require this explicitly (EBA paras. 131
+  and 156&ndash;158, MaRisk BTO 1.2.1 para. 1).</p>
+  <div class="tablewrap"><table><thead><tr><th style='width:52mm'>Scenario</th><th>Assumption and source</th></tr></thead><tbody><tr><td><b>Interest rates +200 basis points</b></td><td><small>All credit facilities become 2.00 percentage points more expensive (EBA/GL/2020/06 para. 158 k). For comparison: in the adverse scenario of the 2025 EU-wide stress test German long-term rates rise by about 1.1 percentage points - so this is the harder test.</small></td></tr><tr><td><b>Revenue down 10%</b></td><td><small>Revenue -10%, of which 65% variable costs fall away with it; fixed costs remain (EBA/GL/2020/06 para. 158 a). The order of magnitude follows the adverse scenario of the 2025 EU-wide stress test, which assumes German GDP 7.5% lower on a cumulative basis.</small></td></tr><tr><td><b>Combined: revenue -10% and rates +200 bp</b></td><td><small>Both events at once (EBA/GL/2020/06 para. 156 expressly permits a multifactor analysis).</small></td></tr></tbody></table></div>
+  <h3>How the shock is worked through the accounts</h3>
+  <p>The mechanism follows the Deutsche Bundesbank's own published approach
+  to stressing a financial statement inside its credit assessment system
+  (Technical Paper 02/2023, section 5.2). There a cost line is stressed; the
+  plumbing is the same whatever the shock is:</p>
+  <ul>
+    <li>determine the additional cost, or the contribution lost;</li>
+    <li>fund it from cash first, then through short-term bank borrowing;</li>
+    <li>raise the interest charge on that new borrowing at the existing average
+      rate, because the interest burden is itself rating-relevant;</li>
+    <li>reduce the tax charge at the company's own effective rate (never below
+      zero);</li>
+    <li>carry the reduced result through to equity;</li>
+    <li>recompute every ratio on the stressed accounts.</li>
+  </ul>
+  <div class="note ">
+    <b>The rate shock hits the loan agreements, not just the P&amp;L.</b>
+    Paragraph 158 k speaks of an increase &bdquo;on all credit facilities of the
+    borrower&ldquo;. Had only the interest line been raised, debt service
+    &ndash; and with it debt service coverage, the decisive ratio &ndash; would
+    have stayed unchanged. The rate on each individual facility is therefore
+    raised.</div>
+  <div class="note warn">
+    <b>What the scenario analysis is not.</b> Not a forecast and not a statement
+    of probability. It says: on these stated assumptions the band moves from X
+    to Y. The assumptions are printed next to the result so that the owner can
+    disagree with them &ndash; they know their own variable cost share better
+    than we do.</div>
+</section>
+
+<section>
+  <span class="eyebrow">Section 9</span>
+  <h2><span class="n">09</span>Knock-out criteria</h2>
+  <p>A weighted score answers the question of how a file reads overall. It
+  cannot answer whether there is something in it that ends the conversation
+  regardless of the total &ndash; a weighted average by construction lets a
+  strong factor offset a fatal one. Those are two different questions and they
+  need two different methods.</p>
+  <p>These 8 criteria are therefore checked separately and reported
+  separately, ahead of the ratios. None of the thresholds is ours:</p>
+  <div class="tablewrap"><table><thead><tr><th class='num' style='width:13mm'>Code</th><th style='width:44mm'>Criterion</th><th style='width:48mm'>Condition</th><th>Basis</th></tr></thead><tbody><tr><td class='num'>KO01</td><td><b>Loss of half the share capital</b></td><td><small>Balance-sheet equity &lt; 50% of subscribed capital</small></td><td><small>Sec. 49(3) GmbHG; Banque de France note 4-/6</small></td></tr><tr><td class='num'>KO02</td><td><b>Balance-sheet over-indebtedness</b></td><td><small>Balance-sheet equity negative</small></td><td><small>Sec. 19 InsO; EBA/GL/2020/06 para. 128 a</small></td></tr><tr><td class='num'>KO03</td><td><b>Overdraft limit breached</b></td><td><small>Drawings &gt; the advised limit</small></td><td><small>Article 178 CRR (definition of default)</small></td></tr><tr><td class='num'>KO04</td><td><b>Tax arrears</b></td><td><small>Arrears owed to the tax office</small></td><td><small>EBA/GL/2020/06 para. 121 d</small></td></tr><tr><td class='num'>KO05</td><td><b>Returned direct debits</b></td><td><small>Returned direct debits in the last 12 months; 3 or more is serious</small></td><td><small>Banque de France note 8</small></td></tr><tr><td class='num'>KO06</td><td><b>Consecutive losses</b></td><td><small>Net loss in the current and the prior year</small></td><td><small>Banque de France note 6</small></td></tr><tr><td class='num'>KO07</td><td><b>Interest absorbing EBITDA</b></td><td><small>Interest expense &gt;= 50% of EBITDA; 100% or more is serious</small></td><td><small>Banque de France note 6</small></td></tr><tr><td class='num'>KO08</td><td><b>Accounts too old</b></td><td><small>Most recent accounts &gt;= 23 months old</small></td><td><small>Banque de France note X</small></td></tr></tbody></table></div>
+  <div class="note stop">
+    <b>This check is not a legal assessment.</b> Whether a finding gives rise to
+    an obligation &ndash; under Sec. 49(3) GmbHG or Sec. 15a InsO, say &ndash;
+    turns on a going-concern prognosis that this method cannot make and does not
+    claim to make. The report names the condition and refers the judgement to
+    the tax adviser or a lawyer.</div>
+  <div class="note ">
+    <b>Why a clean result is a statement in its own right.</b> &bdquo;None of
+    these criteria applies&ldquo; is not the same as a good score. It means the
+    conversation about terms can be had at all &ndash; and that is exactly the
+    information a business owner needs before applying.</div>
+</section>
+
+<section class="pagebreak">
+  <span class="eyebrow">Section 10</span>
+  <h2><span class="n">10</span>A worked example</h2>
+  <p>A complete run on the fictional sample case Mueller
+  Praezisionstechnik GmbH. Every value is produced by the running system, not
+  transcribed.</p>
+  <div class="tablewrap"><table><thead><tr><th>Factor</th><th class='num'>Value</th><th class='num'>Points</th><th class='num'>Weight</th><th class='num'>Contribution</th><th></th></tr></thead><tbody><tr><td>Equity ratio (economic)</td><td class='num'>10,1%</td><td class='num'>48,5</td><td class='num'>16%</td><td class='num'><b>7,76</b></td><td></td></tr><tr><td>Debt service coverage incl. new facility (DSCR)</td><td class='num'>1,50x</td><td class='num'>88,0</td><td class='num'>20%</td><td class='num'><b>17,60</b></td><td></td></tr><tr><td>Dynamic gearing (net debt / EBITDA)</td><td class='num'>3,34x</td><td class='num'>68,1</td><td class='num'>11%</td><td class='num'><b>7,49</b></td><td></td></tr><tr><td>EBIT margin</td><td class='num'>4,6%</td><td class='num'>69,6</td><td class='num'>9%</td><td class='num'><b>6,26</b></td><td></td></tr><tr><td>Quick ratio</td><td class='num'>99,3%</td><td class='num'>70,7</td><td class='num'>7%</td><td class='num'><b>4,95</b></td><td></td></tr><tr><td>Interest coverage (EBIT / interest)</td><td class='num'>4,00x</td><td class='num'>79,0</td><td class='num'>5%</td><td class='num'><b>3,95</b></td><td></td></tr><tr><td>Return on assets (net result + interest)</td><td class='num'>7,4%</td><td class='num'>71,0</td><td class='num'>5%</td><td class='num'><b>3,55</b></td><td></td></tr><tr><td>Fixed-asset coverage II</td><td class='num'>97,0%</td><td class='num'>27,3</td><td class='num'>5%</td><td class='num'><b>1,36</b></td><td></td></tr><tr><td>Days payable outstanding</td><td class='num'>59,4</td><td class='num'>50,3</td><td class='num'>4%</td><td class='num'><b>2,01</b></td><td></td></tr><tr><td>Overdraft utilisation</td><td class='num'>84,0%</td><td class='num'>38,2</td><td class='num'>5%</td><td class='num'><b>1,91</b></td><td></td></tr><tr><td>Currency of the monthly accounts (BWA)</td><td class='num'>5,0</td><td class='num'>43,5</td><td class='num'>4%</td><td class='num'><b>1,74</b></td><td></td></tr><tr><td>Creditreform credit index</td><td class='num'>248</td><td class='num'>72,5</td><td class='num'>5%</td><td class='num'><b>3,63</b></td><td></td></tr><tr><td>Payment behaviour</td><td class='num'>70</td><td class='num'>70,0</td><td class='num'>4%</td><td class='num'><b>2,80</b></td><td></td></tr><tr><td colspan='4'><b>Total</b></td><td class='num'><b>65,0</b></td><td><span class='band B'>B</span></td></tr></tbody></table></div>
+  <p>The scenario analysis for the same case:</p>
+  <div class="tablewrap"><table><thead><tr><th>Scenario</th><th class='num'>Points</th><th>Band</th><th class='num'>Delta</th></tr></thead><tbody><tr><td>Base case</td><td class='num'>65,0</td><td><span class='band B'>B</span></td><td class='num'>&ndash;</td></tr><tr><td>Interest rates +200 basis points</td><td class='num'>62,4</td><td><span class='band C'>C</span></td><td class='num'>-2,6</td></tr><tr><td>Revenue down 10%</td><td class='num'>35,8</td><td><span class='band E'>E</span></td><td class='num'>-29,2</td></tr><tr><td>Combined: revenue -10% and rates +200 bp</td><td class='num'>34,5</td><td><span class='band E'>E</span></td><td class='num'>-30,5</td></tr></tbody></table></div>
+  <p>How to read it: the business is financeable at the balance sheet date
+  (band B), but does not survive a 10% fall in revenue, because debt service
+  coverage then drops below 1.0. That is information which surfaces in the
+  credit conversation anyway &ndash; only without preparation.</p>
+</section>
+
+<section>
+  <span class="eyebrow">Section 11</span>
+  <h2><span class="n">11</span>Limitations of the method</h2>
+  <p>A complete list of what this method cannot do. It belongs in this
+  document, because a description of a method without a list of its weaknesses
+  serves as a sales brochure and as nothing else.</p>
+  <ul>
+    <li><b>No default validation.</b> The weights and band thresholds are
+    anchored in distributions and in professional judgement, not in observed
+    defaults. There is as yet no outcome data against which the method could be
+    back-tested.</li>
+    <li><b>Vintage of the benchmark data.</b> Deutsche Bundesbank, Jahresabschlussstatistik (Verhaeltniszahlen), Ausgabe 2026, Berichtsjahr 2023, Quartilswerte. Erfassungsgrad der Umsatzklasse 2-10 Mio EUR rund 14%, 10-50 Mio EUR rund 42% -- kleinere Unternehmen sind im Datenpool der Bundesbank unterrepraesentiert.</li>
+    <li><b>Qualitative factors are largely absent.</b> MaRisk BTO 1.4 para. 3
+    requires qualitative criteria. Only the currency of the accounts, the
+    external credit report and payment behaviour are covered. Management
+    quality, market position, customer and supplier concentration (EBA paras.
+    132&ndash;136) do not enter the score; they appear as findings.</li>
+    <li><b>No ESG assessment.</b> EBA paras. 126&ndash;127 require ESG risks to
+    be assessed. The method does not currently do this.</li>
+    <li><b>No forecast.</b> EBA para. 129 expects financial projections. What is
+    assessed is the most recent accounts plus scenarios; a missing integrated
+    forecast is reported as a finding, not substituted for.</li>
+    <li><b>Sector differentiation only in the comparison.</b> The thresholds
+    apply across sectors; only the sector comparison in the report is
+    sector-specific. The Bundesbank, by contrast, reselects its model ratios for
+    each sector.</li>
+    <li><b>One factor can drop out.</b> Service businesses with no materials
+    expense have no days-payable figure; its weight is then redistributed and
+    coverage falls accordingly.</li>
+  </ul>
+</section>
+
+<section>
+  <span class="eyebrow">Section 12</span>
+  <h2><span class="n">12</span>Changes in this version</h2>
+  <p>The result of reading the EBA guidelines, the MaRisk explanatory notes
+  and the Bundesbank publications:</p>
+  <ul>
+    <li><b>Three factors added</b>, all three empirically calibrated: return on
+    assets (EBA Annex 3 no. 18), fixed-asset coverage II and days payable (both
+    Bundesbank ratios). The calibrated share of the weight rises from 40% to
+    46%.</li>
+    <li><b>Weights rebalanced</b> so that the total stays at 100%. Debt service
+    coverage stays at 20% and remains the largest single weight &ndash; MaRisk
+    BTO 1.2.1 para. 1.</li>
+    <li><b>Scenario analysis introduced</b> (section 8). This was the largest
+    gap against the guidelines: required by paras. 131 and 156&ndash;158, and
+    previously not implemented at all.</li>
+    <li><b>Return on assets on the Bundesbank definition</b> (net result plus
+    interest) rather than on an EBIT basis, so that the published quartiles
+    apply without conversion. Both variants are computed; the adopted one is
+    scored.</li>
+    <li><b>Two previously unused Bundesbank series</b> added to the dataset the
+    application loads at runtime.</li>
+    <li><b>Knock-out criteria introduced</b> (section 9). From reading the EBA
+    benchmarking reports, the Banque de France rating guide and the definition
+    of default in Article 178 CRR. The score alone cannot express a knock-out,
+    because a weighted average offsets it.</li>
+    <li><b>Overdraft breach upgraded.</b> Previously a mere warning in the
+    plausibility check. Under Article 178 CRR an overdraft counts as past due
+    once the advised limit is exceeded &ndash; that is an indicator of default,
+    not an anomaly.</li>
+    <li><b>Scenario sizes anchored to the supervisor.</b> The 10% fall in
+    revenue was previously simply set; it now stands next to the adverse
+    scenario of the 2025 EU-wide stress test, which assumes German GDP 7.5%
+    lower on a cumulative basis. The same comparison shows, conversely, that our
+    200 basis point rate shock is nearly twice the roughly 110 basis points
+    assumed there.</li>
+  </ul>
+  <div class="note ">
+    <b>This document is generated, not maintained.</b> Every factor, weight,
+    breakpoint, band threshold, scenario and the worked example are read from
+    the production modules on each run
+    (<code>scripts/build_methodology_pdf.py</code>). A divergence between this
+    paper and the application is not possible.</div>
+</section>
+</div>
+</div>
+
+<script>
+(function () {
+  var buttons = document.querySelectorAll('.langbtn');
+  var panes = document.querySelectorAll('[data-lang-pane]');
+  function show(lang) {
+    panes.forEach(function (p) { p.hidden = p.dataset.langPane !== lang; });
+    buttons.forEach(function (b) {
+      b.setAttribute('aria-pressed', String(b.dataset.lang === lang));
+    });
+    document.documentElement.lang = lang;
+    try { localStorage.setItem('methodik-lang', lang); } catch (e) { /* private mode */ }
+  }
+  buttons.forEach(function (b) {
+    b.addEventListener('click', function () { show(b.dataset.lang); });
+  });
+  var saved = null;
+  try { saved = localStorage.getItem('methodik-lang'); } catch (e) { /* ignore */ }
+  show(saved === 'en' || saved === 'de' ? saved
+       : (navigator.language || '').toLowerCase().startsWith('de') ? 'de' : 'en');
+})();
+</script>
