@@ -43,6 +43,7 @@ class RatioSet:
     ebitda_marge: Optional[float] = None
     ebit_marge: Optional[float] = None
     gesamtkapitalrentabilitaet: Optional[float] = None
+    gesamtkapitalrentabilitaet_bbk: Optional[float] = None  # (JU + Zins) / BS
     umsatzwachstum: Optional[float] = None
 
     # Liquidity / working capital
@@ -122,6 +123,15 @@ def compute_ratios(case: ClientCase) -> RatioSet:
     r.ebitda_marge = _safe_div(ebitda, umsatz)
     r.ebit_marge = _safe_div(ebit, umsatz)
     r.gesamtkapitalrentabilitaet = _safe_div(ebit, bs.bilanzsumme)
+
+    # Same idea, but on the Bundesbank's own definition: result AFTER tax plus
+    # interest, over total assets. Kept separate from the EBIT variant above on
+    # purpose -- this is the one the scorecard scores, because the published
+    # quartiles are computed this way and a translation between the two would
+    # be a guess about the tax charge dressed up as a calibration.
+    r.gesamtkapitalrentabilitaet_bbk = _safe_div(
+        gu.annualised(gu.jahresueberschuss) + zinsaufwand, bs.bilanzsumme
+    )
 
     if case.prior_year_income:
         py = case.prior_year_income

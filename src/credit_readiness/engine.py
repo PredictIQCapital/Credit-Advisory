@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date
+from typing import Optional
 
 from . import benchmarks
 from .models import ClientCase
@@ -22,7 +23,9 @@ from .remediation import (
     simulate,
 )
 from .routing import RoutingOption, route
+from .rejection_risk import RejectionScreen, screen as screen_rejection
 from .scorecard import ScorecardResult, evaluate
+from .sensitivity import SensitivityResult, analyse as analyse_sensitivity
 from .validation import Severity, ValidationIssue, assert_valid, validate
 
 DISCLAIMER = (
@@ -44,6 +47,8 @@ class DiagnosticResult:
     routing_now: list[RoutingOption]
     routing_after: list[RoutingOption]
     benchmark: list[benchmarks.BenchmarkComparison] = field(default_factory=list)
+    sensitivity: Optional[SensitivityResult] = None
+    rejection: Optional[RejectionScreen] = None
     validation_issues: list[ValidationIssue] = field(default_factory=list)
     generated_on: date = field(default_factory=date.today)
     disclaimer: str = DISCLAIMER
@@ -110,5 +115,7 @@ def run_diagnostic(case: ClientCase, strict: bool = True) -> DiagnosticResult:
         routing_now=routing_now,
         routing_after=routing_after,
         benchmark=benchmarks.compare_all(case.profile.sector, ratios),
+        sensitivity=analyse_sensitivity(case, scorecard),
+        rejection=screen_rejection(case, ratios),
         validation_issues=issues,
     )

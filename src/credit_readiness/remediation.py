@@ -315,7 +315,8 @@ def _rule_fristenkongruenz(case: ClientCase, r: RatioSet, s: ScorecardResult) ->
             "umschulden, abgestimmt auf die Nutzungsdauer der finanzierten "
             "Wirtschaftsgueter. Ggf. mit KfW-Investitionskredit kombinieren."
         ),
-        affected_factors=("liquiditaet_2_grades", "kontokorrent_auslastung"),
+        affected_factors=("anlagendeckungsgrad_ii", "liquiditaet_2_grades",
+                          "kontokorrent_auslastung"),
         effort=Effort.MEDIUM,
         weeks_to_effect=8,
         simulate=sim,

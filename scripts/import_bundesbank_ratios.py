@@ -256,6 +256,11 @@ PACKAGE_METRICS = [
     "bankschulden_pct_bilanzsumme",
     "vorraete_pct_bilanzsumme",
     "cashflow_pct_nettofremdmittel",
+    # Added for the EBA/Bundesbank calibration round: return on assets is
+    # EBA Annex 3 metric 18, and trade payables over materials expense is the
+    # Bundesbank ICAS "accounts payable turnover in days" additional ratio.
+    "ergebnis_plus_zins_pct_bilanzsumme",
+    "verb_ll_pct_materialaufwand",
 ]
 
 

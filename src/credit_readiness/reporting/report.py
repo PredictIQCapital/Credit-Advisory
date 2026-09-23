@@ -132,8 +132,54 @@ def render_markdown(result: DiagnosticResult, data_basis: dict | None = None) ->
         )
         w("")
 
+    # ------------------------------------------------------- knock-out check
+    # Deliberately before the ratios: a file can score respectably and still be
+    # declined on one line, and the client should hear that line first.
+    if result.rejection is not None:
+        rej = result.rejection
+        w("## 2. Ausschlusskriterien der Kreditgeber")
+        w("")
+        if rej.clean:
+            w(f"Geprueft wurden {rej.checked} Kriterien, die bei Kreditgebern "
+              "regelmaessig zur Ablehnung fuehren - unabhaengig von allen "
+              "uebrigen Kennzahlen. **Keines davon liegt vor.**")
+            w("")
+            w("Das ist eine eigenstaendige Aussage und nicht dasselbe wie eine "
+              "gute Bewertung: es bedeutet, dass das Gespraech ueber Konditionen "
+              "ueberhaupt gefuehrt werden kann.")
+        else:
+            offen = [x for x in rej.reasons if not x.mitigated]
+            if rej.knockouts:
+                w(f"**{len(rej.knockouts)} K.-o.-Kriterium/-Kriterien festgestellt.** "
+                  "Solange diese Punkte offen sind, ist eine Antragstellung nicht "
+                  "sinnvoll: sie erzeugt eine dokumentierte Ablehnung, die jeden "
+                  "spaeteren Antrag zusaetzlich belastet.")
+            else:
+                w(f"**{len(offen)} Befund(e)**, die im Kreditgespraech angesprochen "
+                  "werden. Kein K.-o.-Kriterium, aber jeder Punkt braucht eine "
+                  "vorbereitete Antwort.")
+            w("")
+            for reason in rej.reasons:
+                flag = " *(durch Rangruecktritt entschaerft)*" if reason.mitigated else ""
+                w(f"### {reason.code} - {reason.title} ({reason.severity.value}){flag}")
+                w("")
+                w(f"{reason.finding}")
+                w("")
+                w(f"**Wie ein Kreditgeber das liest.** {reason.consequence}")
+                w("")
+                w(f"**Was zu tun ist.** {reason.action}")
+                w("")
+                w(f"*Grundlage: {reason.source}*")
+                w("")
+            w("> Diese Pruefung ersetzt keine rechtliche Beurteilung. Ob sich aus "
+              "einem Befund Pflichten ergeben - etwa nach 49 Abs. 3 GmbHG oder "
+              "15a InsO -, ist mit dem Steuerberater oder einem Rechtsanwalt zu "
+              "klaeren; diese Frage haengt an einer Fortfuehrungsprognose, die "
+              "diese Auswertung nicht leisten kann.")
+            w("")
+
     # --------------------------------------------------------------- ratios
-    w("## 2. Kennzahlen")
+    w("## 3. Kennzahlen")
     w("")
     w("| Kennzahl | Wert | Bewertung |")
     w("|---|---|---|")
@@ -177,7 +223,7 @@ def render_markdown(result: DiagnosticResult, data_basis: dict | None = None) ->
     w("")
 
     # ----------------------------------------------------------- weaknesses
-    w("## 3. Was das Rating am staerksten belastet")
+    w("## 4. Was das Rating am staerksten belastet")
     w("")
     w("Sortiert nach gewichtetem Punktverlust - oben steht, was am meisten kostet.")
     w("")
@@ -197,7 +243,7 @@ def render_markdown(result: DiagnosticResult, data_basis: dict | None = None) ->
         w("")
 
     # ------------------------------------------------------------- findings
-    w("## 4. Befunde und Massnahmen")
+    w("## 5. Befunde und Massnahmen")
     w("")
     if not result.findings:
         w("Keine wesentlichen Befunde.")
@@ -229,7 +275,7 @@ def render_markdown(result: DiagnosticResult, data_basis: dict | None = None) ->
             w("")
 
     # ------------------------------------------------------------ simulation
-    w("## 5. Simulation: Kennzahlen nach Umsetzung")
+    w("## 6. Simulation: Kennzahlen nach Umsetzung")
     w("")
     if not sim.applied:
         w("Keine kennzahlenwirksamen Massnahmen simulierbar.")
@@ -271,7 +317,7 @@ def render_markdown(result: DiagnosticResult, data_basis: dict | None = None) ->
         w("")
 
     # -------------------------------------------------------------- routing
-    w("## 6. Lender-Fit")
+    w("## 7. Lender-Fit")
     w("")
     w("### Aktuelles Profil")
     w("")
@@ -296,7 +342,7 @@ def render_markdown(result: DiagnosticResult, data_basis: dict | None = None) ->
         w("")
 
     # ------------------------------------------------------------ benchmark
-    w("## 7. Branchenvergleich")
+    w("## 8. Branchenvergleich")
     w("")
     w(f"*Datenstand Benchmark: {VINTAGE}*")
     w("")
@@ -326,8 +372,48 @@ def render_markdown(result: DiagnosticResult, data_basis: dict | None = None) ->
     w(f"*{CAVEAT}*")
     w("")
 
+    # ---------------------------------------------------------- sensitivity
+    if result.sensitivity and result.sensitivity.scenarios:
+        sens = result.sensitivity
+        w("## 9. Szenariorechnung (Sensitivitaetsanalyse)")
+        w("")
+        w("Die EBA-Leitlinien zur Kreditvergabe (EBA/GL/2020/06, Tz. 131 und "
+          "Tz. 156-158) verlangen, die Rueckzahlungsfaehigkeit nicht nur zum "
+          "Stichtag, sondern unter unguenstigen Bedingungen zu beurteilen. Die "
+          "folgenden Szenarien sind daher nicht frei gewaehlt - Tz. 158 nennt "
+          "sie, den Zinsanstieg sogar mit der Groessenordnung.")
+        w("")
+        w("| Szenario | Punkte | Stufe | Veraenderung | Kapitaldienstfaehigkeit |")
+        w("|---|---|---|---|---|")
+        w(f"| Ausgangslage | {de(sens.base_score, 1)} | {sens.base_band.value} | - | "
+          f"{_x(result.ratios.kapitaldienstfaehigkeit_inkl_neu)} |")
+        for sc in sens.scenarios:
+            w(f"| {sc.label} | {de(sc.score, 1)} | {sc.band.value} | "
+              f"{de(sc.delta, 1)} | {_x(sc.dscr)} |")
+        w("")
+        for sc in sens.scenarios:
+            w(f"- **{sc.label}:** {sc.assumption}")
+        w("")
+        worst = sens.worst
+        if sens.is_resilient:
+            w(f"**Einordnung:** Auch im haertesten gerechneten Szenario "
+              f"({worst.label}) bleibt das Unternehmen in Stufe "
+              f"{worst.band.value}. Das ist ein Argument, das im Kreditgespraech "
+              "aktiv vorgetragen werden sollte - die Bank rechnet ohnehin so.")
+        else:
+            w(f"**Einordnung:** Im Szenario \"{worst.label}\" faellt das Ergebnis "
+              f"auf {de(worst.score, 1)} Punkte (Stufe {worst.band.value}). "
+              "Rechnen Sie damit, dass der Kreditgeber diese Rechnung selbst "
+              "anstellt, und bereiten Sie eine Antwort darauf vor.")
+            if worst.equity_wiped_out:
+                w("")
+                w("Im selben Szenario ist das wirtschaftliche Eigenkapital "
+                  "aufgezehrt. Das ist der Punkt, an dem aus einer Konditionen- "
+                  "eine Bestandsfrage wird.")
+        w("")
+
     # ----------------------------------------------------------- next steps
-    w("## 8. Naechste Schritte")
+    w("## 10. Naechste Schritte")
     w("")
     if result.verdict is Verdict.GENUINE_RISK:
         w("1. Keine Antragstellung im aktuellen Zustand.")
@@ -349,7 +435,7 @@ def render_markdown(result: DiagnosticResult, data_basis: dict | None = None) ->
 
     # --------------------------------------------------------- data basis
     if data_basis:
-        w("## 9. Datengrundlage")
+        w("## 11. Datengrundlage")
         w("")
         prov = data_basis.get("provenance") or {}
         if prov:

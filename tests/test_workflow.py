@@ -157,8 +157,11 @@ def test_upload_path_reproduces_the_hand_built_reference_case(store, full_case):
     res = wf.run_case_diagnostic(store, full_case, today=TODAY)
     assert res["ok"], res
     s = res["summary"]
-    assert (s["band"], s["score"]) == ("B", 66.4)
-    assert (s["band_after_remediation"], s["score_after_remediation"]) == ("A", 80.3)
+    assert (s["band"], s["score"]) == ("B", 65.0)
+    # Band B, not A, since the EBA/Bundesbank calibration round: the file still
+    # carries a maturity mismatch that the Umschuldung only closes to exactly
+    # 100% Anlagendeckung -- still below the sector's lower quartile of 122%.
+    assert (s["band_after_remediation"], s["score_after_remediation"]) == ("B", 77.7)
     assert {"R01", "R04", "R05"} <= {f["rule"] for f in s["findings"]}
 
 
@@ -223,7 +226,7 @@ def test_diagnostic_writes_all_artifacts_and_advances_stage(store, full_case):
             "abstimmung_steuerberater.md"} <= arts
     assert store.get_meta(full_case)["stage"] == "diagnostik_erstellt"
     md = store.read_artifact(full_case, "diagnostik.md")
-    assert "## 9. Datengrundlage" in md and "Kontoumsaetze" in md
+    assert "## 11. Datengrundlage" in md and "Kontoumsaetze" in md
     assert "750.000 EUR" in md, "client documents use German number format"
 
 

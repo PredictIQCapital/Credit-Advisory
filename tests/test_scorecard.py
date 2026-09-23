@@ -156,13 +156,25 @@ def test_strong_case_outranks_weak_case(case_03, case_06):
 # ---------------------------------------------------------------------------
 
 #: factor key -> (metric in the Bundesbank dataset, conversion to our unit)
-CALIBRATED = {
-    "eigenkapitalquote": ("eigenmittel_pct_bilanzsumme", lambda v: v / 100),
-    "liquiditaet_2_grades": ("liquiditaet_2_pct", lambda v: v / 100),
-    "ebit_marge": ("ergebnis_vor_steuern_pct_umsatz",
-                   lambda v: v / 100 + benchmarks.EBT_TO_EBIT_ADJUSTMENT),
-}
 ANCHORS = {"q25": 58.0, "q50": 70.0, "q75": 82.0}
+# For a "lower is better" ratio the good end is the 25th percentile, so the
+# anchors run the other way. kreditorenlaufzeit_tage is the only such factor.
+ANCHORS_INVERSE = {"q25": 82.0, "q50": 70.0, "q75": 58.0}
+
+CALIBRATED = {
+    "eigenkapitalquote": ("eigenmittel_pct_bilanzsumme", lambda v: v / 100, ANCHORS),
+    "liquiditaet_2_grades": ("liquiditaet_2_pct", lambda v: v / 100, ANCHORS),
+    "ebit_marge": ("ergebnis_vor_steuern_pct_umsatz",
+                   lambda v: v / 100 + benchmarks.EBT_TO_EBIT_ADJUSTMENT, ANCHORS),
+    # Added in the EBA/Bundesbank calibration round. These three need no
+    # translation at all: our definition and the published one are the same.
+    "gesamtkapitalrentabilitaet_bbk": ("ergebnis_plus_zins_pct_bilanzsumme",
+                                       lambda v: v / 100, ANCHORS),
+    "anlagendeckungsgrad_ii": ("langfr_kapital_pct_anlagevermoegen",
+                               lambda v: v / 100, ANCHORS),
+    "kreditorenlaufzeit_tage": ("verb_ll_pct_materialaufwand",
+                                lambda v: v * 365 / 100, ANCHORS_INVERSE),
+}
 
 
 def _sme_quartile(metric: str, quartile: str) -> float:
@@ -180,9 +192,9 @@ def test_bundesbank_anchors(factor_key):
     drifting apart: re-import a new edition and this fails until the
     breakpoints are moved with it (see the CALIBRATION note in scorecard.py).
     """
-    metric, convert = CALIBRATED[factor_key]
+    metric, convert, anchors = CALIBRATED[factor_key]
     factor = FACTORS_BY_KEY[factor_key]
-    for quartile, expected in ANCHORS.items():
+    for quartile, expected in anchors.items():
         value = convert(_sme_quartile(metric, quartile))
         assert interpolate(value, factor.breakpoints) == pytest.approx(expected, abs=0.5), (
             f"{factor_key} at {quartile} ({value:.4f}) scores "

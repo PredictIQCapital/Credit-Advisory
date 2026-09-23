@@ -15,13 +15,49 @@ Three rules follow from it, and they are enforced in code, not just in prose:
      thresholds only, so any output can be defended to a client or their
      Steuerberater line by line.
 
+REGULATORY BASIS
+================
+The factor set is mapped to two supervisory sources, and the mapping is the
+answer to "why these ratios and not others":
+
+  * **EBA/GL/2020/06** (Guidelines on loan origination and monitoring),
+    Annex 3 section B -- the metrics a lender is expected to consider when
+    assessing an enterprise. Covered here: equity ratio (6), EBITDA (8),
+    interest-bearing debt/EBITDA (10), total debt service coverage (14),
+    current-asset coverage (16), return on assets (18), debt service (19),
+    interest coverage (21), net profit margin (24).
+  * **Bundesbank credit assessment system (ICAS)**, ratio table, December 2023
+    -- the ratios a central bank actually uses to estimate a German SME's PD
+    from HGB accounts. Covered here: EBITDA, adjusted total debt ratio,
+    liquidity, return on sales, debt repayment capability, adjusted equity
+    ratio, accounts payable turnover in days.
+
+Neither source publishes threshold *values*. EBA Annex 1 requires an institution
+to define "acceptable ... ratio limits" but leaves the numbers to the
+institution; MaRisk BTO 1.2 prescribes process, not figures. So the metric set
+comes from the regulators and the thresholds come from the Bundesbank
+distribution -- the two are separate decisions and are documented separately.
+
+Two supervisory requirements shape the design beyond the factor list.
+MaRisk BTO 1.2.1 Tz. 1 puts Kapitaldienstfaehigkeit under "besondere
+Beruecksichtigung", which is why the DSCR carries the single largest weight.
+EBA paragraph 120 says collateral must not be a predominant criterion, which is
+why no factor here scores collateral at all.
+
+Left deliberately unscored: EBA Annex 3 metrics 9, 11, 12, 20 and 22 (debt
+yield, enterprise value, capitalisation rate, loan-to-cost, return on equity)
+are either real-estate/listed-company measures or -- in the case of return on
+equity -- unstable to the point of being misleading for owner-managed firms with
+thin or negative book equity, which is a large part of this segment.
+
 CALIBRATION
 ===========
 Two kinds of factor live in this file, and the difference matters when someone
 asks where a number comes from.
 
 **Calibrated against published data** -- eigenkapitalquote, ebit_marge,
-liquiditaet_2_grades. Their breakpoints are anchored to the firm-level quartiles
+liquiditaet_2_grades, gesamtkapitalrentabilitaet_bbk, anlagendeckungsgrad_ii,
+kreditorenlaufzeit_tage. Their breakpoints are anchored to the firm-level quartiles
 of the Deutsche Bundesbank Jahresabschlussstatistik (Verhaeltniszahlen), all
 sectors, the 2-10M and 10-50M EUR revenue classes averaged, latest reporting
 year. See benchmarks.py for the dataset and its caveats.
@@ -37,6 +73,20 @@ wrongly imply that half of German SMEs are borderline cases.
 Tails beyond the published quartiles stay conventional: the distribution gives
 three points, not a distribution, so the ends are drawn to economically
 meaningful limits (zero equity, negative margin) rather than extrapolated.
+
+Three of the six are calibrated without any translation step, because the
+Bundesbank's definition and ours are identical: anlagendeckungsgrad_ii is its
+"langfristig verfuegbares Kapital / Anlagevermoegen", kreditorenlaufzeit_tage is
+its "Verbindlichkeiten aus LuL / Materialaufwand", and for return on assets we
+adopted the published definition (result after tax plus interest) rather than
+bending the EBIT variant onto it -- see ratios.py, where both live side by side.
+kreditorenlaufzeit_tage is also the one calibrated factor whose curve is capped
+below 100: paying suppliers quickly is the absence of a warning sign, not
+evidence of strength, so its best attainable score is the upper-quartile anchor.
+
+**Direction matters.** For "lower is better" ratios the anchors invert -- the
+25th percentile is the good end. kreditorenlaufzeit_tage is the only such
+factor here (q25 -> 82, median -> 70, q75 -> 58).
 
 **Convention, not calibration** -- everything else. The publication carries no
 comparable series for debt service capacity, overdraft utilisation, reporting
@@ -138,7 +188,7 @@ FACTORS: tuple[FactorDefinition, ...] = (
     FactorDefinition(
         key="eigenkapitalquote",
         label="Eigenkapitalquote (wirtschaftlich)",
-        weight=0.20,
+        weight=0.16,
         unit="percent",
         breakpoints=(
             (-0.20, 0.0), (0.0, 25.0), (0.05, 38.0),
@@ -162,7 +212,7 @@ FACTORS: tuple[FactorDefinition, ...] = (
     FactorDefinition(
         key="dynamischer_verschuldungsgrad",
         label="Dynamischer Verschuldungsgrad (Nettoverschuldung / EBITDA)",
-        weight=0.15,
+        weight=0.11,
         unit="x",
         breakpoints=(
             (0.0, 100.0), (1.0, 95.0), (2.0, 88.0), (3.0, 75.0), (3.5, 65.0),
@@ -172,7 +222,7 @@ FACTORS: tuple[FactorDefinition, ...] = (
     FactorDefinition(
         key="ebit_marge",
         label="EBIT-Marge",
-        weight=0.12,
+        weight=0.09,
         unit="percent",
         breakpoints=(
             (-0.10, 0.0), (-0.05, 12.0), (-0.02, 28.0), (0.0, 45.0),
@@ -185,7 +235,7 @@ FACTORS: tuple[FactorDefinition, ...] = (
     FactorDefinition(
         key="liquiditaet_2_grades",
         label="Liquiditaet 2. Grades",
-        weight=0.08,
+        weight=0.07,
         unit="percent",
         breakpoints=(
             (0.0, 0.0), (0.20, 25.0), (0.30, 40.0),
@@ -205,9 +255,50 @@ FACTORS: tuple[FactorDefinition, ...] = (
         ),
     ),
     FactorDefinition(
+        key="gesamtkapitalrentabilitaet_bbk",
+        label="Gesamtkapitalrentabilitaet (Jahresergebnis + Zinsaufwand)",
+        weight=0.05,
+        unit="percent",
+        breakpoints=(
+            (-0.05, 0.0), (0.0, 30.0),
+            (0.024, 58.0), (0.0685, 70.0), (0.1335, 82.0),
+            (0.22, 95.0), (0.30, 100.0),
+        ),
+        note="EBA-Leitlinien Anhang 3 Nr. 18 (Return on assets). Stuetzstellen "
+             "2,4/6,85/13,35% = Bundesbank-Quartile, Definition uebernommen.",
+    ),
+    FactorDefinition(
+        key="anlagendeckungsgrad_ii",
+        label="Anlagendeckungsgrad II",
+        weight=0.05,
+        unit="percent",
+        breakpoints=(
+            (0.5, 0.0), (0.8, 12.0), (1.0, 30.0),
+            (1.2205, 58.0), (2.182, 70.0), (4.6445, 82.0),
+            (8.0, 95.0), (12.0, 100.0),
+        ),
+        note="Langfristiges Kapital / Anlagevermoegen. Unter 100% ist die "
+             "goldene Bilanzregel verletzt. Stuetzstellen 122,1/218,2/464,5% "
+             "= Bundesbank-Quartile.",
+    ),
+    FactorDefinition(
+        key="kreditorenlaufzeit_tage",
+        label="Kreditorenlaufzeit",
+        weight=0.04,
+        unit="days",
+        breakpoints=(
+            (0.0, 82.0), (15.1, 82.0), (27.2, 70.0), (49.5, 58.0),
+            (75.0, 38.0), (100.0, 20.0), (120.0, 0.0),
+        ),
+        note="Verb. aus LuL / Materialaufwand x 365. Zusatzkennzahl des "
+             "Bundesbank-Bonitaetsanalysesystems. Gedeckelt bei 82 Punkten: "
+             "schnelles Zahlen ist kein Bonitaetsbeleg, nur das Fehlen eines "
+             "Warnsignals. Stuetzstellen 15,1/27,2/49,5 Tage = Quartile.",
+    ),
+    FactorDefinition(
         key="kontokorrent_auslastung",
         label="Kontokorrent-Auslastung",
-        weight=0.06,
+        weight=0.05,
         unit="percent",
         source="derived",
         breakpoints=(
@@ -219,7 +310,7 @@ FACTORS: tuple[FactorDefinition, ...] = (
     FactorDefinition(
         key="bwa_age_months",
         label="Aktualitaet der BWA",
-        weight=0.05,
+        weight=0.04,
         unit="months",
         source="behavior",
         breakpoints=(
@@ -357,6 +448,11 @@ def _raw_value(key: str, case: ClientCase, ratios: RatioSet) -> tuple[Optional[f
         "dynamischer_verschuldungsgrad": "EBITDA <= 0, Kennzahl nicht aussagekraeftig",
         "kapitaldienstfaehigkeit_inkl_neu": "Kein Kapitaldienst bekannt",
         "zinsdeckungsgrad": "Kein Zinsaufwand ausgewiesen",
+        "anlagendeckungsgrad_ii": "Kein Anlagevermoegen ausgewiesen",
+        # Dienstleister weisen haeufig keinen Materialaufwand aus; dann faellt
+        # die Kennzahl weg und ihr Gewicht wird umverteilt.
+        "kreditorenlaufzeit_tage": "Kein Materialaufwand ausgewiesen",
+        "gesamtkapitalrentabilitaet_bbk": "Bilanzsumme oder Jahresergebnis fehlt",
     }
     return None, reasons.get(key, "Nicht berechenbar aus den vorliegenden Daten")
 

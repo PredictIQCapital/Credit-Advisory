@@ -47,6 +47,16 @@
      "q25": 4.5,
      "q50": 16.5,
      "q75": 41.7
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 2.6,
+     "q50": 6.9,
+     "q75": 13.4
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 4.2,
+     "q50": 7.5,
+     "q75": 12.9
     }
    },
    "unter_2m": {
@@ -89,6 +99,16 @@
      "q25": 2.7,
      "q50": 15.6,
      "q75": 48.0
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 3.3,
+     "q50": 9.1,
+     "q75": 21.5
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 4.8,
+     "q50": 10.4,
+     "q75": 22.7
     }
    },
    "2_bis_10m": {
@@ -131,6 +151,16 @@
      "q25": 3.3,
      "q50": 15.5,
      "q75": 45.4
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 2.3,
+     "q50": 7.3,
+     "q75": 15.2
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 4.0,
+     "q50": 7.5,
+     "q75": 14.4
     }
    },
    "10_bis_50m": {
@@ -173,6 +203,16 @@
      "q25": 4.3,
      "q50": 17.1,
      "q75": 40.3
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 2.5,
+     "q50": 6.4,
+     "q75": 11.5
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 4.3,
+     "q50": 7.4,
+     "q75": 12.7
     }
    },
    "ab_50m": {
@@ -215,6 +255,16 @@
      "q25": 5.8,
      "q50": 16.6,
      "q75": 38.5
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 2.6,
+     "q50": 6.7,
+     "q75": 12.8
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 4.2,
+     "q50": 7.1,
+     "q75": 11.6
     }
    }
   },
@@ -259,6 +309,16 @@
      "q25": 1.9,
      "q50": 16.1,
      "q75": 44.1
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 1.6,
+     "q50": 6.0,
+     "q75": 14.2
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 4.7,
+     "q50": 9.9,
+     "q75": 21.0
     }
    },
    "unter_2m": {
@@ -301,6 +361,16 @@
      "q25": -11.4,
      "q50": 12.5,
      "q75": 49.9
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 0.9,
+     "q50": 6.4,
+     "q75": 17.7
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 4.8,
+     "q50": 11.7,
+     "q75": 33.5
     }
    },
    "2_bis_10m": {
@@ -343,6 +413,16 @@
      "q25": 4.0,
      "q50": 16.0,
      "q75": 42.5
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 1.7,
+     "q50": 6.2,
+     "q75": 13.0
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 4.8,
+     "q50": 10.1,
+     "q75": 21.0
     }
    },
    "10_bis_50m": {
@@ -385,6 +465,16 @@
      "q25": 6.7,
      "q50": 19.5,
      "q75": 40.9
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 2.4,
+     "q50": 5.6,
+     "q75": 11.8
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 5.1,
+     "q50": 8.7,
+     "q75": 15.0
     }
    },
    "ab_50m": {
@@ -427,6 +517,16 @@
      "q25": 5.9,
      "q50": 17.3,
      "q75": 39.0
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 0.9,
+     "q50": 4.7,
+     "q75": 10.3
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 4.0,
+     "q50": 7.7,
+     "q75": 13.1
     }
    }
   },
@@ -471,6 +571,16 @@
      "q25": 2.4,
      "q50": 15.3,
      "q75": 44.3
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 1.8,
+     "q50": 6.8,
+     "q75": 13.6
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 3.8,
+     "q50": 7.8,
+     "q75": 13.8
     }
    },
    "unter_2m": {
@@ -513,6 +623,16 @@
      "q25": -2.2,
      "q50": 13.1,
      "q75": 51.3
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 1.8,
+     "q50": 8.5,
+     "q75": 20.4
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 3.7,
+     "q50": 10.0,
+     "q75": 20.2
     }
    },
    "2_bis_10m": {
@@ -555,6 +675,16 @@
      "q25": 5.6,
      "q50": 19.5,
      "q75": 46.0
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 3.1,
+     "q50": 7.3,
+     "q75": 13.7
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 3.5,
+     "q50": 8.3,
+     "q75": 14.2
     }
    },
    "10_bis_50m": {
@@ -597,6 +727,16 @@
      "q25": 2.8,
      "q50": 15.5,
      "q75": 47.5
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 1.5,
+     "q50": 6.6,
+     "q75": 13.2
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 3.9,
+     "q50": 6.8,
+     "q75": 11.8
     }
    },
    "ab_50m": {
@@ -639,6 +779,16 @@
      "q25": 2.2,
      "q50": 12.1,
      "q75": 32.1
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 0.4,
+     "q50": 5.6,
+     "q75": 11.9
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 4.0,
+     "q50": 7.4,
+     "q75": 12.3
     }
    }
   },
@@ -683,6 +833,16 @@
      "q25": 7.8,
      "q50": 21.7,
      "q75": 51.9
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 5.2,
+     "q50": 11.2,
+     "q75": 21.8
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 2.4,
+     "q50": 5.1,
+     "q75": 9.4
     }
    },
    "unter_2m": {
@@ -725,6 +885,16 @@
      "q25": 4.1,
      "q50": 27.3,
      "q75": 85.9
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 5.5,
+     "q50": 20.7,
+     "q75": 49.6
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 2.7,
+     "q50": 7.7,
+     "q75": 22.3
     }
    },
    "2_bis_10m": {
@@ -767,6 +937,16 @@
      "q25": 7.7,
      "q50": 21.8,
      "q75": 51.0
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 5.2,
+     "q50": 11.2,
+     "q75": 21.1
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 2.8,
+     "q50": 6.5,
+     "q75": 12.5
     }
    },
    "10_bis_50m": {
@@ -809,6 +989,16 @@
      "q25": 7.9,
      "q50": 21.3,
      "q75": 50.0
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 5.2,
+     "q50": 11.1,
+     "q75": 20.8
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 2.1,
+     "q50": 4.4,
+     "q75": 8.4
     }
    },
    "ab_50m": {
@@ -851,6 +1041,16 @@
      "q25": 9.0,
      "q50": 20.7,
      "q75": 45.0
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 5.0,
+     "q50": 10.0,
+     "q75": 18.1
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 2.4,
+     "q50": 4.8,
+     "q75": 7.1
     }
    }
   },
@@ -895,6 +1095,16 @@
      "q25": 10.0,
      "q50": 28.5,
      "q75": 62.0
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 7.1,
+     "q50": 16.4,
+     "q75": 32.1
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 4.2,
+     "q50": 7.9,
+     "q75": 11.8
     }
    },
    "unter_2m": {
@@ -937,6 +1147,16 @@
      "q25": 11.0,
      "q50": 41.6,
      "q75": 93.0
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 13.8,
+     "q50": 29.7,
+     "q75": 50.0
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 3.2,
+     "q50": 7.2,
+     "q75": 15.1
     }
    },
    "2_bis_10m": {
@@ -979,6 +1199,16 @@
      "q25": 10.7,
      "q50": 27.0,
      "q75": 54.6
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 7.1,
+     "q50": 15.6,
+     "q75": 27.4
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 5.2,
+     "q50": 8.7,
+     "q75": 11.5
     }
    },
    "10_bis_50m": {
@@ -1021,6 +1251,16 @@
      "q25": 7.0,
      "q50": 21.4,
      "q75": 40.9
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 4.0,
+     "q50": 10.9,
+     "q75": 20.6
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 4.8,
+     "q50": 8.3,
+     "q75": 11.6
     }
    },
    "ab_50m": {
@@ -1063,6 +1303,16 @@
      "q25": 13.0,
      "q50": 27.8,
      "q75": 43.7
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 4.3,
+     "q50": 10.3,
+     "q75": 16.0
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 3.8,
+     "q50": 6.8,
+     "q75": 10.1
     }
    }
   },
@@ -1107,6 +1357,16 @@
      "q25": 3.8,
      "q50": 15.3,
      "q75": 38.5
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 2.2,
+     "q50": 6.7,
+     "q75": 13.6
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 3.9,
+     "q50": 7.1,
+     "q75": 13.0
     }
    },
    "unter_2m": {
@@ -1149,6 +1409,16 @@
      "q25": -3.1,
      "q50": 12.2,
      "q75": 35.7
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 1.0,
+     "q50": 6.7,
+     "q75": 17.2
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 4.0,
+     "q50": 8.3,
+     "q75": 22.0
     }
    },
    "2_bis_10m": {
@@ -1191,6 +1461,16 @@
      "q25": 2.8,
      "q50": 15.1,
      "q75": 40.4
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 2.1,
+     "q50": 6.5,
+     "q75": 13.1
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 3.7,
+     "q50": 7.5,
+     "q75": 13.4
     }
    },
    "10_bis_50m": {
@@ -1233,6 +1513,16 @@
      "q25": 4.8,
      "q50": 17.0,
      "q75": 38.5
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 2.5,
+     "q50": 6.9,
+     "q75": 13.3
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 4.0,
+     "q50": 6.7,
+     "q75": 12.2
     }
    },
    "ab_50m": {
@@ -1275,6 +1565,16 @@
      "q25": 6.5,
      "q50": 15.6,
      "q75": 35.8
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 2.5,
+     "q50": 6.9,
+     "q75": 13.3
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 4.0,
+     "q50": 6.4,
+     "q75": 10.9
     }
    }
   },
@@ -1319,6 +1619,16 @@
      "q25": 3.9,
      "q50": 17.2,
      "q75": 44.6
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 2.4,
+     "q50": 7.0,
+     "q75": 14.0
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 4.0,
+     "q50": 7.6,
+     "q75": 13.2
     }
    },
    "unter_2m": {
@@ -1361,6 +1671,16 @@
      "q25": 0.6,
      "q50": 20.3,
      "q75": 56.4
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 2.6,
+     "q50": 8.7,
+     "q75": 20.7
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 3.7,
+     "q50": 9.7,
+     "q75": 21.1
     }
    },
    "2_bis_10m": {
@@ -1403,6 +1723,16 @@
      "q25": 2.0,
      "q50": 14.5,
      "q75": 43.1
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 2.7,
+     "q50": 7.4,
+     "q75": 14.7
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 4.0,
+     "q50": 8.2,
+     "q75": 15.2
     }
    },
    "10_bis_50m": {
@@ -1445,6 +1775,16 @@
      "q25": 5.2,
      "q50": 18.4,
      "q75": 46.8
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 2.4,
+     "q50": 6.7,
+     "q75": 13.3
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 4.0,
+     "q50": 6.8,
+     "q75": 11.1
     }
    },
    "ab_50m": {
@@ -1487,6 +1827,16 @@
      "q25": 5.3,
      "q50": 16.8,
      "q75": 39.1
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 1.8,
+     "q50": 6.5,
+     "q75": 11.9
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 4.2,
+     "q50": 7.3,
+     "q75": 11.9
     }
    }
   },
@@ -1531,6 +1881,16 @@
      "q25": 3.9,
      "q50": 16.9,
      "q75": 46.0
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 2.4,
+     "q50": 7.3,
+     "q75": 16.6
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 3.9,
+     "q50": 8.2,
+     "q75": 17.1
     }
    },
    "unter_2m": {
@@ -1573,6 +1933,16 @@
      "q25": -0.6,
      "q50": 18.5,
      "q75": 57.9
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 1.9,
+     "q50": 10.3,
+     "q75": 26.8
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 3.9,
+     "q50": 10.0,
+     "q75": 27.4
     }
    },
    "2_bis_10m": {
@@ -1615,6 +1985,16 @@
      "q25": 5.2,
      "q50": 19.5,
      "q75": 50.3
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 2.8,
+     "q50": 7.2,
+     "q75": 15.3
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 3.6,
+     "q50": 8.6,
+     "q75": 16.9
     }
    },
    "10_bis_50m": {
@@ -1657,6 +2037,16 @@
      "q25": 5.1,
      "q50": 15.9,
      "q75": 37.3
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 2.6,
+     "q50": 6.3,
+     "q75": 12.3
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 4.2,
+     "q50": 7.8,
+     "q75": 13.6
     }
    },
    "ab_50m": {
@@ -1699,6 +2089,16 @@
      "q25": 4.5,
      "q50": 14.2,
      "q75": 31.7
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 2.1,
+     "q50": 5.9,
+     "q75": 11.3
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 3.9,
+     "q50": 6.7,
+     "q75": 12.7
     }
    }
   },
@@ -1743,6 +2143,16 @@
      "q25": 2.8,
      "q50": 17.3,
      "q75": 47.2
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 1.7,
+     "q50": 5.9,
+     "q75": 13.2
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 4.4,
+     "q50": 8.9,
+     "q75": 16.9
     }
    },
    "unter_2m": {
@@ -1785,6 +2195,16 @@
      "q25": -5.9,
      "q50": 14.2,
      "q75": 47.7
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 1.2,
+     "q50": 6.5,
+     "q75": 16.5
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 4.3,
+     "q50": 10.6,
+     "q75": 26.1
     }
    },
    "2_bis_10m": {
@@ -1827,6 +2247,16 @@
      "q25": 3.4,
      "q50": 17.9,
      "q75": 44.8
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 2.0,
+     "q50": 6.2,
+     "q75": 13.0
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 4.8,
+     "q50": 9.2,
+     "q75": 16.4
     }
    },
    "10_bis_50m": {
@@ -1869,6 +2299,16 @@
      "q25": 6.0,
      "q50": 20.5,
      "q75": 51.5
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 1.9,
+     "q50": 5.4,
+     "q75": 11.5
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 4.4,
+     "q50": 8.0,
+     "q75": 13.4
     }
    },
    "ab_50m": {
@@ -1911,6 +2351,16 @@
      "q25": 6.3,
      "q50": 18.7,
      "q75": 41.5
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 1.5,
+     "q50": 5.2,
+     "q75": 10.5
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 3.9,
+     "q50": 7.3,
+     "q75": 12.1
     }
    }
   },
@@ -1955,6 +2405,16 @@
      "q25": 3.2,
      "q50": 17.4,
      "q75": 46.5
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 2.0,
+     "q50": 6.0,
+     "q75": 14.0
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 4.7,
+     "q50": 9.5,
+     "q75": 18.8
     }
    },
    "unter_2m": {
@@ -1997,6 +2457,16 @@
      "q25": -3.5,
      "q50": 16.5,
      "q75": 46.9
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 2.2,
+     "q50": 7.9,
+     "q75": 17.9
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 4.6,
+     "q50": 13.1,
+     "q75": 30.0
     }
    },
    "2_bis_10m": {
@@ -2039,6 +2509,16 @@
      "q25": 3.9,
      "q50": 17.1,
      "q75": 52.6
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 2.5,
+     "q50": 6.1,
+     "q75": 14.0
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 5.0,
+     "q50": 9.9,
+     "q75": 20.8
     }
    },
    "10_bis_50m": {
@@ -2081,6 +2561,16 @@
      "q25": 5.9,
      "q50": 17.7,
      "q75": 42.7
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 1.8,
+     "q50": 5.3,
+     "q75": 10.5
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 4.8,
+     "q50": 8.1,
+     "q75": 13.0
     }
    },
    "ab_50m": {
@@ -2123,6 +2613,16 @@
      "q25": 4.2,
      "q50": 17.2,
      "q75": 38.6
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": 0.9,
+     "q50": 4.8,
+     "q75": 11.4
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 4.2,
+     "q50": 7.8,
+     "q75": 13.0
     }
    }
   },
@@ -2167,6 +2667,16 @@
      "q25": -8.9,
      "q50": 10.5,
      "q75": 34.3
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": -3.4,
+     "q50": 2.1,
+     "q75": 10.1
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 8.0,
+     "q50": 15.0,
+     "q75": 32.0
     }
    },
    "unter_2m": {
@@ -2209,6 +2719,16 @@
      "q25": -20.4,
      "q50": 7.7,
      "q75": 40.2
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": -9.5,
+     "q50": 4.8,
+     "q75": 18.1
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 5.7,
+     "q50": 14.1,
+     "q75": 49.0
     }
    },
    "2_bis_10m": {
@@ -2251,6 +2771,16 @@
      "q25": -12.0,
      "q50": 10.0,
      "q75": 43.6
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": -3.5,
+     "q50": 5.8,
+     "q75": 16.3
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 7.5,
+     "q50": 15.9,
+     "q75": 42.4
     }
    },
    "10_bis_50m": {
@@ -2293,6 +2823,16 @@
      "q25": -6.1,
      "q50": 14.2,
      "q75": 40.1
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": -1.0,
+     "q50": 2.9,
+     "q75": 9.2
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 7.3,
+     "q50": 15.0,
+     "q75": 29.1
     }
    },
    "ab_50m": {
@@ -2335,6 +2875,16 @@
      "q25": -0.3,
      "q50": 9.8,
      "q75": 21.3
+    },
+    "ergebnis_plus_zins_pct_bilanzsumme": {
+     "q25": -3.3,
+     "q50": 0.2,
+     "q75": 2.2
+    },
+    "verb_ll_pct_materialaufwand": {
+     "q25": 9.7,
+     "q50": 14.4,
+     "q75": 25.1
     }
    }
   }
