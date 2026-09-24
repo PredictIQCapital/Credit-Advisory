@@ -249,6 +249,37 @@ def render_markdown(result: DiagnosticResult, data_basis: dict | None = None) ->
             f"{de(f.weight*100)}% | {de(f.points_lost, 1)} |"
         )
     w("")
+    imp = result.improvements
+    if imp and imp.items:
+        w("### Verbesserungspotenzial: der Weg zum Branchenueblichen")
+        w("")
+        w("Ziel ist nicht der Hoechstwert, sondern der Wert eines typischen "
+          "Unternehmens derselben Branche (70 Punkte, Branchenmedian). Die Tabelle "
+          "zeigt, was das Erreichen dieses Werts zum Gesamtwert beitruege und wie "
+          "gross die Luecke in Euro ist -- jeweils bei sonst unveraenderten Zahlen.")
+        w("")
+        w("| Faktor | Heute | Branchenueblich | Plus Gesamtwert | Luecke |")
+        w("|---|---|---|---|---|")
+        for i in imp.items[:8]:
+            gap = f"{_eur(round(i.euro_gap, -3))} {i.lever}" if i.euro_gap else i.lever
+            w(f"| {i.label} | {i.format(i.current)} | {i.format(i.target)} | "
+              f"+{de(i.points_gain, 1)} | {gap} |")
+        w("")
+        need = imp.points_to_next_band
+        if need is not None:
+            path = imp.reaching_next_band()
+            nb = imp.next_band[1].value
+            if path:
+                names = ", ".join(i.label for i in path)
+                w(f"**Bis Band {nb} fehlen {de(need, 1)} Punkte.** Am kuerzesten "
+                  f"ueber: {names}.")
+            else:
+                w(f"**Bis Band {nb} fehlen {de(need, 1)} Punkte** -- mehr, als das "
+                  "Erreichen des Branchenueblichen bei allen Kennzahlen zusammen "
+                  "bringt. Hier reicht Aufbereitung nicht; es braucht eine "
+                  "wirtschaftliche Veraenderung.")
+            w("")
+
     if s.missing_factors:
         w("**Nicht bewertbar mangels Daten:**")
         w("")

@@ -58,6 +58,12 @@ def result_summary(result) -> dict:
         "top_lender_key_after": next(
             (o.lender.key for o in result.routing_after if o.eligible), None
         ),
+        "improvements": [
+            {"factor": i.label, "current": i.format(i.current), "target": i.format(i.target),
+             "points_gain": round(i.points_gain, 1),
+             "euro_gap": round(i.euro_gap) if i.euro_gap else None, "lever": i.lever}
+            for i in (result.improvements.items if result.improvements else [])
+        ],
         "projection": result.projection.as_dict() if result.projection else None,
         "warnings": [str(i) for i in result.data_warnings],
         "disclaimer": result.disclaimer,
