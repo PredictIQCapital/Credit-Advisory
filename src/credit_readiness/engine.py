@@ -22,6 +22,7 @@ from .remediation import (
     diagnose,
     simulate,
 )
+from .projection import Projection, project
 from .routing import RoutingOption, route
 from .rejection_risk import RejectionScreen, screen as screen_rejection
 from .scorecard import ScorecardResult, evaluate
@@ -55,6 +56,7 @@ class DiagnosticResult:
     #: sector" -- lenders price the latter separately (ADR-005).
     scorecard_generic: Optional[ScorecardResult] = None
     sector_trends: list[benchmarks.SectorTrend] = field(default_factory=list)
+    projection: Optional[Projection] = None
     generated_on: date = field(default_factory=date.today)
     disclaimer: str = DISCLAIMER
 
@@ -125,4 +127,5 @@ def run_diagnostic(case: ClientCase, strict: bool = True) -> DiagnosticResult:
         validation_issues=issues,
         scorecard_generic=evaluate(case, ratios, sector_specific=False),
         sector_trends=benchmarks.sector_trends(case.profile.sector, ratios),
+        projection=project(case),
     )

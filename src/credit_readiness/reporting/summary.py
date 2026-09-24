@@ -58,6 +58,7 @@ def result_summary(result) -> dict:
         "top_lender_key_after": next(
             (o.lender.key for o in result.routing_after if o.eligible), None
         ),
+        "projection": result.projection.as_dict() if result.projection else None,
         "warnings": [str(i) for i in result.data_warnings],
         "disclaimer": result.disclaimer,
     }

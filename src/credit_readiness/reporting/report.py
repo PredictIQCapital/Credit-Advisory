@@ -405,10 +405,43 @@ def render_markdown(result: DiagnosticResult, data_basis: dict | None = None) ->
           f"juengsten Bundesbank-Ausgabe, die es enthaelt.*")
         w("")
 
-    # ---------------------------------------------------------- sensitivity
-    if result.sensitivity and result.sensitivity.scenarios:
+    # ------------------------------------------------ projection + sensitivity
+    proj = result.projection
+    has_sens = bool(result.sensitivity and result.sensitivity.scenarios)
+    if (proj and proj.years) or has_sens:
+        w("## 9. Blick nach vorn: Fortschreibung und Szenarien")
+        w("")
+    if proj and proj.years:
+        w("### Fortschreibung (Basisfall)")
+        w("")
+        w("Die Bank prueft die Kapitaldienstfaehigkeit nicht nur zum Stichtag, sondern "
+          "fuer die Laufzeit (MaRisk BTO 1.2.1). Die Tabelle schreibt die eigenen Zahlen "
+          "mechanisch fort -- keine Prognose, sondern der Massstab, an dem eine eigene "
+          "Planrechnung gemessen wird.")
+        w("")
+        w("| Jahr | Umsatz | EBITDA | Kapitaldienst | Kapitaldienstfaehigkeit |")
+        w("|---|---|---|---|---|")
+        for y in proj.years:
+            flag = " (unter 1,2x)" if y.below_floor else ""
+            w(f"| {y.year} | {_eur(y.umsatz)} | {_eur(y.ebitda)} | {_eur(y.kapitaldienst)} | "
+              f"{_x(y.dscr)}{flag} |")
+        w("")
+        for a in proj.assumptions:
+            w(f"- {a}")
+        w("")
+        weak = proj.years_below_floor
+        if weak:
+            w(f"**Einordnung:** In {len(weak)} von {len(proj.years)} Jahren liegt die "
+              f"Kapitaldienstfaehigkeit unter 1,2x (am niedrigsten {proj.weakest_year.year}: "
+              f"{_x(proj.weakest_year.dscr)}). Ohne eine Planrechnung, die das anders "
+              "begruendet, wird der Kreditgeber diese Luecke sehen.")
+        elif proj.min_dscr is not None:
+            w(f"**Einordnung:** Bei unveraenderter Entwicklung traegt das Unternehmen den "
+              f"Kapitaldienst in jedem Jahr (mindestens {_x(proj.min_dscr)}).")
+        w("")
+    if has_sens:
         sens = result.sensitivity
-        w("## 9. Szenariorechnung (Sensitivitaetsanalyse)")
+        w("### Szenariorechnung (Sensitivitaetsanalyse)")
         w("")
         w("Die EBA-Leitlinien zur Kreditvergabe (EBA/GL/2020/06, Tz. 131 und "
           "Tz. 156-158) verlangen, die Rueckzahlungsfaehigkeit nicht nur zum "
