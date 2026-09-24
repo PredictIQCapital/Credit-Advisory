@@ -290,6 +290,73 @@ def test_upload_keeps_a_short_note_with_the_document(env):
     assert "note" not in up["document"]["meta"]
 
 
+def _jab(ov):
+    return next(d for d in ov["documents"] if d["id"] == "jahresabschluesse")
+
+
+def test_annual_accounts_are_one_row_per_year(env):
+    """Latest two years required, the third recommended; files land in their year."""
+    _, _, base = env
+    c, cid = _register(base)
+    _, up = c.upload(cid, "jahresabschluesse", "jahresabschluss_2024.pdf", fiscal_year=2025)
+    years = _jab(up["overview"])["years"]
+    slots = {s["year"]: s for s in years["slots"]}
+    latest = TODAY.year - 1
+    assert list(slots) == [latest, latest - 1, latest - 2]
+    assert slots[latest]["required"] and slots[latest - 1]["required"]
+    assert not slots[latest - 2]["required"]
+    # The stated year wins over the year in the file name.
+    assert [f["filename"] for f in slots[2025]["files"]] == ["jahresabschluss_2024.pdf"]
+
+
+def test_uploading_a_year_again_replaces_that_year_only(env):
+    _, _, base = env
+    c, cid = _register(base)
+    c.upload(cid, "jahresabschluesse", "jahresabschluss_2024.pdf", fiscal_year=2024)
+    c.upload(cid, "jahresabschluesse", "jahresabschluss_2025.pdf", fiscal_year=2025)
+    _, up = c.upload(cid, "jahresabschluesse", "jahresabschluss_2025.pdf", fiscal_year=2024)
+    jab = _jab(up["overview"])
+    assert jab["count"] == 2
+    slots = {s["year"]: s for s in jab["years"]["slots"]}
+    assert len(slots[2024]["files"]) == 1 and slots[2024]["files"][0]["filename"] == "jahresabschluss_2025.pdf"
+    assert c.upload(cid, "jahresabschluesse", "jahresabschluss_2025.pdf", fiscal_year=1900)[0] == 400
+    assert c.upload(cid, "handelsregisterauszug", "handelsregisterauszug.pdf", fiscal_year=2024)[0] == 400
+
+
+def test_a_note_can_explain_a_missing_document(env):
+    """'Founded 2024, no 2023 accounts' -- a note without a file."""
+    store, _, base = env
+    c, cid = _register(base)
+    latest = TODAY.year - 1
+    status, ov = c.call("PUT", f"/api/cases/{cid}/document-notes",
+                        {"key": f"jahresabschluesse:{latest - 2}", "note": "  Gegruendet 2024  "})
+    assert status == 200
+    slot = next(s for s in _jab(ov)["years"]["slots"] if s["year"] == latest - 2)
+    assert slot["note"] == "Gegruendet 2024" and not slot["files"]
+    status, ov = c.call("PUT", f"/api/cases/{cid}/document-notes",
+                        {"key": "handelsregisterauszug", "note": "folgt naechste Woche"})
+    assert next(d for d in ov["documents"] if d["id"] == "handelsregisterauszug")["note"] == "folgt naechste Woche"
+    # Clearing removes it; unknown keys and other parties' documents are refused.
+    _, ov = c.call("PUT", f"/api/cases/{cid}/document-notes", {"key": "handelsregisterauszug", "note": ""})
+    assert next(d for d in ov["documents"] if d["id"] == "handelsregisterauszug")["note"] == ""
+    assert c.call("PUT", f"/api/cases/{cid}/document-notes", {"key": "gibtsnicht", "note": "x"})[0] == 400
+    assert c.call("PUT", f"/api/cases/{cid}/document-notes",
+                  {"key": "creditreform_auskunft", "note": "x"})[0] == 403
+
+
+def test_letters_name_missing_years_and_carry_notes(env):
+    store, _, base = env
+    c, cid = _register(base)
+    latest = TODAY.year - 1
+    c.upload(cid, "jahresabschluesse", "jahresabschluss_2025.pdf", fiscal_year=latest)
+    c.call("PUT", f"/api/cases/{cid}/document-notes",
+           {"key": f"jahresabschluesse:{latest - 2}", "note": "Gegruendet 2024"})
+    letters = wf.generate_letters(store, cid, today=TODAY)
+    text = "\n".join(letters.values())
+    assert f"Es fehlen die Geschaeftsjahre: {latest - 1}" in text
+    assert f"*Anmerkung:* {latest - 2}: Gegruendet 2024" in text
+
+
 def test_submit_requires_complete_questionnaire(env):
     store, _, base = env
     c, cid = _register(base)

@@ -121,6 +121,31 @@ h2.sec:first-of-type { border-top: 0; padding-top: 0; margin-top: 0; }
 .doc .file { display: flex; align-items: center; gap: 10px; font-size: 13.5px; flex-wrap: wrap; }
 .doc .file a { font-weight: 600; }
 .doc .upl { grid-column: 2 / -1; }
+/* Document rows: one per document, one per fiscal year for the annual accounts. */
+.doc-row { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; background: #fff; display: grid; grid-template-columns: 34px 1fr auto; gap: 12px; align-items: start; transition: border-color .15s, background .15s; }
+.doc-row.over { border-color: var(--teal); background: var(--teal-soft); }
+.doc-row .st, .doc-group .st { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; font-weight: 800; }
+.doc-row .st.ok { background: var(--teal-soft); color: var(--teal); }
+.doc-row .st.need { background: var(--red-soft); color: var(--red); }
+.doc-row .st.info { background: var(--soft); color: var(--navy); font-style: italic; }
+.doc-row .st.opt { background: var(--soft); color: var(--faint); }
+.doc-row .tt { font-weight: 650; color: var(--navy); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.doc-row .ds, .doc-group-head .ds { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.doc-row .files { margin-top: 6px; display: flex; flex-direction: column; gap: 4px; }
+.doc-row .file { display: flex; align-items: center; gap: 10px; font-size: 13.5px; flex-wrap: wrap; }
+.doc-row .file a { font-weight: 600; }
+.doc-action { display: flex; gap: 8px; align-items: end; flex-wrap: wrap; justify-content: flex-end; }
+.doc-action .mini { display: flex; flex-direction: column; font-size: 12px; color: var(--muted); gap: 3px; }
+.doc-action .mini input { padding: 6px 8px; width: auto; }
+.doc-note { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+.doc-note input { flex: 1; padding: 6px 10px; font-size: 13.5px; border-color: var(--line); background: #fafbfc; }
+.doc-note.ro { font-size: 13px; color: var(--navy-2); }
+.doc-note .saved { white-space: nowrap; }
+.doc-group { margin-bottom: 12px; }
+.doc-group-head { margin: 4px 0 8px; }
+.doc-group-head .tt { font-weight: 650; color: var(--navy); }
+.doc-group .doc-row { margin-left: 18px; }
+.add-year { margin-left: 18px; }
 .drop { border: 2px dashed #c9d3de; border-radius: 12px; padding: 14px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; background: #fafbfc; margin-top: 10px; transition: border-color .15s, background .15s; }
 .drop.over { border-color: var(--teal); background: var(--teal-soft); }
 .drop .hint { font-size: 13.5px; color: var(--muted); flex: 1; min-width: 180px; }
@@ -237,6 +262,9 @@ table.figs input { padding: 7px 9px; text-align: right; }
   .q-grid { grid-template-columns: 1fr; }
   .board { grid-template-columns: repeat(4, 80vw); }
   .doc { grid-template-columns: 34px 1fr; }
+  .doc-row { grid-template-columns: 30px 1fr; }
+  .doc-action { grid-column: 2; justify-content: flex-start; }
+  .doc-group .doc-row, .add-year { margin-left: 0; }
   .doc > .btn, .doc > .actions { grid-column: 2; }
   .who .nm, .who .rl { display: none; }
   .who .hide-sm, .topbar .logo > span { display: none; }

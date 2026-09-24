@@ -11,6 +11,7 @@ testable without HTTP and behaves identically from the command line.
 from __future__ import annotations
 
 import json
+import re
 from datetime import date
 from typing import Any, Optional
 
@@ -22,6 +23,7 @@ from .intake.documents import (
     SOURCE_BERATER,
     SOURCE_STEUERBERATER,
     SOURCE_UNTERNEHMEN,
+    DOCUMENT_TYPES_BY_ID,
     document_status,
 )
 from .intake.questionnaire import (
@@ -95,6 +97,75 @@ def section_progress(audience: str, raw_answers: dict) -> list[dict]:
     return out
 
 
+# ------------------------------------------------------------ document rows
+#
+# The portal shows one row per document, and the annual accounts one row per
+# fiscal year: "2025", "2024", "2023" is easier to act on than "2-3 years,
+# 1 received". Every row can carry a short note -- also without a file, which
+# is how a company says "founded 2024, no 2023 accounts exist".
+
+YEARLY_DOC = "jahresabschluesse"
+#: Years shown for the annual accounts: the latest two required, the third recommended.
+YEARS_SHOWN = 3
+MAX_DOC_NOTE = 500
+_YEAR_IN_NAME = re.compile(r"(?<!\d)(19[89]\d|20[0-9]\d)(?!\d)")
+
+
+def fiscal_year_of(entry: dict) -> Optional[int]:
+    """Fiscal year of an annual-accounts upload: stated, else read from the name."""
+    meta = entry.get("meta") or {}
+    if meta.get("fiscal_year"):
+        return int(meta["fiscal_year"])
+    m = _YEAR_IN_NAME.search(entry.get("filename", ""))
+    if m:
+        return int(m.group(1))
+    if meta.get("period_end"):
+        return int(str(meta["period_end"])[:4])
+    return None
+
+
+def doc_note_key(doc_type: str, year: Optional[int] = None) -> str:
+    return f"{doc_type}:{year}" if year else doc_type
+
+
+def valid_doc_note_key(key: str) -> bool:
+    doc_type, _, year = key.partition(":")
+    if doc_type not in DOCUMENT_TYPES_BY_ID:
+        return False
+    return not year or (doc_type == YEARLY_DOC and bool(re.fullmatch(r"(19|20)\d\d", year)))
+
+
+def set_doc_note(store: CaseStore, case_id: str, key: str, note: str) -> dict:
+    if not valid_doc_note_key(key):
+        raise CaseStoreError(f"Unbekannte Unterlage '{key}'")
+    notes = dict(store.get_meta(case_id).get("doc_notes") or {})
+    note = (note or "").strip()[:MAX_DOC_NOTE]
+    if note:
+        notes[key] = note
+    else:
+        notes.pop(key, None)
+    return store.update_meta(case_id, doc_notes=notes)
+
+
+def year_slots(files: list[dict], notes: dict, min_count: int, today: date) -> dict:
+    """One row per fiscal year for the annual accounts."""
+    by_year: dict[int, list[dict]] = {}
+    undated = []
+    for f in files:
+        y = fiscal_year_of(f)
+        (by_year.setdefault(y, []) if y else undated).append(f)
+    noted = {int(k.split(":")[1]) for k in notes if k.startswith(YEARLY_DOC + ":")}
+    latest = max([today.year - 1, *by_year])
+    years = set(range(latest - YEARS_SHOWN + 1, latest + 1)) | set(by_year) | noted
+    slots = [{
+        "year": y,
+        "required": y > latest - max(1, min_count),
+        "files": by_year.get(y, []),
+        "note": notes.get(doc_note_key(YEARLY_DOC, y), ""),
+    } for y in sorted(years, reverse=True)]
+    return {"slots": slots, "undated": undated}
+
+
 def case_overview(store: CaseStore, case_id: str, today: Optional[date] = None) -> dict:
     """Everything the portal's case page shows, in one call."""
     meta = store.get_meta(case_id)
@@ -102,8 +173,12 @@ def case_overview(store: CaseStore, case_id: str, today: Optional[date] = None) 
     docs = store.list_documents(case_id)
     statuses = [s.as_dict() for s in document_status(
         [d["doc_type"] for d in docs], sme.values, stb.values)]
+    notes = meta.get("doc_notes") or {}
     for s in statuses:
         s["files"] = [d for d in docs if d["doc_type"] == s["id"]]
+        s["note"] = notes.get(s["id"], "")
+        if s["id"] == YEARLY_DOC:
+            s["years"] = year_slots(s["files"], notes, s["min_count"], today or date.today())
 
     asm = assemble_case(store, case_id, today=today)
     summary_txt = store.read_artifact(case_id, "summary.json")

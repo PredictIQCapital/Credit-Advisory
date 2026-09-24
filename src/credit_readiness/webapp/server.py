@@ -106,6 +106,7 @@ _ROUTE_TABLE = [
     ("POST", rf"/api/cases/{_CASE}/documents", "upload"),
     ("GET", rf"/api/cases/{_CASE}/documents/(?P<doc>[a-f0-9]{{12}})", "download"),
     ("DELETE", rf"/api/cases/{_CASE}/documents/(?P<doc>[a-f0-9]{{12}})", "delete_doc"),
+    ("PUT", rf"/api/cases/{_CASE}/document-notes", "doc_note"),
     ("POST", rf"/api/cases/{_CASE}/invite", "invite"),
     ("POST", rf"/api/cases/{_CASE}/submit", "submit"),
     ("POST", rf"/api/cases/{_CASE}/stage", "stage"),
@@ -443,10 +444,39 @@ class Handler(BaseHTTPRequestHandler):
                 date.fromisoformat(str(meta["period_end"]))
             except ValueError:
                 raise ApiError(HTTPStatus.BAD_REQUEST, "Stichtag ungueltig (JJJJ-MM-TT)") from None
+        replaces = []
+        if body.get("fiscal_year") not in (None, ""):
+            if doc_type != wf.YEARLY_DOC:
+                raise ApiError(HTTPStatus.BAD_REQUEST, "Geschaeftsjahr nur fuer Jahresabschluesse")
+            try:
+                year = int(body["fiscal_year"])
+            except (TypeError, ValueError):
+                year = 0
+            if not 1980 <= year <= date.today().year:
+                raise ApiError(HTTPStatus.BAD_REQUEST, "Geschaeftsjahr ungueltig")
+            meta["fiscal_year"] = year
+            # One file per year: a new upload for a year replaces the old one.
+            replaces = [d["doc_id"] for d in self.store.list_documents(cid)
+                        if d["doc_type"] == doc_type and wf.fiscal_year_of(d) == year]
         meta["uploaded_by"] = principal.email
         with self.lock:
             entry = self.store.add_document(cid, doc_type, str(body.get("filename", "")), content, meta)
+            for old_id in replaces:
+                self.store.remove_document(cid, old_id)
         self._json(201, {"document": entry, "overview": self._overview(principal, cid)})
+
+    def h_doc_note(self, principal, cid: str) -> None:
+        self._case(principal, cid)
+        body = self._obj()
+        key = str(body.get("key", ""))
+        dt = DOCUMENT_TYPES_BY_ID.get(key.partition(":")[0])
+        if dt is None:
+            raise ApiError(HTTPStatus.BAD_REQUEST, f"Unbekannte Unterlage '{key}'")
+        if not principal.is_berater and dt.source not in UPLOAD_SOURCES[principal.role]:
+            raise ApiError(HTTPStatus.FORBIDDEN, "Diese Unterlage liefert eine andere Partei")
+        with self.lock:
+            wf.set_doc_note(self.store, cid, key, str(body.get("note") or ""))
+        self._json(200, self._overview(principal, cid))
 
     def _doc_entry(self, cid: str, doc: str) -> dict:
         entry = next((d for d in self.store.list_documents(cid) if d["doc_id"] == doc), None)

@@ -569,85 +569,151 @@ function docsPanel(ov, opts) {
   return out;
 }
 
+// One row per document, and for the annual accounts one row per fiscal year.
+// Each row: status, what it is, the file (or a button), and a note that can be
+// saved without a file ("gegründet 2024 – kein Abschluss 2023").
+
+function reqLabel(s) {
+  if (s.required) return t("erforderlich", "required");
+  if (s.requirement === "empfohlen") return t("empfohlen", "recommended");
+  if (s.requirement === "bedingt") return t("falls zutreffend", "if applicable");
+  return t("optional", "optional");
+}
+
+function fileLine(f, opts) {
+  const mine = S.me.role === "berater" || (f.meta && f.meta.uploaded_by === S.me.email);
+  return el("div", { class: "file" },
+    el("a", { href: `/api/cases/${S.ovCid}/documents/${f.doc_id}`, text: f.filename }),
+    el("span", { class: "muted small", text: `${Math.max(1, Math.round(f.size / 1024))} KB · ${fdate(f.uploaded_at)}` }),
+    f.meta && f.meta.period_end ? el("span", { class: "pill", text: `${t("Stichtag", "Date")} ${fdate(f.meta.period_end)}` }) : null,
+    f.meta && f.meta.account_label ? el("span", { class: "pill", text: f.meta.account_label }) : null,
+    f.meta && f.meta.note ? el("span", { class: "muted small", text: `„${f.meta.note}“` }) : null,
+    mine && opts.canUpload ? el("button", { class: "link-btn small", text: t("entfernen", "remove"), onclick: (ev) => guarded(ev.target, async () => {
+      if (!confirm(t(`${f.filename} entfernen?`, `Remove ${f.filename}?`))) return;
+      setOv(await api("DELETE", `/api/cases/${S.ovCid}/documents/${f.doc_id}`));
+      opts.onChange();
+    }) }) : null);
+}
+
+// Choose-file button plus the few fields some documents need. `row` becomes the drop target.
+function uploadControl(def, opts, row, extra) {
+  const input = el("input", { type: "file", accept: def.formats.map((x) => "." + x).join(","), hidden: true });
+  const fields = [];
+  let pEnd = null, pMonths = null, acct = null;
+  if (def.needs_period) {
+    pEnd = el("input", { type: "date" });
+    pMonths = el("input", { type: "number", min: 1, max: 12, value: 12, style: "width:64px" });
+    fields.push(el("label", { class: "mini" }, t("Stichtag", "Balance date"), pEnd), el("label", { class: "mini" }, t("Monate", "Months"), pMonths));
+  }
+  if (def.parser === "bank_csv") {
+    acct = el("input", { type: "text", placeholder: t("z. B. Geschäftskonto", "e.g. business account") });
+    fields.push(el("label", { class: "mini" }, t("Konto", "Account"), acct));
+  }
+  const btn = el("button", { class: "btn btn-ghost btn-sm", type: "button", text: extra.label, onclick: () => input.click() });
+  const upload = (file) => guarded(btn, async () => {
+    if (!file) return;
+    if (file.size > S.meta.max_upload_mb * 1024 * 1024) throw new Error(t("Datei zu groß", "File too large"));
+    if (pEnd && !pEnd.value) { pEnd.focus(); throw new Error(t("Bitte zuerst den Stichtag der Saldenliste eintragen", "Please enter the balance date of the trial balance first")); }
+    btn.textContent = t("Lade hoch …", "Uploading …");
+    const body = { doc_type: def.id, filename: file.name, content_base64: await fileToBase64(file) };
+    if (extra.year) body.fiscal_year = extra.year;
+    if (pEnd) { body.period_end = pEnd.value; body.period_months = Number(pMonths.value || 12); }
+    if (acct && acct.value.trim()) body.account_label = acct.value.trim();
+    const res = await api("POST", `/api/cases/${S.ovCid}/documents`, body);
+    setOv(res.overview);
+    toast(t(`${file.name} hochgeladen`, `${file.name} uploaded`));
+    opts.onChange();
+  }).finally(() => { input.value = ""; });
+  input.addEventListener("change", () => upload(input.files[0]));
+  row.addEventListener("dragover", (e) => { e.preventDefault(); row.classList.add("over"); });
+  row.addEventListener("dragleave", () => row.classList.remove("over"));
+  row.addEventListener("drop", (e) => { e.preventDefault(); row.classList.remove("over"); upload(e.dataTransfer.files[0]); });
+  return el("div", { class: "doc-action" }, fields, btn, input);
+}
+
+function noteField(key, value, editable) {
+  if (!editable) return value ? el("div", { class: "doc-note ro", text: `${t("Anmerkung", "Note")}: ${value}` }) : null;
+  const saved = el("span", { class: "small muted saved" });
+  const input = el("input", { type: "text", maxlength: 500, value: value || "",
+    placeholder: t("Anmerkung (optional) – z. B. „Entwurf, Testat folgt“ oder „liegt nicht vor, weil …“",
+      "Note (optional) – e.g. \"draft, audit to follow\" or \"not available because …\"") });
+  let last = value || "";
+  const save = async () => {
+    const v = input.value.trim();
+    if (v === last) return;
+    try {
+      setOv(await api("PUT", `/api/cases/${S.ovCid}/document-notes`, { key, note: v }));
+      last = v;
+      saved.textContent = t("✓ gespeichert", "✓ saved");
+    } catch (e) { toast(e.message, true); }
+  };
+  input.addEventListener("change", save);
+  input.addEventListener("keydown", (e) => { if (e.key === "Enter") input.blur(); });
+  return el("div", { class: "doc-note" }, input, saved);
+}
+
+function docRow({ state, title, badge, sub, files, note }) {
+  const icon = { ok: "✓", need: "!", info: "i", opt: "○" }[state];
+  return el("div", { class: "doc-row" },
+    el("div", { class: "st " + state, text: icon }),
+    el("div", { class: "doc-main" },
+      el("div", { class: "tt" }, title, badge ? el("span", { class: "pill " + (state === "need" ? "bad" : state === "ok" ? "ok" : ""), text: badge }) : null),
+      sub ? el("div", { class: "ds", text: sub }) : null,
+      files && files.length ? el("div", { class: "files" }, files) : null,
+      note));
+}
+
 function docCard(s, def, opts) {
   const canUpload = opts.canUpload(def);
-  const status = s.satisfied ? ["ok", "✓"] : s.required ? ["need", "!"] : ["opt", "–"];
-  let reqText;
-  if (s.required) reqText = t("erforderlich", "required") + (s.min_count > 1 ? ` · ${t("mind.", "min.")} ${s.min_count}` : "");
-  else if (s.requirement === "empfohlen") reqText = t("empfohlen", "recommended");
-  else if (s.requirement === "bedingt") reqText = t("nur falls zutreffend", "only if applicable");
-  else reqText = t("optional", "optional");
+  const o = { canUpload, onChange: opts.onChange };
+  const title = el("span", {}, qtext(def, "title"), def.parser ? el("span", { class: "pill ok", style: "margin-left:8px", text: t("wird automatisch ausgewertet", "read automatically") }) : null);
+  const sub = qtext(def, "why");
 
-  const files = el("div", { class: "files" }, s.files.map((f) => {
-    const mine = S.me.role === "berater" || (f.meta && f.meta.uploaded_by === S.me.email);
-    return el("div", { class: "file" },
-      el("span", { text: "📄" }),
-      el("a", { href: `/api/cases/${S.ovCid}/documents/${f.doc_id}`, text: f.filename }),
-      el("span", { class: "muted small", text: `${Math.max(1, Math.round(f.size / 1024))} KB · ${fdate(f.uploaded_at)}` }),
-      f.meta && f.meta.period_end ? el("span", { class: "pill", text: `${t("Stichtag", "Date")} ${fdate(f.meta.period_end)}` }) : null,
-      f.meta && f.meta.account_label ? el("span", { class: "pill", text: f.meta.account_label }) : null,
-      f.meta && f.meta.note ? el("span", { class: "muted small file-note", text: `„${f.meta.note}“` }) : null,
-      mine ? el("button", { class: "link-btn small", text: t("entfernen", "remove"), onclick: (ev) => guarded(ev.target, async () => {
-        if (!confirm(t(`${f.filename} entfernen?`, `Remove ${f.filename}?`))) return;
-        setOv(await api("DELETE", `/api/cases/${S.ovCid}/documents/${f.doc_id}`));
-        opts.onChange();
-      }) }) : null);
-  }));
-
-  let upl = null;
-  if (canUpload) {
-    const input = el("input", { type: "file", accept: def.formats.map((x) => "." + x).join(","), hidden: true });
-    const extras = [];
-    let pEnd = null, pMonths = null, acct = null;
-    if (def.needs_period) {
-      pEnd = el("input", { type: "date" });
-      pMonths = el("input", { type: "number", min: 1, max: 12, value: 12, style: "width:80px" });
-      extras.push(el("label", { class: "mini" }, t("Stichtag", "Balance date"), pEnd), el("label", { class: "mini" }, t("Monate", "Months"), pMonths));
+  if (s.years) {
+    S.extraYears = S.extraYears || {};
+    const extraYears = S.extraYears[S.ovCid] || [];
+    const slots = s.years.slots.slice();
+    for (const y of extraYears) if (!slots.some((x) => x.year === y)) slots.push({ year: y, required: false, files: [], note: "" });
+    slots.sort((a, b) => b.year - a.year);
+    const shown = opts.onlyLatestYear ? slots.slice(0, 1) : slots;
+    const latest = slots.length ? slots[0].year : null;
+    const box = el("div", { class: "doc-group" },
+      el("div", { class: "doc-group-head" }, el("div", { class: "tt" }, title), el("div", { class: "ds", text: sub })));
+    for (const slot of shown) {
+      const has = slot.files.length > 0;
+      const state = has ? "ok" : slot.note ? "info" : slot.required ? "need" : "opt";
+      const label = t(`Jahresabschluss ${slot.year}`, `Annual accounts ${slot.year}`) + (slot.year === latest ? t(" (aktuellster)", " (latest)") : "");
+      const row = docRow({
+        state, title: label,
+        badge: has ? t("liegt vor", "received") : slot.required ? t("erforderlich", "required") : t("empfohlen", "recommended"),
+        files: slot.files.map((f) => fileLine(f, o)),
+        note: noteField(`jahresabschluesse:${slot.year}`, slot.note, canUpload),
+      });
+      if (canUpload) row.append(uploadControl(def, o, row, { year: slot.year, label: has ? t("Ersetzen", "Replace") : t("Datei wählen", "Choose file") }));
+      box.append(row);
     }
-    if (def.parser === "bank_csv") {
-      acct = el("input", { type: "text", placeholder: t("z. B. Geschäftskonto", "e.g. business account") });
-      extras.push(el("label", { class: "mini" }, t("Konto", "Account"), acct));
+    if (s.years.undated.length && !opts.onlyLatestYear) {
+      box.append(docRow({ state: "ok", title: t("Ohne Jahresangabe", "Without a year"), files: s.years.undated.map((f) => fileLine(f, o)) }));
     }
-    const note = el("input", { type: "text", maxlength: 500, placeholder: t("optional, z. B. „Entwurf, Testat folgt“", "optional, e.g. \"draft, audit opinion to follow\"") });
-    extras.push(el("label", { class: "mini" }, t("Anmerkung", "Note"), note));
-    const hint = el("div", { class: "hint", text: t(`Datei hierher ziehen oder auswählen (${def.formats.join(", ").toUpperCase()})`, `Drag a file here or choose one (${def.formats.join(", ").toUpperCase()})`) });
-    const pick = el("button", { class: "btn btn-ghost btn-sm", type: "button", text: s.files.length && !def.multiple ? t("Ersetzen", "Replace") : t("Datei wählen", "Choose file"), onclick: () => input.click() });
-    const drop = el("div", { class: "drop" }, hint, extras, pick, input);
-    const collapsed = s.satisfied && !def.multiple;
-    if (collapsed) drop.hidden = true;
-    const upload = (file) => guarded(pick, async () => {
-      if (!file) return;
-      if (file.size > S.meta.max_upload_mb * 1024 * 1024) throw new Error(t("Datei zu groß", "File too large"));
-      if (def.needs_period && !pEnd.value) { pEnd.focus(); throw new Error(t("Bitte zuerst den Stichtag der Saldenliste eintragen", "Please enter the balance date of the trial balance first")); }
-      hint.textContent = t(`Lade ${file.name} hoch …`, `Uploading ${file.name} …`);
-      const body = { doc_type: def.id, filename: file.name, content_base64: await fileToBase64(file) };
-      if (pEnd) { body.period_end = pEnd.value; body.period_months = Number(pMonths.value || 12); }
-      if (acct && acct.value.trim()) body.account_label = acct.value.trim();
-      if (note.value.trim()) body.note = note.value.trim();
-      const res = await api("POST", `/api/cases/${S.ovCid}/documents`, body);
-      setOv(res.overview);
-      toast(t(`${file.name} hochgeladen`, `${file.name} uploaded`));
-      opts.onChange();
-    }).finally(() => { input.value = ""; note.value = ""; });
-    input.addEventListener("change", () => upload(input.files[0]));
-    drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.add("over"); });
-    drop.addEventListener("dragleave", () => drop.classList.remove("over"));
-    drop.addEventListener("drop", (e) => { e.preventDefault(); drop.classList.remove("over"); upload(e.dataTransfer.files[0]); });
-    upl = el("div", { class: "upl" },
-      collapsed ? el("button", { class: "link-btn small", type: "button", text: t("Andere Datei hochladen", "Upload a different file"),
-        onclick: (ev) => { drop.hidden = false; ev.currentTarget.remove(); } }) : null,
-      drop);
+    if (canUpload && !opts.onlyLatestYear && slots.length) {
+      const oldest = Math.min(...slots.map((x) => x.year));
+      box.append(el("button", { class: "link-btn small add-year", type: "button", text: t(`+ weiteres Jahr hinzufügen (${oldest - 1})`, `+ add another year (${oldest - 1})`),
+        onclick: () => { S.extraYears[S.ovCid] = extraYears.concat([oldest - 1]); opts.onChange(); } }));
+    }
+    return box;
   }
 
-  return el("div", { class: "doc" },
-    el("div", { class: "st " + status[0], text: status[1] }),
-    el("div", {},
-      el("div", { class: "tt" }, qtext(def, "title"), " ", def.parser ? el("span", { class: "pill ok", style: "margin-left:6px", text: t("wird automatisch ausgewertet", "read automatically") }) : null),
-      el("div", { class: "ds", text: qtext(def, "description") }),
-      el("div", { class: "ds", style: "color:var(--navy-2)", text: qtext(def, "why") }),
-      files),
-    el("div", {}, el("span", { class: "pill " + (s.satisfied ? "ok" : s.required ? "bad" : ""), text: s.satisfied ? t("liegt vor", "received") : reqText })),
-    upl);
+  const has = s.files.length > 0;
+  const state = s.satisfied ? "ok" : s.note ? "info" : s.required ? "need" : "opt";
+  const row = docRow({
+    state, title, sub,
+    badge: s.satisfied ? t("liegt vor", "received") : reqLabel(s),
+    files: s.files.map((f) => fileLine(f, o)),
+    note: noteField(s.id, s.note, canUpload),
+  });
+  if (canUpload) row.append(uploadControl(def, o, row, {
+    label: !has ? t("Datei wählen", "Choose file") : def.multiple ? t("Weitere Datei", "Add file") : t("Ersetzen", "Replace") }));
+  return row;
 }
 
 // ------------------------------------------------------------------ result component (client-facing)
@@ -1046,7 +1112,7 @@ function qcUpload(ov) {
     el("h2", { text: t("1. Laden Sie Ihren letzten Jahresabschluss hoch", "1. Upload your latest annual accounts") }),
     el("p", { class: "muted", text: t("Bilanz und Gewinn- und Verlustrechnung als PDF – so, wie Sie sie von Ihrem Steuerberater bekommen haben.", "Balance sheet and profit & loss as a PDF – as you received it from your tax advisor.") }),
     aiBadge(),
-    docCard(status, def, { canUpload: () => true, onChange: () => renderQuickCheck(S.ov, "upload") }),
+    docCard(status, def, { canUpload: () => true, onlyLatestYear: true, onChange: () => renderQuickCheck(S.ov, "upload") }),
     consentNeeded ? el("label", { class: "checkbox" }, consent, el("span", { text: t("Ich willige ein, dass mein Jahresabschluss zur automatischen Auslesung an den KI-Dienstleister übermittelt wird.", "I consent to my annual accounts being sent to the AI provider for automatic reading.") })) : null,
     el("div", { class: "wizard-nav" },
       el("button", { class: "btn btn-ghost", text: t("Zahlen lieber selbst eintragen", "I'd rather enter the figures myself"), onclick: () => go(`case/${cid}/figures`) }),

@@ -46,7 +46,15 @@ def _doc_lines(statuses: list[dict], source: str, only_outstanding: bool) -> lis
         count = f", mind. {s['min_count']} Dateien" if s["required"] and s["min_count"] > 1 else ""
         have = f" -- bereits {s['count']} erhalten" if s["count"] else ""
         lines.append(f"- [ ] **{d.title}** ({need}, {fmt}{count}){have}  ")
-        lines.append(f"  {d.description}")
+        lines.append(f"  {d.description}  ")
+        years = (s.get("years") or {}).get("slots") or []
+        missing = [str(y["year"]) for y in years if not y["files"] and not y["note"]]
+        if missing:
+            lines.append(f"  Es fehlen die Geschaeftsjahre: {', '.join(missing)}  ")
+        notes = ([f"{y['year']}: {y['note']}" for y in years if y["note"]]
+                 + ([s["note"]] if s.get("note") else []))
+        for n in notes:
+            lines.append(f"  *Anmerkung:* {n}  ")
     return lines
 
 
