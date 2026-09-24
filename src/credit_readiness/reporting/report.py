@@ -386,6 +386,25 @@ def render_markdown(result: DiagnosticResult, data_basis: dict | None = None) ->
     w(f"*{CAVEAT}*")
     w("")
 
+    if result.sector_trends:
+        years = result.sector_trends[0].years
+        w(f"### Branchenmedian im Zeitverlauf ({years[0]}-{years[-1]})")
+        w("")
+        w("Die Bewertung nutzt das juengste Berichtsjahr. Der Verlauf zeigt, ob sich "
+          "der Massstab selbst bewegt hat -- das interne Vergleichsmaterial einer "
+          "Bank kann dem veroeffentlichten Stand vor- oder nachlaufen.")
+        w("")
+        w("| Kennzahl | " + " | ".join(str(y) for y in years) + " | Unternehmen |")
+        w("|---|" + "---|" * (len(years) + 1))
+        for t in result.sector_trends:
+            cells = [_pct(m) for m in t.medians] + [""] * (len(years) - len(t.medians))
+            company = _pct(t.company_value) if t.company_value is not None else "-"
+            w(f"| {t.label} | " + " | ".join(cells) + f" | {company} |")
+        w("")
+        w(f"*Vergleichsgruppe: {result.sector_trends[0].basis}. Jedes Jahr aus der "
+          f"juengsten Bundesbank-Ausgabe, die es enthaelt.*")
+        w("")
+
     # ---------------------------------------------------------- sensitivity
     if result.sensitivity and result.sensitivity.scenarios:
         sens = result.sensitivity

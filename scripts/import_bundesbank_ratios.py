@@ -24,6 +24,11 @@ Usage
 
 Writes one JSON per publication into data/reference/bundesbank/ plus a
 manifest. Re-running is idempotent.
+
+    python scripts/import_bundesbank_ratios.py --rebuild
+
+Rebuilds only the engine dataset from the per-edition JSON extracts already in
+data/reference/bundesbank/, without the PDFs.
 """
 
 from __future__ import annotations
@@ -264,6 +269,38 @@ PACKAGE_METRICS = [
 ]
 
 
+#: How many reporting years of sector medians the engine carries for trend
+#: comparison (product spec: "the last 5 years").
+HISTORY_YEARS = 5
+
+
+def build_history(editions: list[dict], years: int = HISTORY_YEARS) -> dict:
+    """{sector: {size: {metric: {year: quartiles}}}} for the last `years` years.
+
+    Every edition publishes two reporting years, and the Bundesbank revises the
+    earlier one when the sample grows. Each year is therefore taken from the
+    newest edition that contains it -- never mixed across editions within a year.
+    """
+    source_for_year: dict[str, dict] = {}
+    for ed in sorted(editions, key=lambda e: e["edition"]):
+        for y in ed["years"]:
+            source_for_year[str(y)] = ed           # later editions overwrite
+    wanted = sorted(source_for_year)[-years:]
+    history: dict[str, dict] = {}
+    for year in wanted:
+        ed = source_for_year[year]
+        for sector, forms in ed["sectors"].items():
+            series = forms.get("alle_rechtsformen") or next(iter(forms.values()))
+            for metric in PACKAGE_METRICS:
+                for size, by_year in series.get(metric, {}).items():
+                    if year in by_year:
+                        (history.setdefault(sector, {}).setdefault(size, {})
+                         .setdefault(metric, {}))[year] = by_year[year]
+    return {"years": [int(y) for y in wanted],
+            "editions": {y: source_for_year[y]["edition"] for y in wanted},
+            "sectors": history}
+
+
 def build_package_dataset(editions: list[dict]) -> dict:
     """Condense the newest edition into the file the engine loads at runtime."""
     newest = max(editions, key=lambda e: (e["edition"], e["years"][-1]))
@@ -288,13 +325,30 @@ def build_package_dataset(editions: list[dict]) -> dict:
                   "10-50 Mio EUR rund 42% -- kleinere Unternehmen sind im "
                   "Datenpool der Bundesbank unterrepraesentiert.",
         "sectors": sectors,
+        "history": build_history(editions),
     }
+
+
+def rebuild_from_extracts() -> int:
+    editions = [json.loads(p.read_text(encoding="utf-8"))
+                for p in sorted(OUT_DIR.glob("verhaeltniszahlen_*.json"))]
+    if not editions:
+        print(f"no extracts in {OUT_DIR}")
+        return 1
+    package = build_package_dataset(editions)
+    PACKAGE_FILE.write_text(json.dumps(package, indent=1, ensure_ascii=False), encoding="utf-8")
+    print(f"engine dataset  -> {PACKAGE_FILE.relative_to(ROOT)} "
+          f"(Ausgabe {package['edition']}, Berichtsjahr {package['reporting_year']}, "
+          f"Verlauf {package['history']['years'][0]}-{package['history']['years'][-1]})")
+    return 0
 
 
 def main(argv: list[str]) -> int:
     if len(argv) < 2:
         print(__doc__)
         return 1
+    if argv[1] == "--rebuild":
+        return rebuild_from_extracts()
     folder = Path(argv[1])
     pdfs = sorted(folder.glob("*jahresabschlussstatistik-verhaeltniszahlen-data.pdf"))
     if not pdfs:

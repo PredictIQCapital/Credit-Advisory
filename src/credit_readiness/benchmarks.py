@@ -138,6 +138,34 @@ def sector_cell(
     return None
 
 
+def history_years() -> list[int]:
+    return list(_dataset().get("history", {}).get("years", []))
+
+
+def history(
+    metric: str, sector: Optional[Sector] = None, revenue: Optional[float] = None
+) -> tuple[list[tuple[int, dict]], str]:
+    """Quartiles of a metric per reporting year, oldest first, plus the basis.
+
+    Same fallback as quartiles() -- sector and size class, then the sector
+    total, then all sectors -- but the whole series comes from one cell, so a
+    trend never mixes populations from one year to the next.
+    """
+    data = _dataset().get("history", {}).get("sectors", {})
+    size = size_class(revenue)
+    for sector_key in ([_SECTOR_KEYS[sector]] if sector else []) + ["__alle__"]:
+        block = data.get(sector_key)
+        if not block:
+            continue
+        for size_key in (size, "insgesamt"):
+            series = block.get(size_key, {}).get(metric)
+            if series:
+                label = "alle Branchen" if sector_key == "__alle__" else sector_key
+                return ([(int(y), c) for y, c in sorted(series.items())],
+                        f"{label}, {SIZE_LABELS[size_key]}")
+    return [], ""
+
+
 def percentile(value: float, cell: dict, higher_is_better: bool = True) -> float:
     """Where a value sits in the published distribution, 0-100.
 
@@ -208,6 +236,65 @@ def _compare(
         percentile=percentile(value / scale, cell, higher_is_better),
         quartiles=(cell["q25"] * scale, cell["q50"] * scale, cell["q75"] * scale),
     )
+
+
+#: (label, metric, attribute on RatioSet, scale to our unit, higher_is_better)
+TREND_METRICS = (
+    ("Eigenkapitalquote", "eigenmittel_pct_bilanzsumme", "eigenkapitalquote", 0.01, True),
+    ("Umsatzrendite vor Steuern", "ergebnis_vor_steuern_pct_umsatz",
+     "umsatzrendite_vor_steuern", 0.01, True),
+    ("Liquiditaet 2. Grades", "liquiditaet_2_pct", "liquiditaet_2_grades", 0.01, True),
+    ("Gesamtkapitalrentabilitaet", "ergebnis_plus_zins_pct_bilanzsumme",
+     "gesamtkapitalrentabilitaet_bbk", 0.01, True),
+    ("Anlagendeckungsgrad II", "langfr_kapital_pct_anlagevermoegen",
+     "anlagendeckungsgrad_ii", 0.01, True),
+)
+
+
+@dataclass
+class SectorTrend:
+    label: str
+    basis: str
+    years: list[int]
+    medians: list[float]            # in our unit (decimal for percentages)
+    company_value: Optional[float]
+    higher_is_better: bool = True
+
+    @property
+    def change(self) -> Optional[float]:
+        """Median change first year -> last year, in our unit."""
+        return self.medians[-1] - self.medians[0] if len(self.medians) >= 2 else None
+
+    @property
+    def five_year_median(self) -> Optional[float]:
+        if not self.medians:
+            return None
+        ordered = sorted(self.medians)
+        mid = len(ordered) // 2
+        return ordered[mid] if len(ordered) % 2 else (ordered[mid - 1] + ordered[mid]) / 2
+
+
+def sector_trends(sector: Sector, ratios) -> list[SectorTrend]:
+    """Sector medians over the last reporting years, for the report's trend table.
+
+    Context only: the scorecard uses the latest year. A median that has moved a
+    lot over five years is worth saying out loud, because a lender's internal
+    benchmark may lag or lead the published one.
+    """
+    revenue = getattr(ratios, "umsatz", None)
+    out = []
+    for label, metric, attr, scale, higher in TREND_METRICS:
+        series, basis = history(metric, sector, revenue)
+        if not series:
+            continue
+        out.append(SectorTrend(
+            label=label, basis=basis,
+            years=[y for y, _ in series],
+            medians=[c["q50"] * scale for _, c in series],
+            company_value=getattr(ratios, attr, None) if attr else None,
+            higher_is_better=higher,
+        ))
+    return out
 
 
 def compare_all(sector: Sector, ratios) -> list[BenchmarkComparison]:

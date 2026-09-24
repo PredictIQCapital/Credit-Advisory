@@ -54,6 +54,7 @@ class DiagnosticResult:
     #: because sector scoring says "typical for its sector", not "low-risk
     #: sector" -- lenders price the latter separately (ADR-005).
     scorecard_generic: Optional[ScorecardResult] = None
+    sector_trends: list[benchmarks.SectorTrend] = field(default_factory=list)
     generated_on: date = field(default_factory=date.today)
     disclaimer: str = DISCLAIMER
 
@@ -123,4 +124,5 @@ def run_diagnostic(case: ClientCase, strict: bool = True) -> DiagnosticResult:
         rejection=screen_rejection(case, ratios),
         validation_issues=issues,
         scorecard_generic=evaluate(case, ratios, sector_specific=False),
+        sector_trends=benchmarks.sector_trends(case.profile.sector, ratios),
     )

@@ -42,6 +42,7 @@ class RatioSet:
     # Profitability
     ebitda_marge: Optional[float] = None
     ebit_marge: Optional[float] = None
+    umsatzrendite_vor_steuern: Optional[float] = None   # EBT / revenue, Bundesbank definition
     gesamtkapitalrentabilitaet: Optional[float] = None
     gesamtkapitalrentabilitaet_bbk: Optional[float] = None  # (JU + Zins) / BS
     umsatzwachstum: Optional[float] = None
@@ -122,6 +123,7 @@ def compute_ratios(case: ClientCase) -> RatioSet:
     # --- profitability ---------------------------------------------------
     r.ebitda_marge = _safe_div(ebitda, umsatz)
     r.ebit_marge = _safe_div(ebit, umsatz)
+    r.umsatzrendite_vor_steuern = _safe_div(gu.annualised(gu.ebt), umsatz)
     r.gesamtkapitalrentabilitaet = _safe_div(ebit, bs.bilanzsumme)
 
     # Same idea, but on the Bundesbank's own definition: result AFTER tax plus
