@@ -687,7 +687,10 @@ function resultView(s, cid, advisor) {
           bandBox(s.band_after_remediation, t("nach Maßnahmen", "after fixes"))),
         el("p", { class: "small muted", style: "margin:14px 0 0", text: t(
           `Readiness-Band A (sehr gut) bis E (substanzielle Schwäche). Indikativer Wert ${nf(s.score, 1)} → ${nf(s.score_after_remediation, 1)} von 100. Kein Rating.`,
-          `Readiness band A (very good) to E (substantive weakness). Indicative score ${nf(s.score, 1)} → ${nf(s.score_after_remediation, 1)} of 100. Not a rating.`) })),
+          `Readiness band A (very good) to E (substantive weakness). Indicative score ${nf(s.score, 1)} → ${nf(s.score_after_remediation, 1)} of 100. Not a rating.`) }),
+        s.score_generic != null && s.scoring_basis && s.scoring_basis !== "Alle Branchen (Standardkurve)" ? el("p", { class: "small muted", style: "margin:6px 0 0", text: t(
+          `Gemessen an Ihrer Branche (${s.sector}). Ohne Branchenbezug: ${nf(s.score_generic, 1)}, Band ${s.band_generic}.`,
+          `Measured against your sector (${s.sector}). Without the sector view: ${nf(s.score_generic, 1)}, band ${s.band_generic}.`) }) : null),
       el("div", { class: `verdict ${tone}` },
         el("h3", { text: title }), el("p", { text: text }),
         el("div", { class: "small muted", text: t("Passender Kreditgebertyp nach den Maßnahmen", "Best-fitting lender type after the fixes") }),
@@ -713,10 +716,48 @@ function resultView(s, cid, advisor) {
               f.requires_steuerberater ? el("span", { class: "pill warn", text: t("mit Steuerberater", "with tax advisor") }) : null,
               advisor ? el("span", { class: "pill", text: f.rule }) : null)));
       }) : el("p", { class: "muted", text: t("Keine wesentlichen Befunde.", "No material findings.") })),
+    improvementPanel(s.improvements),
+    projectionPanel(s.projection),
     el("div", { class: "actions", style: "margin-top:18px" },
       el("a", { class: "btn btn-dark", href: `/api/cases/${cid}/artifacts/diagnostik.html`, target: "_blank", rel: "noopener", text: t("Vollständigen Bericht öffnen", "Open full report") }),
       el("span", { class: "small muted", style: "align-self:center", text: t("Im Bericht: Drucken → „Als PDF speichern“.", "In the report: Print → 'Save as PDF'. The report is in German, the language of the lender.") })),
     el("p", { class: "disclaimer", text: s.disclaimer }));
+}
+
+function improvementPanel(items) {
+  if (!items || !items.length) return null;
+  return el("div", { class: "panel", style: "margin-top:18px" },
+    el("div", { class: "panel-title" }, el("h2", { text: t("Wo das meiste Potenzial liegt", "Where the most potential lies") })),
+    el("p", { class: "small muted", text: t(
+      "Ziel ist der Wert eines typischen Unternehmens Ihrer Branche, nicht der Höchstwert. Beträge bei sonst unveränderten Zahlen.",
+      "The target is what a typical company in your sector achieves, not the maximum. Amounts with all other figures unchanged.") }),
+    el("div", { class: "table-wrap" }, el("table", { class: "data" },
+      el("thead", {}, el("tr", {},
+        el("th", { text: t("Kennzahl", "Ratio") }), el("th", { text: t("Heute", "Today") }),
+        el("th", { text: t("Branchenüblich", "Sector-typical") }), el("th", { text: t("Punkte", "Points") }),
+        el("th", { text: t("Lücke", "Gap") }))),
+      el("tbody", {}, items.slice(0, 4).map((i) => el("tr", {},
+        el("td", { text: i.factor }), el("td", { text: i.current }), el("td", { text: i.target }),
+        el("td", { text: `+${nf(i.points_gain, 1)}` }),
+        el("td", { text: i.euro_gap ? `${eur(Math.round(i.euro_gap / 1000) * 1000)} · ${i.lever}` : i.lever })))))));
+}
+
+function projectionPanel(p) {
+  if (!p || !p.years || !p.years.length) return null;
+  return el("div", { class: "panel", style: "margin-top:18px" },
+    el("div", { class: "panel-title" }, el("h2", { text: t("Blick nach vorn", "Looking ahead") })),
+    el("p", { class: "small muted", text: t(
+      "Ihre Zahlen mechanisch fortgeschrieben, inklusive der beantragten Finanzierung. Keine Prognose; Banken erwarten mindestens 1,2x.",
+      "Your figures carried forward mechanically, including the requested loan. Not a forecast; banks expect at least 1.2x.") }),
+    el("div", { class: "table-wrap" }, el("table", { class: "data" },
+      el("thead", {}, el("tr", {},
+        el("th", { text: t("Jahr", "Year") }), el("th", { text: t("Umsatz", "Revenue") }),
+        el("th", { text: "EBITDA" }), el("th", { text: t("Kapitaldienst", "Debt service") }),
+        el("th", { text: t("Kapitaldienstfähigkeit", "Debt service cover") }))),
+      el("tbody", {}, p.years.map((y) => el("tr", {},
+        el("td", { text: String(y.year) }), el("td", { text: eur(y.umsatz) }), el("td", { text: eur(y.ebitda) }),
+        el("td", { text: eur(y.kapitaldienst) }),
+        el("td", {}, el("span", { class: "pill " + (y.dscr == null ? "" : y.dscr < 1.2 ? "bad" : "ok"), text: y.dscr == null ? "–" : xf(y.dscr) }))))))));
 }
 
 function kpi(label, value, sub) {
