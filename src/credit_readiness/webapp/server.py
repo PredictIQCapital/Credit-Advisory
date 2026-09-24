@@ -47,9 +47,11 @@ from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, Optional
-from urllib.parse import unquote, urlparse
+from urllib.parse import parse_qs, unquote, urlparse
 
+from .. import agreements
 from .. import workflow as wf
+from ..reporting.pdf import html_to_pdf
 from ..auth import (
     ROLE_BERATER,
     ROLE_STEUERBERATER,
@@ -109,6 +111,15 @@ _ROUTE_TABLE = [
     ("DELETE", rf"/api/cases/{_CASE}/documents/(?P<doc>[a-f0-9]{{12}})", "delete_doc"),
     ("PUT", rf"/api/cases/{_CASE}/document-notes", "doc_note"),
     ("PUT", rf"/api/cases/{_CASE}/doc-matrix", "doc_matrix"),
+    ("POST", rf"/api/cases/{_CASE}/agreements", "sign"),
+    ("POST", rf"/api/cases/{_CASE}/agreements/(?P<agreement>[a-z_]+)/withdraw", "withdraw"),
+    ("GET", rf"/api/cases/{_CASE}/agreements/record", "agreement_record"),
+    ("POST", rf"/api/cases/{_CASE}/messages", "message"),
+    ("POST", rf"/api/cases/{_CASE}/messages/read", "messages_read"),
+    ("GET", rf"/api/cases/{_CASE}/logo", "logo_get"),
+    ("PUT", rf"/api/cases/{_CASE}/logo", "logo_put"),
+    ("DELETE", rf"/api/cases/{_CASE}/logo", "logo_delete"),
+    ("GET", rf"/api/cases/{_CASE}/bankpack", "bankpack"),
     ("PUT", rf"/api/cases/{_CASE}/documents/(?P<doc>[a-f0-9]{{12}})/meta", "doc_meta"),
     ("POST", rf"/api/cases/{_CASE}/invite", "invite"),
     ("POST", rf"/api/cases/{_CASE}/submit", "submit"),
@@ -131,6 +142,13 @@ PUBLIC_HANDLERS = {"meta", "me", "login", "logout", "register", "form"}
 
 
 MAX_NOTE_CHARS = 500
+
+# A company enters nothing before it has signed the required agreements
+# (agreements.py). Reading, messaging us and signing stay open.
+AGREEMENT_GATED = {
+    "save_answers", "upload", "doc_note", "doc_matrix", "doc_meta", "extract", "figures",
+    "quickcheck", "invite", "order", "submit", "logo_put", "logo_delete", "bankpack",
+}
 #: Months a BWA covers, cumulated from the start of the fiscal year.
 BWA_PERIODS = ("1", "1-3", "1-6", "1-12")
 
@@ -152,6 +170,8 @@ def meta_payload(demo: bool = False) -> dict:
         "letters": wf.LETTERS,
         "lenders": [{"key": lp.key, "name": lp.name} for lp in LENDERS],
         "max_upload_mb": MAX_UPLOAD_BYTES // (1024 * 1024),
+        "agreements": agreements.status([]),
+        "message_topics": list(wf.MESSAGE_TOPICS),
         "demo": demo,
         "ai": _ai_info(),
         "figure_fields": _figure_fields(),
@@ -182,13 +202,14 @@ def _figure_fields() -> list[dict]:
 def view_for(principal: Principal, ov: dict) -> dict:
     """Strip what a role must not see from a case overview."""
     if principal.is_berater:
-        return ov
+        return {**ov, "unread": wf.unread_count(ov["meta"], ov.get("messages") or [], principal.email)}
     v = dict(ov)
     released = ov["report_released"]
     if not released:
         v["latest_summary"] = None
     v["assembly_notes"] = []
     v["blocking"] = []
+    v["unread"] = wf.unread_count(ov["meta"], ov.get("messages") or [], principal.email)
     # A company may see who it invited; a tax advisor does not need the list.
     v["members"] = ov["members"] if principal.role == ROLE_UNTERNEHMEN else {}
     allowed = REPORT_ARTIFACTS if released else set()
@@ -197,6 +218,8 @@ def view_for(principal: Principal, ov: dict) -> dict:
         v["raw_answers"] = {"steuerberater": ov["raw_answers"]["steuerberater"]}
         v["quick_check"] = v["extraction"] = v["figures_confirmed"] = None
         v["orders"] = []
+        v["messages"] = []
+        v["agreements"] = []
     else:
         v["raw_answers"] = {"unternehmen": ov["raw_answers"]["unternehmen"]}
     v["artifacts"] = [a for a in ov["artifacts"] if a in allowed]
@@ -306,7 +329,14 @@ class Handler(BaseHTTPRequestHandler):
                     principal = self._principal()
                     if handler not in PUBLIC_HANDLERS and principal is None:
                         raise ApiError(HTTPStatus.UNAUTHORIZED, "Bitte anmelden")
-                    return getattr(self, "h_" + handler)(principal, **match.groupdict())
+                    args = match.groupdict()
+                    if (handler in AGREEMENT_GATED and principal.role == ROLE_UNTERNEHMEN
+                            and "cid" in args):
+                        self._case(principal, args["cid"])
+                        if not wf.agreements_ok(self.store, args["cid"]):
+                            raise ApiError(HTTPStatus.FORBIDDEN,
+                                           "Bitte zuerst die Nutzungsbedingungen und Datenschutzhinweise bestaetigen")
+                    return getattr(self, "h_" + handler)(principal, **args)
             if method == "GET":
                 return self._static(path)
             raise ApiError(HTTPStatus.NOT_FOUND, "Nicht gefunden")
@@ -371,9 +401,14 @@ class Handler(BaseHTTPRequestHandler):
                 self.store, self.users, str(body.get("company_name", "")),
                 str(body.get("name", "")), str(body.get("email", "")),
                 str(body.get("password", "")))
-            answers = self.store.load_answers(meta["case_id"], "unternehmen")
-            answers["datenschutz_einwilligung"] = True
-            self.store.save_answers(meta["case_id"], "unternehmen", answers)
+            # Registering is signing: the typed name is the signature under the
+            # terms and the privacy notice shown on the form. A name that does
+            # not read as first + last name leaves the gate for the first login.
+            try:
+                wf.sign_agreements(self.store, meta["case_id"], list(agreements.REQUIRED_IDS),
+                                   p.name, p.email, self._ip(), self.headers.get("User-Agent", ""))
+            except agreements.AgreementError:
+                pass
         token = self.sessions.create(p)
         self._json(201, {"user": p.public(), "case_id": meta["case_id"]},
                    self._cookie_header(token, self.sessions.ttl))
@@ -393,6 +428,8 @@ class Handler(BaseHTTPRequestHandler):
             for m in cases:
                 s = self.store.read_artifact(m["case_id"], "summary.json")
                 m["summary"] = json.loads(s) if s else None
+                m["unread"] = wf.unread_count(m, self.store.list_records(m["case_id"], "messages"),
+                                              principal.email)
         self._json(200, cases)
 
     def h_create_case(self, principal) -> None:
@@ -557,6 +594,10 @@ class Handler(BaseHTTPRequestHandler):
         if principal.role == ROLE_STEUERBERATER or (
                 principal.role == ROLE_UNTERNEHMEN and role != ROLE_STEUERBERATER):
             raise ApiError(HTTPStatus.FORBIDDEN, "Dafuer fehlt die Berechtigung")
+        if (principal.role == ROLE_UNTERNEHMEN and role == ROLE_STEUERBERATER and not
+                agreements.is_signed(wf.agreement_records(self.store, cid), "schweigepflicht")):
+            raise ApiError(HTTPStatus.FORBIDDEN,
+                           "Bitte zuerst die Entbindung von der Verschwiegenheitspflicht unterzeichnen")
         with self.lock:
             res = wf.invite_member(self.store, self.users, cid, role,
                                    str(body.get("email", "")), str(body.get("name", "")))
@@ -568,6 +609,103 @@ class Handler(BaseHTTPRequestHandler):
         with self.lock:
             wf.submit_case(self.store, cid, today=self.today)
         self._json(200, self._overview(principal, cid))
+
+    # ------------------------------------------------------ agreements
+    def _ip(self) -> str:
+        return str(self.client_address[0]) if self.client_address else ""
+
+    def h_sign(self, principal, cid: str) -> None:
+        self._case(principal, cid)
+        self._require(principal, ROLE_UNTERNEHMEN)
+        body = self._obj()
+        ids = [str(i) for i in body.get("ids") or []]
+        try:
+            with self.lock:
+                wf.sign_agreements(self.store, cid, ids, str(body.get("name", "")), principal.email,
+                                   self._ip(), self.headers.get("User-Agent", ""))
+        except agreements.AgreementError as e:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(e)) from None
+        self._json(200, self._overview(principal, cid))
+
+    def h_withdraw(self, principal, cid: str, agreement: str) -> None:
+        self._case(principal, cid)
+        self._require(principal, ROLE_UNTERNEHMEN)
+        try:
+            with self.lock:
+                wf.withdraw_agreement(self.store, cid, agreement, principal.email, self._ip())
+        except agreements.AgreementError as e:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(e)) from None
+        self._json(200, self._overview(principal, cid))
+
+    def h_agreement_record(self, principal, cid: str) -> None:
+        meta = self._case(principal, cid)
+        if principal.role == ROLE_STEUERBERATER:
+            raise ApiError(HTTPStatus.FORBIDDEN, "Dafuer fehlt die Berechtigung")
+        md = agreements.record_markdown(meta["company_name"], cid, wf.agreement_records(self.store, cid))
+        self._send(200, markdown_to_html(md, "Nachweis der Erklaerungen").encode("utf-8"),
+                   "text/html; charset=utf-8")
+
+    # ------------------------------------------------------ messages
+    def h_message(self, principal, cid: str) -> None:
+        self._case(principal, cid)
+        if principal.role == ROLE_STEUERBERATER:
+            raise ApiError(HTTPStatus.FORBIDDEN, "Nachrichten sind zwischen Unternehmen und Berater")
+        body = self._obj()
+        with self.lock:
+            wf.post_message(self.store, cid, principal, str(body.get("text", "")), str(body.get("topic") or ""))
+        self._json(201, self._overview(principal, cid))
+
+    def h_messages_read(self, principal, cid: str) -> None:
+        self._case(principal, cid)
+        with self.lock:
+            wf.mark_read(self.store, cid, principal.email)
+        self._json(200, self._overview(principal, cid))
+
+    # ------------------------------------------------------ logo
+    def h_logo_get(self, principal, cid: str) -> None:
+        self._case(principal, cid)
+        logo = self.store.get_logo(cid)
+        if logo is None:
+            raise ApiError(HTTPStatus.NOT_FOUND, "Kein Logo")
+        self._send(200, logo[0], logo[1])
+
+    def h_logo_put(self, principal, cid: str) -> None:
+        self._case(principal, cid)
+        self._require(principal, ROLE_BERATER, ROLE_UNTERNEHMEN)
+        try:
+            content = base64.b64decode(str(self._obj().get("content_base64", "")), validate=True)
+        except (binascii.Error, ValueError):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Dateiinhalt nicht lesbar") from None
+        with self.lock:
+            wf.set_logo(self.store, cid, content)
+        self._json(200, self._overview(principal, cid))
+
+    def h_logo_delete(self, principal, cid: str) -> None:
+        self._case(principal, cid)
+        self._require(principal, ROLE_BERATER, ROLE_UNTERNEHMEN)
+        with self.lock:
+            wf.set_logo(self.store, cid, None)
+        self._json(200, self._overview(principal, cid))
+
+    # ------------------------------------------------------ bank pack
+    def h_bankpack(self, principal, cid: str) -> None:
+        self._case(principal, cid)
+        self._require(principal, ROLE_BERATER, ROLE_UNTERNEHMEN)
+        query = parse_qs(urlparse(self.path).query)
+        sections = [x for x in (query.get("sections", [""])[0]).split(",") if x]
+        with self.lock:
+            res = wf.build_bank_pack(self.store, cid, sections, actor=principal.email, today=self.today)
+        if not res["ok"]:
+            raise ApiError(HTTPStatus.CONFLICT, "Noch nicht moeglich: " + " · ".join(res["blocking"]))
+        stem = re.sub(r"[^A-Za-z0-9]+", "_", res["company"]).strip("_") or "Unternehmen"
+        name = f"Finanzierungsunterlage_{stem}_{(self.today or date.today()).isoformat()}"
+        if query.get("format", ["pdf"])[0] == "pdf":
+            pdf = html_to_pdf(res["html"], footer_title=f"Finanzierungsunterlage {res['company']}")
+            if pdf:
+                return self._send(200, pdf, "application/pdf",
+                                  {"Content-Disposition": f'attachment; filename="{name}.pdf"'})
+        # No PDF renderer on this machine: the same document as HTML, to print.
+        self._send(200, res["html"].encode("utf-8"), "text/html; charset=utf-8")
 
     # ------------------------------------------------------ advisor only
     def h_stage(self, principal, cid: str) -> None:

@@ -284,10 +284,27 @@ def case_to_answers(payload: dict, today: date) -> tuple[dict, dict]:
 
 def _new_case(store, users_by_key, key: str, company: str) -> str:
     cid = store.create_case(company)["case_id"]
-    for email, _, role, keys in DEMO_USERS:
+    for email, name, role, keys in DEMO_USERS:
         if key in keys:
             wf.add_member(store, cid, role, email)
+            if role == ROLE_UNTERNEHMEN:
+                # Every demo company signed at registration; those that invited
+                # their tax firm also signed its release from confidentiality.
+                ids = ["nutzungsbedingungen", "datenschutz"] + ([] if key == "weber" else ["schweigepflicht"])
+                wf.sign_agreements(store, cid, ids, name, email, "127.0.0.1", "Demo")
     return cid
+
+
+def _demo_thread(store, cid: str) -> None:
+    """A short exchange, so the messages page is not empty in a presentation."""
+    from types import SimpleNamespace
+    anna = SimpleNamespace(email="anna.mueller@demo.de", name="Anna Mueller", role=ROLE_UNTERNEHMEN)
+    team = SimpleNamespace(email="berater@demo.de", name="Credit Readiness Team", role="berater")
+    wf.post_message(store, cid, anna, "Muss der Rangruecktritt notariell beurkundet werden, oder reicht "
+                    "eine schriftliche Erklaerung der Gesellschafter?", "Frage zum Ergebnis")
+    wf.post_message(store, cid, team, "Eine schriftliche Erklaerung reicht; eine Beurkundung ist nicht "
+                    "noetig. Wichtig ist der qualifizierte Wortlaut -- wir stimmen den Entwurf mit Ihrer "
+                    "Kanzlei ab und schicken ihn Ihnen diese Woche.", "Frage zum Ergebnis")
 
 
 def _upload_pdf(store, cid, doc_type, name, text, by):
@@ -308,6 +325,7 @@ def seed_demo(store: LocalCaseStore, today: Optional[date] = None) -> dict[str, 
 
     # 1. Mueller -- complete showcase --------------------------------------
     cid = ids["mueller"] = _new_case(store, users, "mueller", "Mueller Praezisionstechnik GmbH")
+    _demo_thread(store, cid)
     sme = json.loads((INTAKE / "antworten_unternehmen.json").read_text(encoding="utf-8"))
     sme.update({"steuerberater_email": stb_mail, "ansprechpartner_email": sme_mail})
     store.save_answers(cid, "unternehmen", sme)

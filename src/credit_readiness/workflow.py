@@ -17,6 +17,7 @@ from typing import Any, Optional
 from .casefile import OUTCOMES, STAGE_IDS, STAGE_LABELS, STAGES, CaseStore, CaseStoreError
 from .engine import run_diagnostic
 from .ingest.json_intake import load_case
+from . import agreements
 from .intake import docmatrix
 from .intake.assemble import assemble_case
 from .intake.documents import (
@@ -138,12 +139,165 @@ def history(meta: dict, docs: list[dict]) -> list[dict]:
                    "doc_type": d["doc_type"]})
     for o in meta.get("orders") or []:
         ev.append({"at": o["at"], "kind": "order", "product": o["product"], "text": o.get("note", "")})
+    for b in meta.get("bankpack_downloads") or []:
+        ev.append({"at": b["at"], "kind": "bankpack", "text": ", ".join(b["sections"])})
     for key, kind in (("quick_check_at", "quick_check"), ("submitted_at", "submitted")):
         if meta.get(key):
             ev.append({"at": meta[key], "kind": kind, "text": ""})
     # Same-second events: the case was created before anything happened on it.
     return sorted((e for e in ev if e["at"]), key=lambda e: (e["at"], e["kind"] != "created"),
                   reverse=True)
+
+
+# ------------------------------------------------------------ agreements
+#
+# Nothing is entered before the required agreements are signed (agreements.py
+# holds the texts and the rules). Each signature syncs the questionnaire
+# answers that express the same consent, so the rest of the engine keeps
+# reading one source.
+
+_AGREEMENT_ANSWERS = {
+    "datenschutz": "datenschutz_einwilligung",
+    "ki": "ki_einwilligung",
+    "schweigepflicht": "steuerberater_kontakt_erlaubt",
+}
+
+
+def agreement_records(store: CaseStore, case_id: str) -> list[dict]:
+    return store.list_records(case_id, "agreements")
+
+
+def agreements_ok(store: CaseStore, case_id: str) -> bool:
+    return not agreements.missing_required(agreement_records(store, case_id))
+
+
+def _sync_answers(store: CaseStore, case_id: str, updates: dict) -> None:
+    if not updates:
+        return
+    answers = store.load_answers(case_id, AUDIENCE_UNTERNEHMEN)
+    answers.update(updates)
+    store.save_answers(case_id, AUDIENCE_UNTERNEHMEN, answers)
+
+
+def sign_agreements(store: CaseStore, case_id: str, ids: list[str], name: str, email: str,
+                    ip: str = "", user_agent: str = "") -> list[dict]:
+    records = agreements.sign(agreement_records(store, case_id), ids, name, email, ip, user_agent)
+    for r in records:
+        store.append_record(case_id, "agreements", r)
+    _sync_answers(store, case_id, {_AGREEMENT_ANSWERS[i]: True for i in ids if i in _AGREEMENT_ANSWERS})
+    return records
+
+
+def withdraw_agreement(store: CaseStore, case_id: str, agreement_id: str, email: str,
+                       ip: str = "") -> dict:
+    record = agreements.withdraw(agreement_records(store, case_id), agreement_id, email, ip)
+    store.append_record(case_id, "agreements", record)
+    if agreement_id in _AGREEMENT_ANSWERS:
+        _sync_answers(store, case_id, {_AGREEMENT_ANSWERS[agreement_id]: False})
+    return record
+
+
+# ------------------------------------------------------------ messages
+#
+# "Contact us" inside the portal: one thread per case, so every question and
+# answer sits next to the documents it is about -- not in someone's inbox.
+
+MESSAGE_TOPICS = ("Frage zum Ergebnis", "Unterlagen", "Termin", "Rechnung und Tarif", "Sonstiges")
+MAX_MESSAGE = 4000
+
+
+def post_message(store: CaseStore, case_id: str, principal, text: str, topic: str = "") -> dict:
+    text = (text or "").strip()
+    if not text:
+        raise CaseStoreError("Nachricht ist leer")
+    if topic and topic not in MESSAGE_TOPICS:
+        raise CaseStoreError("Unbekanntes Thema")
+    from datetime import datetime, timezone
+    import uuid
+    # Microseconds: a reply in the same second must still count as unread.
+    msg = {"id": uuid.uuid4().hex[:12], "at": datetime.now(timezone.utc).isoformat(timespec="microseconds"),
+           "by": principal.email, "name": principal.name, "role": principal.role,
+           "topic": topic, "text": text[:MAX_MESSAGE]}
+    store.append_record(case_id, "messages", msg)
+    mark_read(store, case_id, principal.email, msg["at"])
+    return msg
+
+
+def mark_read(store: CaseStore, case_id: str, email: str, at: Optional[str] = None) -> None:
+    from datetime import datetime, timezone
+    read = dict(store.get_meta(case_id).get("messages_read") or {})
+    read[email] = at or datetime.now(timezone.utc).isoformat(timespec="microseconds")
+    store.update_meta(case_id, messages_read=read)
+
+
+def unread_count(meta: dict, messages: list[dict], email: str) -> int:
+    last = (meta.get("messages_read") or {}).get(email, "")
+    return sum(1 for m in messages if m["by"] != email and m["at"] > last)
+
+
+# ------------------------------------------------------------ logo
+
+MAX_LOGO_BYTES = 1_000_000
+_LOGO_MAGIC = ((bytes.fromhex("89504e470d0a1a0a"), "png"), (bytes.fromhex("ffd8ff"), "jpg"))
+
+
+def logo_type(content: bytes) -> Optional[str]:
+    """Recognise the image by its bytes, never by the file name. No SVG: it can carry script."""
+    for magic, ext in _LOGO_MAGIC:
+        if content.startswith(magic):
+            return ext
+    if content[:4] == b"RIFF" and content[8:12] == b"WEBP":
+        return "webp"
+    return None
+
+
+def set_logo(store: CaseStore, case_id: str, content: Optional[bytes]) -> None:
+    if content is None:
+        return store.set_logo(case_id, None)
+    if len(content) > MAX_LOGO_BYTES:
+        raise CaseStoreError("Logo zu gross (max. 1 MB)")
+    ext = logo_type(content)
+    if ext is None:
+        raise CaseStoreError("Logo: bitte PNG, JPG oder WebP")
+    store.set_logo(case_id, content, ext)
+
+
+# ------------------------------------------------------------ bank pack
+
+
+def build_bank_pack(store: CaseStore, case_id: str, sections: list[str], actor: str = "",
+                    today: Optional[date] = None) -> dict:
+    """The document a company hands its bank. Logged, because it leaves our hands."""
+    from datetime import datetime, timezone
+    from .reporting import bankpack
+
+    sections = [s for s in sections if s in bankpack.SECTION_IDS] or list(bankpack.DEFAULT_SECTIONS)
+    asm = assemble_case(store, case_id, today=today)
+    if not asm.ready:
+        return {"ok": False, "blocking": asm.blocking}
+    case = load_case(asm.payload)
+    try:
+        result = run_diagnostic(case, strict=True)
+    except ValidationError as exc:
+        return {"ok": False, "blocking": [str(i) for i in exc.issues]}
+    meta = store.get_meta(case_id)
+    titles = {d.id: d.title for d in DOCUMENT_TYPES_BY_ID.values()}
+    order = {t: i for i, t in enumerate(DOCUMENT_TYPES_BY_ID)}
+    docs = [{"title": titles.get(d["doc_type"], d["doc_type"]), "filename": d["filename"],
+             "date": (f"GJ {docmatrix.fiscal_year_of(d)}" if d["doc_type"] in docmatrix.ROW_DOC_TYPES
+                      and docmatrix.fiscal_year_of(d) else
+                      date.fromisoformat(d["uploaded_at"][:10]).strftime("%d.%m.%Y"))}
+            for d in sorted(store.list_documents(case_id), key=lambda d: (order.get(d["doc_type"], 99), d["filename"]))]
+    sme = check_answers(get_questionnaire(AUDIENCE_UNTERNEHMEN),
+                        store.load_answers(case_id, AUDIENCE_UNTERNEHMEN)).values
+    html = bankpack.render(result, sme, sections=tuple(sections), reviewed=bool(meta.get("report_released")),
+                           documents=docs, logo=store.get_logo(case_id), today=today)
+    log = list(meta.get("bankpack_downloads") or [])
+    log.append({"at": datetime.now(timezone.utc).isoformat(timespec="seconds"), "by": actor,
+                "sections": sections, "band": result.scorecard.band.value,
+                "score": result.scorecard.total_score})
+    store.update_meta(case_id, bankpack_downloads=log)
+    return {"ok": True, "html": html, "company": case.profile.name}
 
 
 def case_overview(store: CaseStore, case_id: str, today: Optional[date] = None) -> dict:
@@ -185,6 +339,9 @@ def case_overview(store: CaseStore, case_id: str, today: Optional[date] = None) 
         "documents": statuses,
         "doc_matrix": grid,
         "history": history(meta, docs),
+        "agreements": agreements.status(agreement_records(store, case_id)),
+        "agreements_missing": agreements.missing_required(agreement_records(store, case_id)),
+        "messages": store.list_records(case_id, "messages"),
         "outstanding_documents": outstanding,
         "documents_complete": not any(outstanding.values()),
         "ready_for_diagnosis": asm.ready,

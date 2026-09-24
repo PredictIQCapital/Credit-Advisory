@@ -135,6 +135,19 @@ class CaseStore(abc.ABC):
     @abc.abstractmethod
     def update_document_meta(self, case_id: str, doc_id: str, **fields: Any) -> dict: ...
 
+    # Append-only records: agreements signed or withdrawn, and messages.
+    @abc.abstractmethod
+    def append_record(self, case_id: str, kind: str, record: dict) -> dict: ...
+
+    @abc.abstractmethod
+    def list_records(self, case_id: str, kind: str) -> list[dict]: ...
+
+    @abc.abstractmethod
+    def set_logo(self, case_id: str, content: Optional[bytes], ext: str = "") -> None: ...
+
+    @abc.abstractmethod
+    def get_logo(self, case_id: str) -> Optional[tuple[bytes, str]]: ...
+
     @abc.abstractmethod
     def write_artifact(self, case_id: str, name: str, text: str) -> None: ...
 
@@ -346,6 +359,47 @@ class LocalCaseStore(CaseStore):
             self._write_json(d / "documents" / "index.json", index)
             self.update_meta(case_id)
             return entry
+
+    # ------------------------------------------------------------ records
+    RECORD_KINDS = ("agreements", "messages")
+
+    def append_record(self, case_id: str, kind: str, record: dict) -> dict:
+        if kind not in self.RECORD_KINDS:
+            raise CaseStoreError(f"Unbekannte Ablage '{kind}'")
+        with self._lock:
+            path = self._case_dir(case_id) / f"{kind}.json"
+            rows = self._read_json(path, [])
+            rows.append(record)
+            self._write_json(path, rows)
+            self.update_meta(case_id)
+            return record
+
+    def list_records(self, case_id: str, kind: str) -> list[dict]:
+        if kind not in self.RECORD_KINDS:
+            raise CaseStoreError(f"Unbekannte Ablage '{kind}'")
+        return self._read_json(self._case_dir(case_id) / f"{kind}.json", [])
+
+    # --------------------------------------------------------------- logo
+    LOGO_TYPES = {"png": "image/png", "jpg": "image/jpeg", "webp": "image/webp"}
+
+    def set_logo(self, case_id: str, content: Optional[bytes], ext: str = "") -> None:
+        with self._lock:
+            d = self._case_dir(case_id)
+            for old in self.LOGO_TYPES:
+                (d / f"logo.{old}").unlink(missing_ok=True)
+            if content is not None:
+                if ext not in self.LOGO_TYPES:
+                    raise CaseStoreError("Logo: PNG, JPG oder WebP")
+                (d / f"logo.{ext}").write_bytes(content)
+            self.update_meta(case_id, has_logo=content is not None)
+
+    def get_logo(self, case_id: str) -> Optional[tuple[bytes, str]]:
+        d = self._case_dir(case_id)
+        for ext, ctype in self.LOGO_TYPES.items():
+            f = d / f"logo.{ext}"
+            if f.is_file():
+                return f.read_bytes(), ctype
+        return None
 
     # ----------------------------------------------------------- artifacts
     def _artifact_path(self, case_id: str, name: str) -> Path:

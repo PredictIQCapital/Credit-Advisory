@@ -94,12 +94,18 @@ def _answers(name):
     return json.loads((INTAKE / name).read_text(encoding="utf-8"))
 
 
-def _register(base, company="Mueller Praezisionstechnik GmbH", email="anna@test.de"):
+def _register(base, company="Mueller Praezisionstechnik GmbH", email="anna@test.de",
+              name="Anna Mueller", release=True):
+    """Register a company. The typed name signs the terms and the privacy notice;
+    `release` also signs the tax advisor's release, which inviting them needs."""
     c = Client(base)
     status, body = c.call("POST", "/api/auth/register", {
-        "company_name": company, "name": "Anna", "email": email,
+        "company_name": company, "name": name, "email": email,
         "password": "anna-pass-1", "consent": True})
     assert status == 201, body
+    if release:
+        assert c.call("POST", f"/api/cases/{body['case_id']}/agreements",
+                      {"ids": ["schweigepflicht"], "name": name})[0] == 200
     return c, body["case_id"]
 
 
