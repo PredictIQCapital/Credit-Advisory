@@ -138,15 +138,28 @@ DOCUMENT_TYPES: tuple[DocumentType, ...] = (
     ),
     DocumentType(
         id="jahresabschluesse",
-        title="Jahresabschluesse der letzten 2-3 Jahre",
+        title="Jahresabschluesse der letzten 3 Jahre",
         source=SOURCE_STEUERBERATER,
         requirement=REQUIRED,
         formats=("pdf", "png", "jpg", "jpeg"),
         multiple=True,
         min_count=2,
-        description="Bilanz, GuV und ggf. Anhang, je Geschaeftsjahr eine Datei. Der juengste "
-                    "Abschluss wird fuer den Schnell-Check automatisch ausgelesen.",
+        description="Bilanz, GuV und ggf. Anhang, je Geschaeftsjahr eine Datei; drei "
+                    "Jahre, mindestens zwei. Der juengste Abschluss wird fuer den "
+                    "Schnell-Check automatisch ausgelesen.",
         why="Grundlage jeder Kreditentscheidung; Pflichtbestandteil des Kreditantrags.",
+    ),
+    DocumentType(
+        id="kapitalflussrechnung",
+        title="Kapitalflussrechnung",
+        source=SOURCE_STEUERBERATER,
+        requirement=OPTIONAL,
+        formats=("pdf", "xlsx", "csv"),
+        multiple=True,
+        description="Cashflow-Rechnung nach DRS 21, sofern erstellt -- fuer kleine und "
+                    "mittlere GmbHs nach HGB keine Pflicht.",
+        why="Zeigt, woher die Liquiditaet tatsaechlich kam. Fehlt sie, leitet die Bank "
+            "den Cashflow selbst aus Bilanz und GuV ab -- das tun wir auch.",
     ),
     DocumentType(
         id="steuerkonto",
@@ -231,12 +244,16 @@ DOCUMENT_TYPES: tuple[DocumentType, ...] = (
     ),
     DocumentType(
         id="sicherheitenaufstellung",
-        title="Aufstellung der Sicherheiten",
+        title="Aufstellung der Verbindlichkeiten und Sicherheiten",
         source=SOURCE_UNTERNEHMEN,
-        requirement=OPTIONAL,
+        requirement=RECOMMENDED,
         formats=("pdf", "xlsx", "csv"),
-        description="Grundbuchauszuege, Gutachten, Maschinenlisten.",
-        why="Bestimmt, ob eine Besicherungsluecke besteht und wie gross sie ist.",
+        description="Alle bestehenden Verpflichtungen (Kredite, Leasing, Buergschaften) "
+                    "und alle Sicherheiten, getrennt nach frei und bereits belastet "
+                    "(Grundschulden, Sicherungsuebereignungen, Abtretungen), mit "
+                    "Grundbuchauszuegen, Gutachten oder Maschinenlisten.",
+        why="Nur freie Sicherheiten stehen fuer einen neuen Kredit zur Verfuegung. "
+            "Bestimmt, ob eine Besicherungsluecke besteht und wie gross sie ist.",
     ),
     DocumentType(
         id="gesellschafterliste",

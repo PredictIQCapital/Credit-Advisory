@@ -76,11 +76,21 @@ ______________________________ Jahre
 
 > Warum wir fragen: Die Laufzeit bestimmt die jaehrliche Rate und damit die Kapitaldienstfaehigkeit.
 
-**Wert verfuegbarer Sicherheiten**
+**Wert freier (unbelasteter) Sicherheiten**
+
+*Nur, was noch keinem Kreditgeber als Sicherheit dient*
 
 ______________________________ EUR
 
 > Warum wir fragen: Eine Ablehnung trotz tragfaehiger Zahlen ist oft eine Besicherungsfrage -- die ueber Foerderprogramme loesbar ist.
+
+**Wert bereits belasteter Sicherheiten**
+
+*Grundschulden, Sicherungsuebereignungen, Abtretungen zugunsten bestehender Kreditgeber*
+
+______________________________ EUR
+
+> Warum wir fragen: Belastete Sicherheiten zeigen, wie viel Besicherung die bestehenden Kredite binden -- und ob nachrangig noch Spielraum besteht.
 
 **Welche Sicherheiten?**
 

@@ -201,10 +201,18 @@ FRAGEBOGEN_UNTERNEHMEN = Questionnaire(
                 Question("laufzeit_jahre", "Gewuenschte Laufzeit", "int", unit="Jahre",
                          why="Die Laufzeit bestimmt die jaehrliche Rate und damit die "
                              "Kapitaldienstfaehigkeit."),
-                Question("sicherheiten_wert", "Wert verfuegbarer Sicherheiten", "money",
-                         unit="EUR",
+                Question("sicherheiten_wert", "Wert freier (unbelasteter) Sicherheiten",
+                         "money", unit="EUR",
+                         help="Nur, was noch keinem Kreditgeber als Sicherheit dient",
                          why="Eine Ablehnung trotz tragfaehiger Zahlen ist oft eine "
                              "Besicherungsfrage -- die ueber Foerderprogramme loesbar ist."),
+                Question("sicherheiten_belastet", "Wert bereits belasteter Sicherheiten",
+                         "money", unit="EUR",
+                         help="Grundschulden, Sicherungsuebereignungen, Abtretungen "
+                              "zugunsten bestehender Kreditgeber",
+                         why="Belastete Sicherheiten zeigen, wie viel Besicherung die "
+                             "bestehenden Kredite binden -- und ob nachrangig noch "
+                             "Spielraum besteht."),
                 Question("sicherheiten_beschreibung", "Welche Sicherheiten?", "textarea",
                          help="Grundschulden, Maschinen, Forderungsabtretung, Buergschaften"),
                 Question("benoetigt_in_wochen", "Bis wann wird das Geld benoetigt?",

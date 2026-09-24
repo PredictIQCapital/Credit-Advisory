@@ -586,6 +586,7 @@ function docCard(s, def, opts) {
       el("span", { class: "muted small", text: `${Math.max(1, Math.round(f.size / 1024))} KB · ${fdate(f.uploaded_at)}` }),
       f.meta && f.meta.period_end ? el("span", { class: "pill", text: `${t("Stichtag", "Date")} ${fdate(f.meta.period_end)}` }) : null,
       f.meta && f.meta.account_label ? el("span", { class: "pill", text: f.meta.account_label }) : null,
+      f.meta && f.meta.note ? el("span", { class: "muted small file-note", text: `„${f.meta.note}“` }) : null,
       mine ? el("button", { class: "link-btn small", text: t("entfernen", "remove"), onclick: (ev) => guarded(ev.target, async () => {
         if (!confirm(t(`${f.filename} entfernen?`, `Remove ${f.filename}?`))) return;
         setOv(await api("DELETE", `/api/cases/${S.ovCid}/documents/${f.doc_id}`));
@@ -607,6 +608,8 @@ function docCard(s, def, opts) {
       acct = el("input", { type: "text", placeholder: t("z. B. Geschäftskonto", "e.g. business account") });
       extras.push(el("label", { class: "mini" }, t("Konto", "Account"), acct));
     }
+    const note = el("input", { type: "text", maxlength: 500, placeholder: t("optional, z. B. „Entwurf, Testat folgt“", "optional, e.g. \"draft, audit opinion to follow\"") });
+    extras.push(el("label", { class: "mini" }, t("Anmerkung", "Note"), note));
     const hint = el("div", { class: "hint", text: t(`Datei hierher ziehen oder auswählen (${def.formats.join(", ").toUpperCase()})`, `Drag a file here or choose one (${def.formats.join(", ").toUpperCase()})`) });
     const pick = el("button", { class: "btn btn-ghost btn-sm", type: "button", text: s.files.length && !def.multiple ? t("Ersetzen", "Replace") : t("Datei wählen", "Choose file"), onclick: () => input.click() });
     const drop = el("div", { class: "drop" }, hint, extras, pick, input);
@@ -620,11 +623,12 @@ function docCard(s, def, opts) {
       const body = { doc_type: def.id, filename: file.name, content_base64: await fileToBase64(file) };
       if (pEnd) { body.period_end = pEnd.value; body.period_months = Number(pMonths.value || 12); }
       if (acct && acct.value.trim()) body.account_label = acct.value.trim();
+      if (note.value.trim()) body.note = note.value.trim();
       const res = await api("POST", `/api/cases/${S.ovCid}/documents`, body);
       setOv(res.overview);
       toast(t(`${file.name} hochgeladen`, `${file.name} uploaded`));
       opts.onChange();
-    }).finally(() => { input.value = ""; });
+    }).finally(() => { input.value = ""; note.value = ""; });
     input.addEventListener("change", () => upload(input.files[0]));
     drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.add("over"); });
     drop.addEventListener("dragleave", () => drop.classList.remove("over"));

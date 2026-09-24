@@ -126,6 +126,9 @@ ROUTES = [(m, re.compile("^" + p + "$"), h) for m, p, h in _ROUTE_TABLE]
 PUBLIC_HANDLERS = {"meta", "me", "login", "logout", "register", "form"}
 
 
+MAX_NOTE_CHARS = 500
+
+
 class ApiError(Exception):
     def __init__(self, status: int, message: str):
         super().__init__(message)
@@ -430,6 +433,11 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Dateiinhalt nicht lesbar") from None
         meta = {k: body[k] for k in ("period_end", "period_months", "account_label")
                 if body.get(k) not in (None, "")}
+        note = str(body.get("note") or "").strip()
+        if note:
+            # Free text explaining the document ("Entwurf, Testat folgt"). Kept
+            # short: it is a label for the reader, not a place for a second file.
+            meta["note"] = note[:MAX_NOTE_CHARS]
         if "period_end" in meta:
             try:
                 date.fromisoformat(str(meta["period_end"]))

@@ -277,6 +277,19 @@ def test_members_can_only_delete_their_own_uploads(env):
     assert stb.call("DELETE", f"/api/cases/{cid}/documents/{doc}")[0] == 200
 
 
+def test_upload_keeps_a_short_note_with_the_document(env):
+    """The spec lets the uploader say what a file is ("draft, audit to follow")."""
+    store, _, base = env
+    c, cid = _register(base)
+    _, up = c.upload(cid, "handelsregisterauszug", "handelsregisterauszug.pdf",
+                     note="  Auszug vom Maerz, aktueller folgt  ")
+    assert up["document"]["meta"]["note"] == "Auszug vom Maerz, aktueller folgt"
+    _, up = c.upload(cid, "handelsregisterauszug", "handelsregisterauszug.pdf", note="x" * 900)
+    assert len(up["document"]["meta"]["note"]) == 500
+    _, up = c.upload(cid, "handelsregisterauszug", "handelsregisterauszug.pdf", note="   ")
+    assert "note" not in up["document"]["meta"]
+
+
 def test_submit_requires_complete_questionnaire(env):
     store, _, base = env
     c, cid = _register(base)
