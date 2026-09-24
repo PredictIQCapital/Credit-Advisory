@@ -34,7 +34,7 @@ Demo logins (password `demo1234`, also shown as one-click buttons on the login p
 | Login | Role | What you see |
 |---|---|---|
 | `berater@demo.de` | advisor | pipeline of all cases; run analysis; release reports; letters; outcomes |
-| `anna.mueller@demo.de` | company | 7-step guided flow, all complete; released result: fixable, C -> A |
+| `anna.mueller@demo.de` | company | 7-step guided flow, all complete; released result: fixable, B -> A |
 | `elif.yilmaz@demo.de` | company | the honest no: genuine credit risk, advised not to apply |
 | `jan.petersen@demo.de` | company | questionnaire half done |
 | `jonas.weber@demo.de` | company | just registered: the flow from step 1 |
@@ -89,10 +89,10 @@ Sample output:
 
 ```
 Fall       Unternehmen                  Band   Score  ->   Score Band  Einordnung
-CASE-01    Mueller Praezisionstechnik   B       66.4  ->    80.3 A     behebbar - Struktur
-CASE-02    Nordlicht Handel GmbH & Co.  D       50.7  ->    64.7 C     behebbar - Struktur
-CASE-03    Gastro Rheinblick GmbH       E        4.2  ->     8.7 E     substanzielles Kreditrisiko
-CASE-06    Hoffmann Medizintechnik      A       93.3  ->    93.3 A     bereits finanzierbar
+CASE-01    Mueller Praezisionstechnik   B       65.6  ->    78.4 A     behebbar - Struktur
+CASE-02    Nordlicht Handel GmbH & Co.  C       52.3  ->    63.6 C     behebbar - Struktur
+CASE-03    Gastro Rheinblick GmbH       E        4.5  ->     8.4 E     substanzielles Kreditrisiko
+CASE-06    Hoffmann Medizintechnik      A       90.8  ->    90.8 A     bereits finanzierbar
 ```
 
 ## Products
@@ -118,9 +118,10 @@ Only do this after the data processing agreement with the provider is in place.
 
 **Intake** (see [docs/inputs-outputs.md](docs/inputs-outputs.md) for every input and output):
 
-- **Two questionnaires**: 41 questions for the company, 20 for its Steuerberater.
+- **Two questionnaires**: 45 questions for the company, 20 for its Steuerberater.
+  The company's WZ 2008 / NACE code, when given, determines its sector.
   Each question says *why* it is asked. Printable versions in [docs/intake/](docs/intake/).
-- **Document catalogue**: 14 document types, who supplies each, required or
+- **Document catalogue**: 15 document types, who supplies each, required or
   conditional, accepted formats, and why it matters.
 - **Automatic reading** of the two structured sources: the DATEV Summen- und
   Saldenliste (current and prior year) and bank-statement CSVs (days at the
@@ -138,11 +139,18 @@ Only do this after the data processing agreement with the provider is in place.
 2. **Compute ratios** — the metrics a German bank's rating engine actually uses,
    annualised correctly when working from a mid-year BWA.
 3. **Score** — transparent weighted scorecard, piecewise-linear over published
-   thresholds. Every factor exposes its value, weight, and points lost.
+   thresholds. Every factor exposes its value, weight, and points lost. The
+   Bundesbank-calibrated factors are anchored to the client's own sector and
+   revenue class ([ADR-005](docs/decisions/ADR-005-sector-specific-scoring.md));
+   the all-sector score is shown alongside.
 4. **Diagnose** — classify each weakness as `Darstellung`, `Unterlagen`,
    `Produktwahl`, `Besicherung`, or `substanzielles Kreditrisiko`.
 5. **Simulate** — apply the remediations to a copy and show before/after.
 6. **Route** — rank lender *types* for the current and the corrected profile.
+   **Improve** — for each ratio below the sector-typical level: the target,
+   the points it would add, and the gap in euros on the client's own balance
+   sheet. **Project** — revenue, EBITDA and debt service coverage over the
+   coming years, next to the stress scenarios.
 7. **Report** — a German-language client report with the disclaimer on every page.
 
 ### The distinction the whole business rests on
@@ -173,7 +181,10 @@ src/credit_readiness/
 ├── scorecard.py     factor weights, breakpoints, banding    [REGULATORY]
 ├── remediation.py   fixability rules R01-R10 + simulation   [CORE IP]
 ├── routing.py       lender-type matching                    [REGULATORY]
-├── benchmarks.py    sector quartiles, Bundesbank            [REAL DATA]
+├── benchmarks.py    sector quartiles + 5-year history, Bundesbank [REAL DATA]
+├── nace.py          WZ 2008 / NACE code -> benchmark sector
+├── improvement.py   ratio gaps to the sector-typical level, in points and EUR
+├── projection.py    damped-trend projection of DSCR over the loan
 ├── engine.py        orchestrator -> DiagnosticResult
 ├── ai/              document reading (rules | Claude), explanations, guardrails, audit log
 ├── intake/          questionnaires, document catalogue, case assembly
@@ -244,4 +255,8 @@ blueprint's own build order, the honest MVP is this engine run manually on the
 first handful of real client files — automate a layer only once real volume makes
 the manual version the bottleneck.
 
-217 tests, all passing.
+585 tests, all passing.
+
+The product plan (PRD) is checked against this build in
+[docs/prd-review.md](docs/prd-review.md), including why Phases 3 and 4 wait
+for a legal decision.
