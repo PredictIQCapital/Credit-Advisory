@@ -67,7 +67,28 @@ The architecture is built so this decision can be made late without a rewrite:
 If the success-fee model is adopted, `routing.py` is where the regulatory surface
 changes, and the module docstring says so.
 
+### 4. What the company hands its bank — the bank pack
+
+**OPEN — include in the lawyer's review of the quick check.** The company can
+download a PDF for its bank that includes its readiness band. That is the
+client showing its own advisory result, not us distributing an assessment, and
+the document is built to stay that way: it states the source (reviewed report
+or automatic quick check), says on every page that the band is not a rating
+and not a loan promise, and the terms oblige the company not to remove that
+note. We never send it to a lender ourselves. Every download is logged
+(`bankpack_downloads` in the case record).
+
 ## GDPR — not optional
+
+**Agreements before data** (`agreements.py`). A company enters nothing until it
+has signed the terms and acknowledged the privacy notice; the tax advisor can
+only be invited after the release from confidentiality (§ 57 StBerG). Each
+signature is an append-only record with typed name, account, time, IP address
+and a SHA-256 of the exact text shown (Art. 7(1) GDPR: the controller must be
+able to demonstrate consent); withdrawals are new records. **All four texts
+are drafts and need legal review before the first real client** -- bump the
+version and every company signs again.
+
 
 The data handled here is financial, sometimes distress-adjacent, and always
 commercially sensitive.

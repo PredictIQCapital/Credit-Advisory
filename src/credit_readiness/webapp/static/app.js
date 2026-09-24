@@ -262,15 +262,18 @@ function renderAuth(mode) {
       el("p", { class: "muted", text: t("Legen Sie ein Konto für Ihr Unternehmen an. Danach führen wir Sie Schritt für Schritt durch alles Weitere.", "Create an account for your company. We then guide you through everything, step by step.") }),
       err,
       el("label", { class: "field" }, el("span", { class: "lbl", text: t("Firmenname", "Company name") }), f.company),
-      el("label", { class: "field" }, el("span", { class: "lbl", text: t("Ihr Name", "Your name") }), f.name),
+      el("label", { class: "field" }, el("span", { class: "lbl", text: t("Ihr Name (Vor- und Nachname)", "Your name (first and last)") }), f.name),
       el("label", { class: "field" }, el("span", { class: "lbl", text: t("E-Mail", "E-mail") }), f.email),
       el("label", { class: "field" }, el("span", { class: "lbl", text: t("Passwort (mind. 8 Zeichen)", "Password (min. 8 characters)") }), f.password),
-      el("label", { class: "checkbox" }, f.consent, el("span", { text: t("Ich willige in die Verarbeitung meiner Daten zum Zweck der Kreditfähigkeitsanalyse ein.", "I consent to the processing of my data for the purpose of the creditworthiness analysis.") })),
+      el("label", { class: "checkbox" }, f.consent, el("span", {},
+        t("Ich akzeptiere die ", "I accept the "), agreementLink("nutzungsbedingungen"),
+        t(" und habe die ", " and have read the "), agreementLink("datenschutz"),
+        t(" gelesen. Mein Name gilt als Unterschrift.", ". My name is my signature."))),
       btn);
     form.addEventListener("submit", (ev) => {
       ev.preventDefault();
       err.hidden = true;
-      if (!f.consent.checked) return showErr(t("Bitte der Datenverarbeitung zustimmen.", "Please consent to the data processing."));
+      if (!f.consent.checked) return showErr(t("Bitte Nutzungsbedingungen und Datenschutzhinweise bestätigen.", "Please confirm the terms and the privacy notice."));
       guarded(btn, async () => {
         try {
           const res = await api("POST", "/api/auth/register", { company_name: f.company.value, name: f.name.value, email: f.email.value, password: f.password.value, consent: true });
@@ -324,6 +327,19 @@ function renderAuth(mode) {
       el("a", { href: "/", class: "small", text: t("← Zur Website", "← Back to website") }), langToggle()),
     tabs, form, demo));
   mount(el("div", { class: "auth" }, brand, panel));
+}
+
+/** Opens an agreement's full text from the registration form. */
+function agreementLink(id) {
+  const a = S.meta.agreements.find((x) => x.id === id);
+  return el("a", { href: "#", text: t(a.title_de, a.title_en), onclick: (ev) => {
+    ev.preventDefault();
+    openModal((box, close) => box.append(
+      el("h3", { text: t(a.title_de, a.title_en) }),
+      lang() === "en" ? el("p", { class: "small muted", text: a.summary_en + " The binding text is German:" }) : null,
+      el("div", { class: "agr-text", text: a.text_de }),
+      el("div", { class: "foot" }, el("button", { class: "btn btn-primary", text: "OK", onclick: close }))));
+  } });
 }
 
 async function login(email, password) {
@@ -1084,6 +1100,7 @@ const ADV_TABS = [
   ["analysis", "Analyse", "Analysis"],
   ["letters", "Schreiben", "Letters"],
   ["outcome", "Ergebnis", "Outcome"],
+  ["messages", "Nachrichten", "Messages"],
 ];
 
 function renderAdvisorCase(ov, part) {
@@ -1091,11 +1108,11 @@ function renderAdvisorCase(ov, part) {
   const tab = ADV_TABS.some(([id]) => id === part) ? part : "overview";
   const curIdx = STAGE_ORDER.indexOf(ov.meta.stage);
   const stagebar = el("div", { class: "stagebar" }, STAGE_ORDER.map((s, i) => el("span", { class: i < curIdx ? "done" : i === curIdx ? "cur" : "", text: stageLabel(s) })));
-  const tabs = el("div", { class: "tabs2" }, ADV_TABS.map(([id, de, en]) => el("button", { class: id === tab ? "active" : "", text: t(de, en), onclick: () => go(`case/${cid}/${id}`) })));
+  const tabs = el("div", { class: "tabs2" }, ADV_TABS.map(([id, de, en]) => el("button", { class: id === tab ? "active" : "", text: t(de, en) + (id === "messages" && ov.unread ? ` (${ov.unread})` : ""), onclick: () => go(`case/${cid}/${id}`) })));
   const bodies = {
     overview: advOverview, company: (o) => advQuestionnaire(o, "unternehmen"), taxadvisor: (o) => advQuestionnaire(o, "steuerberater"),
     documents: (o) => el("div", { class: "panel" }, docsPanel(o, { canUpload: () => true, onChange: () => renderAdvisorCase(S.ov, "documents") })),
-    analysis: advAnalysis, letters: advLetters, outcome: advOutcome,
+    analysis: advAnalysis, letters: advLetters, outcome: advOutcome, messages: advMessages,
   };
   mount(shell([
     el("div", { class: "crumbs" }, el("a", { href: "#home", text: t("← Alle Mandate", "← All engagements") })),

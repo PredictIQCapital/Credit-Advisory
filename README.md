@@ -34,6 +34,10 @@ financing, documents, figures, result, plan, history) and a dashboard with
 score, next steps, ratios against the sector, plan, company data, document
 status and recent activity. Annual accounts and trial balances are uploaded
 into a grid of statements by fiscal year; every document can carry a note.
+Before entering any data, a company signs the terms and privacy notice (its
+typed name is the signature, recorded with time, IP and a fingerprint of the
+text); it can add its logo, message the advisory team inside the portal, and
+download a bank pack PDF with its data, ratios, charts and readiness band.
 
 Demo logins (password `demo1234`, also shown as one-click buttons on the login page):
 

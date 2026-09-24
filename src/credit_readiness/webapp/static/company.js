@@ -25,6 +25,9 @@ const ICON_PATHS = {
   menu: ["M3 6h18M3 12h18M3 18h18"],
   users: ["M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2", "M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z", "M22 21v-2a4 4 0 0 0-3-3.9", "M16 3.1a4 4 0 0 1 0 7.8"],
   arrow: ["M5 12h14", "M13 6l6 6-6 6"],
+  shield: ["M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z", "M9 12l2 2 4-4"],
+  chat: ["M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"],
+  download: ["M12 4v11", "M7 10l5 5 5-5", "M4 20h16"],
 };
 
 function icon(name, size) {
@@ -52,8 +55,11 @@ const WS_NAV = [
   { id: "documents", icon: "file", de: "Unterlagen", en: "Documents" },
   { id: "figures", icon: "check", de: "Zahlen prüfen", en: "Check figures" },
   { id: "result", icon: "chart", de: "Ergebnis", en: "Result" },
+  { id: "bankpack", icon: "download", de: "Bankmappe (PDF)", en: "Bank pack (PDF)" },
+  { id: "messages", icon: "chat", de: "Nachrichten", en: "Messages" },
   { id: "plan", icon: "card", de: "Tarif", en: "Plan" },
   { id: "history", icon: "clock", de: "Verlauf", en: "History" },
+  { id: "agreements", icon: "shield", de: "Datenschutz & Verträge", en: "Privacy & agreements" },
 ];
 
 const WS_SECTIONS = {
@@ -147,6 +153,8 @@ function wsShell(ov, page, content, headAction) {
     documents: el("span", { class: "nb" + (dp.done === dp.total ? " ok" : ""), text: `${dp.done}/${dp.total}` }),
     figures: ov.figures_confirmed ? el("span", { class: "nb ok", text: "✓" }) : null,
     result: res ? el("span", { class: `nb band-${res.r.band}`, text: res.r.band }) : null,
+    messages: ov.unread ? el("span", { class: "nb warn", text: String(ov.unread) }) : null,
+    agreements: ov.agreements.some((a) => a.outdated) ? el("span", { class: "nb warn", text: "!" }) : null,
     plan: el("span", { class: "nb plain", text: wsPlan(ov) === "quick" ? t("Free", "Free") : wsPlan(ov) === "report" ? "390 €" : "Pro" }),
   };
   const logout = el("button", { class: "side-item", type: "button" }, icon("logout"), el("span", { class: "lbl", text: t("Abmelden", "Log out") }));
@@ -158,7 +166,7 @@ function wsShell(ov, page, content, headAction) {
   const side = el("aside", { class: "side", "aria-label": t("Navigation", "Navigation") },
     el("a", { class: "side-brand", href: `#case/${cid}/overview` }, logoMark(), el("span", { class: "lbl" }, "Credit Readiness")),
     el("div", { class: "side-co" },
-      el("div", { class: "co-av", text: initials(ov.meta.company_name) }),
+      logoSrc(ov) ? el("div", { class: "co-av logo" }, el("img", { src: logoSrc(ov), alt: "" })) : el("div", { class: "co-av", text: initials(ov.meta.company_name) }),
       el("div", { class: "lbl" },
         el("b", { text: ov.meta.company_name }),
         el("span", { text: [raw.branche && optLabel(sectorQ(), raw.branche), cid].filter(Boolean).join(" · ") }))),
@@ -189,10 +197,12 @@ function sectorQ() {
 // ------------------------------------------------------------------ router
 
 function renderSmeCase(ov, part) {
+  if (ov.agreements_missing && ov.agreements_missing.length) return wsGate(ov);
   const page = WS_NAV.some((n) => n.id === part) ? part : "overview";
   const pages = {
     overview: wsOverview, company: (o) => wsForm(o, "company"), financing: (o) => wsForm(o, "financing"),
     documents: wsDocuments, figures: wsFigures, result: wsResultPage, plan: wsPlanPage, history: wsHistory,
+    bankpack: wsBankpack, messages: wsMessages, agreements: wsAgreements,
   };
   const [content, action] = pages[page](ov);
   const root = document.getElementById("root");
@@ -282,7 +292,9 @@ function scoreBlock(ov, res) {
         `Gemessen an Ihrer Branche. Ohne Branchenbezug: ${nf(r.score_generic, 1)} (Band ${r.band_generic}).`,
         `Measured against your sector. Without the sector view: ${nf(r.score_generic, 1)} (band ${r.band_generic}).`) }) : null,
       after ? el("div", { class: "after" }, t("Nach den Maßnahmen: ", "After the measures: "), el("span", { class: `band-chip band-${r.band_after_remediation}`, text: r.band_after_remediation }), ` ${nf(r.score_after_remediation, 1)} / 100`) : null,
-      el("a", { class: "link-arrow", href: `#case/${cid}/result` }, t("Details ansehen", "See details"), icon("arrow", 14))),
+      el("div", { class: "score-links" },
+        el("a", { class: "link-arrow", href: `#case/${cid}/result` }, t("Details ansehen", "See details"), icon("arrow", 14)),
+        el("a", { class: "link-arrow", href: `#case/${cid}/bankpack` }, icon("download", 14), t("Bankmappe als PDF", "Bank pack as PDF")))),
     leversBlock(r.improvements));
 }
 
@@ -423,6 +435,7 @@ function historyText(e) {
     case "order": return [t(`Bestellt: ${planName(e.product)}`, `Ordered: ${planName(e.product)}`), e.text];
     case "quick_check": return [t("Schnell-Check berechnet", "Quick check calculated"), ""];
     case "submitted": return [t("An Berater übermittelt", "Sent to advisor"), ""];
+    case "bankpack": return [t("Bankmappe erstellt", "Bank pack created"), e.text];
     default: return [e.kind, e.text];
   }
 }
@@ -464,6 +477,7 @@ function wsForm(ov, key) {
     ? t("Stammdaten, Reporting und Zahlungsverhalten. Pflichtfelder sind mit * markiert; jede Frage sagt, warum wir sie stellen.", "Company data, reporting and payment behaviour. Required fields are marked *; every question says why we ask it.")
     : t("Was Sie finanzieren möchten, und was schon besteht. Das bestimmt, welche Kreditgeber passen.", "What you want to finance and what already exists. This decides which lenders fit.");
   return [el("div", { class: "form-page" },
+    key === "company" ? logoCard(ov) : null,
     el("div", { class: "card" }, el("p", { class: "muted", style: "margin:0 0 6px", text: intro }),
       gap.missing ? nextBanner("warn", t(`${gap.missing} Pflichtangaben offen`, `${gap.missing} required answers open`), t("Speichern geht jederzeit – auch unvollständig.", "You can save at any time – even incomplete.")) : nextBanner("done", t("Alle Pflichtangaben vollständig", "All required answers complete"), ""),
       form.node),
@@ -658,6 +672,13 @@ function inviteCard(ov, onChange) {
     showInvite(res.invite);
     onChange();
   }));
+  const release = (ov.agreements || []).find((a) => a.id === "schweigepflicht");
+  if (!invited.length && release && !release.signed) {
+    return el("div", { class: "card invite" },
+      el("div", { class: "card-head" }, el("h3", {}, icon("users", 18), t(" Steuerberatung", " Tax advisor"))),
+      el("p", { class: "small muted", text: t("Damit Ihre Kanzlei uns Unterlagen geben darf, entbinden Sie sie für diesen Zweck von der Verschwiegenheitspflicht.", "So that your firm may give us documents, release them from confidentiality for this purpose.") }),
+      el("a", { class: "btn btn-dark btn-sm", href: `#case/${ov.meta.case_id}/agreements`, text: t("Entbindung unterzeichnen", "Sign the release") }));
+  }
   return el("div", { class: "card invite" },
     el("div", { class: "card-head" }, el("h3", {}, icon("users", 18), t(" Steuerberatung", " Tax advisor"))),
     invited.length
@@ -847,4 +868,231 @@ function wsPlanPage(ov) {
 
 function wsHistory(ov) {
   return [el("div", { class: "card" }, timeline(ov.history || [])), null];
+}
+
+// ------------------------------------------------------------------ agreements
+
+const AGR_TITLE = (a) => t(a.title_de, a.title_en);
+
+/** Shown instead of the workspace until the required agreements are signed. */
+function wsGate(ov) {
+  const cid = ov.meta.case_id;
+  const needed = ov.agreements.filter((a) => ov.agreements_missing.includes(a.id));
+  const checks = {};
+  const name = el("input", { type: "text", value: S.me.name, autocomplete: "name" });
+  const err = el("div", { class: "form-error", hidden: true });
+  const btn = el("button", { class: "btn btn-primary btn-lg", text: t("Verbindlich unterzeichnen", "Sign") });
+  btn.addEventListener("click", () => guarded(btn, async () => {
+    err.hidden = true;
+    const unchecked = needed.filter((a) => !checks[a.id].checked);
+    if (unchecked.length) { err.textContent = t("Bitte alle Punkte bestätigen.", "Please confirm every item."); err.hidden = false; return; }
+    try {
+      setOv(await api("POST", `/api/cases/${cid}/agreements`, { ids: needed.map((a) => a.id), name: name.value }));
+      toast(t("Danke – unterzeichnet. Ihre Kopie finden Sie unter „Datenschutz & Verträge“.", "Thank you – signed. Your copy is under Privacy & agreements."));
+      renderSmeCase(S.ov, "overview");
+    } catch (e) { err.textContent = e.message; err.hidden = false; }
+  }));
+  const logout = el("button", { class: "link-btn small", text: t("Abmelden", "Log out"), onclick: async () => { await api("POST", "/api/auth/logout"); S.me = null; go("login"); } });
+  const root = document.getElementById("root");
+  root.className = "";
+  root.replaceChildren(el("div", { class: "gate" },
+    el("div", { class: "gate-card" },
+      el("div", { class: "gate-brand" }, logoMark(), el("b", { text: "Credit Readiness" }), el("span", { style: "flex:1" }), langToggle()),
+      el("div", { class: "eyebrow" }, icon("shield", 14), t(" Bevor es losgeht", " Before we start")),
+      el("h1", { text: t("Kurz bestätigen, dann geht es los", "Confirm, then we start") }),
+      el("p", { class: "muted", text: t(`Damit wir Unterlagen von ${ov.meta.company_name} verarbeiten dürfen, brauchen wir Ihre Bestätigung. Ihr eingetippter Name gilt als Unterschrift; wir speichern Zeitpunkt, Konto und den genauen Wortlaut als Nachweis.`,
+        `Before we may process documents of ${ov.meta.company_name}, we need your confirmation. Your typed name is your signature; we store time, account and the exact wording as proof.`) }),
+      needed.map((a) => {
+        checks[a.id] = el("input", { type: "checkbox" });
+        return el("div", { class: "agr" },
+          el("details", {}, el("summary", {}, el("b", { text: AGR_TITLE(a) }), el("span", { class: "small muted", text: " · " + t("Wortlaut lesen", "read the text") })),
+            lang() === "en" ? el("p", { class: "small muted", text: a.summary_en + " The binding text is German:" }) : null,
+            el("div", { class: "agr-text", text: a.text_de })),
+          el("label", { class: "checkbox" }, checks[a.id], el("span", { text: lang() === "en" ? `I confirm: ${a.title_en}.` : a.confirm_de })));
+      }),
+      el("label", { class: "field" }, el("span", { class: "lbl", text: t("Unterschrift: Vor- und Nachname", "Signature: first and last name") }), name),
+      err,
+      el("div", { class: "actions" }, btn, logout))));
+}
+
+function wsAgreements(ov) {
+  const cid = ov.meta.case_id;
+  const rows = ov.agreements.map((a) => {
+    const r = a.record;
+    let action = null;
+    if (a.revocable && a.signed) {
+      action = el("button", { class: "btn btn-ghost btn-sm", text: t("Widerrufen", "Withdraw"), onclick: (ev) => guarded(ev.currentTarget, async () => {
+        if (!confirm(t(`„${a.title_de}“ widerrufen? Das gilt ab sofort für die Zukunft.`, `Withdraw "${a.title_en}"? This applies from now on.`))) return;
+        setOv(await api("POST", `/api/cases/${cid}/agreements/${a.id}/withdraw`));
+        renderSmeCase(S.ov, "agreements");
+      }) });
+    } else if (!a.signed) {
+      const nm = el("input", { type: "text", value: S.me.name, style: "max-width:240px" });
+      action = el("div", { class: "sign-inline" }, nm, el("button", { class: "btn btn-dark btn-sm", text: t("Unterzeichnen", "Sign"), onclick: (ev) => guarded(ev.currentTarget, async () => {
+        setOv(await api("POST", `/api/cases/${cid}/agreements`, { ids: [a.id], name: nm.value }));
+        toast(t("Unterzeichnet", "Signed"));
+        renderSmeCase(S.ov, "agreements");
+      }) }));
+    }
+    const when = !r ? (a.id === "schweigepflicht" ? t("Nötig, bevor Sie Ihre Steuerberatung einladen.", "Needed before you invite your tax advisor.") : t("Noch nicht erteilt.", "Not given yet."))
+      : r.action === "widerrufen" ? t(`Widerrufen am ${fdate(r.at)} von ${r.by}`, `Withdrawn on ${fdate(r.at)} by ${r.by}`)
+        : t(`Unterzeichnet am ${fdate(r.at)} von ${r.signature} (${r.by}) · Fassung ${r.version}`, `Signed on ${fdate(r.at)} by ${r.signature} (${r.by}) · version ${r.version}`);
+    return el("div", { class: "agr-row" },
+      el("div", { class: "agr-st " + (a.signed ? "ok" : a.required ? "need" : "opt"), text: a.signed ? "✓" : a.required ? "!" : "○" }),
+      el("div", { class: "agr-main" },
+        el("div", { class: "agr-title" }, el("b", { text: AGR_TITLE(a) }), el("span", { class: "pill " + (a.required ? "" : "info"), text: a.required ? t("erforderlich", "required") : a.revocable ? t("freiwillig, widerrufbar", "optional, revocable") : t("optional", "optional") })),
+        el("div", { class: "small muted", text: when }),
+        a.outdated ? el("div", { class: "small", style: "color:var(--amber)", text: t("Neue Fassung – bitte erneut unterzeichnen.", "New version – please sign again.") }) : null,
+        el("details", {}, el("summary", { class: "small", text: t("Wortlaut", "Text") }), el("div", { class: "agr-text", text: a.text_de }))),
+      action);
+  });
+  return [el("div", {},
+    el("div", { class: "card" },
+      el("div", { class: "card-head" }, el("h3", {}, icon("shield", 18), t(" Ihre Erklärungen", " Your declarations")),
+        el("a", { class: "btn btn-ghost btn-sm", href: `/api/cases/${cid}/agreements/record`, target: "_blank", rel: "noopener", text: t("Nachweis herunterladen", "Download proof") })),
+      el("p", { class: "small muted", text: t("Jede Unterschrift und jeder Widerruf wird unveränderlich gespeichert – mit Zeitpunkt, Konto, IP-Adresse und einem Fingerabdruck des genauen Wortlauts (Art. 7 Abs. 1 DSGVO).", "Every signature and withdrawal is stored immutably – with time, account, IP address and a fingerprint of the exact wording (Art. 7(1) GDPR).") }),
+      rows),
+    el("div", { class: "card small muted", text: t("Ihre Rechte: Auskunft, Berichtigung, Löschung, Einschränkung, Datenübertragbarkeit, Widerspruch und Beschwerde bei einer Aufsichtsbehörde. Ihr Konto samt allen Daten löschen Sie unten auf jeder Seite.", "Your rights: access, rectification, erasure, restriction, portability, objection and complaint to a supervisory authority. Delete your account and all data at the bottom of any page.") })), null];
+}
+
+// ------------------------------------------------------------------ messages
+
+function messagesView(ov, onChange) {
+  const cid = ov.meta.case_id;
+  const msgs = ov.messages || [];
+  const stamp = (iso) => new Date(iso).toLocaleString(lang() === "en" ? "en-GB" : "de-DE", { dateStyle: "short", timeStyle: "short" });
+  const list = el("div", { class: "thread" }, msgs.length ? msgs.map((m) => el("div", { class: "msg" + (m.by === S.me.email ? " mine" : "") + (m.role === "berater" ? " team" : "") },
+    el("div", { class: "msg-head" }, el("b", { text: m.role === "berater" ? t(`${m.name} · Beraterteam`, `${m.name} · advisory team`) : m.name }),
+      m.topic ? el("span", { class: "pill", text: m.topic }) : null, el("time", { text: stamp(m.at) })),
+    el("div", { class: "msg-text", text: m.text })))
+    : el("p", { class: "muted", text: t("Noch keine Nachrichten. Schreiben Sie uns – die Antwort erscheint hier.", "No messages yet. Write to us – the answer appears here.") }));
+  const topic = el("select", {}, el("option", { value: "", text: t("Thema (optional)", "Topic (optional)") }), S.meta.message_topics.map((x) => el("option", { value: x, text: x })));
+  const text = el("textarea", { placeholder: t("Ihre Nachricht …", "Your message …"), maxlength: 4000 });
+  const send = el("button", { class: "btn btn-primary", text: t("Senden", "Send") });
+  send.addEventListener("click", () => guarded(send, async () => {
+    if (!text.value.trim()) return;
+    setOv(await api("POST", `/api/cases/${cid}/messages`, { text: text.value, topic: S.me.role === "berater" ? "" : topic.value }));
+    onChange();
+  }));
+  // Mark read, then redraw once so the sidebar badge clears (unread is 0 on the redraw).
+  if (ov.unread) api("POST", `/api/cases/${cid}/messages/read`).then((o) => { setOv(o); onChange(); }).catch(() => {});
+  return el("div", { class: "card messages" }, list,
+    el("div", { class: "compose" }, S.me.role === "berater" ? null : topic, text, el("div", { class: "actions" }, send)));
+}
+
+function wsMessages(ov) {
+  return [el("div", {},
+    el("p", { class: "ws-hello", text: t("Fragen zu Ergebnis, Unterlagen, Terminen oder Rechnung – alles an einem Ort, direkt neben Ihrem Fall.", "Questions about your result, documents, appointments or invoices – all in one place, right next to your case.") }),
+    messagesView(ov, rerender("messages"))), null];
+}
+
+function advMessages(ov) {
+  const cid = ov.meta.case_id;
+  return el("div", {},
+    messagesView(ov, () => renderAdvisorCase(S.ov, "messages")),
+    el("p", { class: "small" }, el("a", { href: `/api/cases/${cid}/agreements/record`, target: "_blank", rel: "noopener", text: t("Nachweis der Erklärungen des Unternehmens öffnen", "Open the company's declarations record") })));
+}
+
+// ------------------------------------------------------------------ logo
+
+function logoSrc(ov) {
+  return ov.meta.has_logo ? `/api/cases/${ov.meta.case_id}/logo?v=${encodeURIComponent(ov.meta.updated_at || "")}` : null;
+}
+
+function logoCard(ov) {
+  const cid = ov.meta.case_id;
+  const src = logoSrc(ov);
+  const upload = (file) => guarded(null, async () => {
+    if (file.size > 1000000) throw new Error(t("Logo zu groß (max. 1 MB)", "Logo too large (max. 1 MB)"));
+    setOv(await api("PUT", `/api/cases/${cid}/logo`, { content_base64: await fileToBase64(file) }));
+    toast(t("Logo gespeichert", "Logo saved"));
+    renderSmeCase(S.ov, "company");
+  });
+  const box = el("div", { class: "logo-box" }, src ? el("img", { src, alt: t("Firmenlogo", "Company logo") }) : el("div", { class: "co-av big", text: initials(ov.meta.company_name) }));
+  dropTarget(box, upload);
+  return el("div", { class: "card logo-card" },
+    box,
+    el("div", {},
+      el("h3", { text: t("Firmenlogo", "Company logo") }),
+      el("p", { class: "small muted", text: t("Erscheint in Ihrem Portal und auf der Bankmappe. PNG, JPG oder WebP, höchstens 1 MB.", "Shown in your portal and on the bank pack. PNG, JPG or WebP, up to 1 MB.") }),
+      el("div", { class: "actions" },
+        el("button", { class: "up-btn", type: "button", onclick: () => pickFile(".png,.jpg,.jpeg,.webp", upload) }, icon("upload", 14), src ? t("Ersetzen", "Replace") : t("Logo hochladen", "Upload logo")),
+        src ? el("button", { class: "link-btn small", type: "button", text: t("Entfernen", "Remove"), onclick: (ev) => guarded(ev.currentTarget, async () => {
+          setOv(await api("DELETE", `/api/cases/${cid}/logo`));
+          renderSmeCase(S.ov, "company");
+        }) }) : null)));
+}
+
+// ------------------------------------------------------------------ bank pack
+
+const BANKPACK_SECTIONS = [
+  ["unternehmen", "Unternehmen", "Company", "Stammdaten, Branche, Ansprechpartner", "Company data, sector, contact", true],
+  ["vorhaben", "Finanzierungsvorhaben", "Financing request", "Betrag, Zweck, Laufzeit, Sicherheiten, bestehende Kredite", "Amount, purpose, term, collateral, existing loans", true],
+  ["zahlen", "Finanzzahlen", "Financial figures", "Umsatz, EBITDA, Ergebnis, Bilanz – aktuelles und Vorjahr", "Revenue, EBITDA, result, balance sheet – current and prior year", true],
+  ["kennzahlen", "Kennzahlen und Branchenvergleich", "Ratios and sector comparison", "Mit Diagrammen gegen die Bundesbank-Werte Ihrer Branche", "With charts against the Bundesbank figures for your sector", true],
+  ["band", "Readiness-Band", "Readiness band", "Ihr Ergebnis, mit Quelle und dem Hinweis „kein Rating“", "Your result, with its source and the not-a-rating note", true],
+  ["fortschreibung", "Kapitaldienstfähigkeit: Fortschreibung", "Debt service cover: projection", "Diagramm je Jahr inkl. beantragtem Kredit", "Chart per year incl. the requested loan", true],
+  ["massnahmen", "Maßnahmenplan", "Improvement plan", "Zeigt auch Schwächen – bewusst entscheiden", "Also shows weaknesses – decide deliberately", false],
+  ["unterlagen", "Unterlagenverzeichnis", "Document index", "Welche Unterlagen vorliegen", "Which documents are on file", true],
+];
+
+function wsBankpack(ov) {
+  const cid = ov.meta.case_id;
+  const res = wsResult(ov);
+  const boxes = {};
+  const opts = BANKPACK_SECTIONS.map(([id, de, en, sde, sen, on]) => {
+    boxes[id] = el("input", { type: "checkbox", checked: on });
+    return el("label", { class: "bp-opt" }, boxes[id], el("span", {}, el("b", { text: t(de, en) }), el("small", { text: t(sde, sen) })));
+  });
+  const chosen = () => BANKPACK_SECTIONS.map((s) => s[0]).filter((id) => boxes[id].checked).join(",");
+  const fetchPack = async (format) => {
+    const r = await fetch(`/api/cases/${cid}/bankpack?sections=${chosen()}&format=${format}`, { credentials: "same-origin" });
+    if (!r.ok) {
+      let m = `Error ${r.status}`;
+      try { m = (await r.json()).error; } catch (_) { /* not JSON */ }
+      throw new Error(m);
+    }
+    return r;
+  };
+  const dl = el("button", { class: "btn btn-primary btn-lg" }, icon("download", 18), t(" PDF herunterladen", " Download PDF"));
+  dl.addEventListener("click", () => guarded(dl, async () => {
+    const r = await fetchPack("pdf");
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    if (blob.type === "application/pdf") {
+      const disp = r.headers.get("Content-Disposition") || "";
+      const m = /filename="([^"]+)"/.exec(disp);
+      const a = el("a", { href: url, download: m ? m[1] : "Finanzierungsunterlage.pdf" });
+      document.body.append(a); a.click(); a.remove();
+    } else {
+      window.open(url, "_blank", "noopener");
+      toast(t("Kein PDF-Programm auf dem Server – Dokument geöffnet: Drucken → Als PDF speichern.", "No PDF renderer on the server – document opened: Print → Save as PDF."));
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    await loadOverview(cid, true);
+  }));
+  const pv = el("button", { class: "btn btn-ghost", text: t("Vorschau", "Preview") });
+  pv.addEventListener("click", () => guarded(pv, async () => {
+    const url = URL.createObjectURL(await (await fetchPack("html")).blob());
+    window.open(url, "_blank", "noopener");
+  }));
+  const log = (ov.meta.bankpack_downloads || []).slice(-3).reverse();
+  let banner = null;
+  if (!res) {
+    banner = nextBanner("warn", t("Noch kein Ergebnis", "No result yet"), t("Die Bankmappe braucht Ihre bestätigten Zahlen – zuerst den kostenlosen Schnell-Check berechnen.", "The bank pack needs your confirmed figures – calculate the free quick check first."),
+      el("a", { class: "btn btn-ghost btn-sm", href: `#case/${cid}/result`, text: t("Zum Schnell-Check", "Go to quick check") }));
+  } else if (res.kind === "quick") {
+    banner = nextBanner("", t("Hinweis: vorläufiges Ergebnis", "Note: preliminary result"), t("Ihr Readiness-Band stammt aus dem automatischen Schnell-Check und wird so gekennzeichnet. Mit dem vollständigen Bericht steht „geprüft“ darauf.", "Your readiness band comes from the automatic quick check and is labelled as such. With the full report it says reviewed."));
+  }
+  return [el("div", { class: "bp" },
+    el("div", { class: "card" },
+      el("div", { class: "card-head" }, el("h3", {}, icon("download", 18), t(" Ihre Unterlage für die Bank", " Your document for the bank"))),
+      el("p", { class: "muted", text: t("Ein PDF mit allem, was ein Kreditberater beim ersten Gespräch sehen will: Ihre Daten, Ihre Zahlen, Kennzahlen mit Branchenvergleich und Diagrammen. Sie entscheiden, was hineinkommt.",
+        "One PDF with everything a loan officer wants to see at the first meeting: your data, your figures, ratios with sector comparison and charts. You decide what goes in.") }),
+      banner,
+      el("div", { class: "bp-opts" }, opts),
+      el("div", { class: "actions" }, dl, pv),
+      el("p", { class: "small muted", text: t("Jede Seite trägt den Hinweis, dass das Readiness-Band kein Rating und keine Kreditzusage ist. Bitte entfernen Sie ihn nicht.", "Every page carries the note that the readiness band is not a rating and not a loan promise. Please do not remove it.") })),
+    log.length ? el("div", { class: "card" }, el("h3", { text: t("Zuletzt erstellt", "Recently created") }),
+      el("ul", { class: "list-plain small" }, log.map((b) => el("li", { text: `${fdate(b.at)} · ${t("Band", "band")} ${b.band} · ${b.sections.length} ${t("Abschnitte", "sections")}` })))) : null), null];
 }
