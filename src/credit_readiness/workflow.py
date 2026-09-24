@@ -11,13 +11,13 @@ testable without HTTP and behaves identically from the command line.
 from __future__ import annotations
 
 import json
-import re
 from datetime import date
 from typing import Any, Optional
 
 from .casefile import OUTCOMES, STAGE_IDS, STAGE_LABELS, STAGES, CaseStore, CaseStoreError
 from .engine import run_diagnostic
 from .ingest.json_intake import load_case
+from .intake import docmatrix
 from .intake.assemble import assemble_case
 from .intake.documents import (
     SOURCE_BERATER,
@@ -97,42 +97,16 @@ def section_progress(audience: str, raw_answers: dict) -> list[dict]:
     return out
 
 
-# ------------------------------------------------------------ document rows
+# ------------------------------------------------------------ document notes
 #
-# The portal shows one row per document, and the annual accounts one row per
-# fiscal year: "2025", "2024", "2023" is easier to act on than "2-3 years,
-# 1 received". Every row can carry a short note -- also without a file, which
-# is how a company says "founded 2024, no 2023 accounts exist".
+# Every document row -- and every cell of the financial-statements grid -- can
+# carry a short note, also without a file ("founded 2024, no 2023 accounts").
 
-YEARLY_DOC = "jahresabschluesse"
-#: Years shown for the annual accounts: the latest two required, the third recommended.
-YEARS_SHOWN = 3
 MAX_DOC_NOTE = 500
-_YEAR_IN_NAME = re.compile(r"(?<!\d)(19[89]\d|20[0-9]\d)(?!\d)")
-
-
-def fiscal_year_of(entry: dict) -> Optional[int]:
-    """Fiscal year of an annual-accounts upload: stated, else read from the name."""
-    meta = entry.get("meta") or {}
-    if meta.get("fiscal_year"):
-        return int(meta["fiscal_year"])
-    m = _YEAR_IN_NAME.search(entry.get("filename", ""))
-    if m:
-        return int(m.group(1))
-    if meta.get("period_end"):
-        return int(str(meta["period_end"])[:4])
-    return None
-
-
-def doc_note_key(doc_type: str, year: Optional[int] = None) -> str:
-    return f"{doc_type}:{year}" if year else doc_type
 
 
 def valid_doc_note_key(key: str) -> bool:
-    doc_type, _, year = key.partition(":")
-    if doc_type not in DOCUMENT_TYPES_BY_ID:
-        return False
-    return not year or (doc_type == YEARLY_DOC and bool(re.fullmatch(r"(19|20)\d\d", year)))
+    return docmatrix.note_doc_type(key) in DOCUMENT_TYPES_BY_ID
 
 
 def set_doc_note(store: CaseStore, case_id: str, key: str, note: str) -> dict:
@@ -147,23 +121,29 @@ def set_doc_note(store: CaseStore, case_id: str, key: str, note: str) -> dict:
     return store.update_meta(case_id, doc_notes=notes)
 
 
-def year_slots(files: list[dict], notes: dict, min_count: int, today: date) -> dict:
-    """One row per fiscal year for the annual accounts."""
-    by_year: dict[int, list[dict]] = {}
-    undated = []
-    for f in files:
-        y = fiscal_year_of(f)
-        (by_year.setdefault(y, []) if y else undated).append(f)
-    noted = {int(k.split(":")[1]) for k in notes if k.startswith(YEARLY_DOC + ":")}
-    latest = max([today.year - 1, *by_year])
-    years = set(range(latest - YEARS_SHOWN + 1, latest + 1)) | set(by_year) | noted
-    slots = [{
-        "year": y,
-        "required": y > latest - max(1, min_count),
-        "files": by_year.get(y, []),
-        "note": notes.get(doc_note_key(YEARLY_DOC, y), ""),
-    } for y in sorted(years, reverse=True)]
-    return {"slots": slots, "undated": undated}
+def set_doc_matrix(store: CaseStore, case_id: str, raw: dict, today: Optional[date] = None) -> dict:
+    cfg = dict(store.get_meta(case_id).get("doc_matrix") or {})
+    cfg.update(docmatrix.validate_settings(raw, today or date.today()))
+    return store.update_meta(case_id, doc_matrix=cfg)
+
+
+def history(meta: dict, docs: list[dict]) -> list[dict]:
+    """What happened on the case, newest first -- for the company's timeline."""
+    ev = [{"at": meta.get("created_at"), "kind": "created", "text": "Fall angelegt"}]
+    for h in meta.get("stage_history") or []:
+        if h["stage"] != "neu":
+            ev.append({"at": h["at"], "kind": "stage", "stage": h["stage"], "text": h.get("note", "")})
+    for d in docs:
+        ev.append({"at": d["uploaded_at"], "kind": "upload", "text": d["filename"],
+                   "doc_type": d["doc_type"]})
+    for o in meta.get("orders") or []:
+        ev.append({"at": o["at"], "kind": "order", "product": o["product"], "text": o.get("note", "")})
+    for key, kind in (("quick_check_at", "quick_check"), ("submitted_at", "submitted")):
+        if meta.get(key):
+            ev.append({"at": meta[key], "kind": kind, "text": ""})
+    # Same-second events: the case was created before anything happened on it.
+    return sorted((e for e in ev if e["at"]), key=lambda e: (e["at"], e["kind"] != "created"),
+                  reverse=True)
 
 
 def case_overview(store: CaseStore, case_id: str, today: Optional[date] = None) -> dict:
@@ -174,11 +154,15 @@ def case_overview(store: CaseStore, case_id: str, today: Optional[date] = None) 
     statuses = [s.as_dict() for s in document_status(
         [d["doc_type"] for d in docs], sme.values, stb.values)]
     notes = meta.get("doc_notes") or {}
+    grid = docmatrix.build(docs, notes, docmatrix.settings(meta, today or date.today()))
+    done = docmatrix.completion(grid)
     for s in statuses:
         s["files"] = [d for d in docs if d["doc_type"] == s["id"]]
         s["note"] = notes.get(s["id"], "")
-        if s["id"] == YEARLY_DOC:
-            s["years"] = year_slots(s["files"], notes, s["min_count"], today or date.today())
+        if s["id"] in done:
+            # The grid knows years and parts; a plain file count does not.
+            s.update(done[s["id"]])
+            s["outstanding"] = s["required"] and not s["satisfied"]
 
     asm = assemble_case(store, case_id, today=today)
     summary_txt = store.read_artifact(case_id, "summary.json")
@@ -199,6 +183,8 @@ def case_overview(store: CaseStore, case_id: str, today: Optional[date] = None) 
         "missing_answers": {AUDIENCE_UNTERNEHMEN: sme.missing, AUDIENCE_STEUERBERATER: stb.missing},
         "answer_errors": {AUDIENCE_UNTERNEHMEN: sme.errors, AUDIENCE_STEUERBERATER: stb.errors},
         "documents": statuses,
+        "doc_matrix": grid,
+        "history": history(meta, docs),
         "outstanding_documents": outstanding,
         "documents_complete": not any(outstanding.values()),
         "ready_for_diagnosis": asm.ready,
@@ -462,7 +448,9 @@ def extract_figures(store: CaseStore, case_id: str, doc_id: Optional[str] = None
         docs = [d for d in docs if d["doc_id"] == doc_id]
     if not docs:
         raise CaseStoreError("Bitte zuerst einen Jahresabschluss hochladen")
-    doc = sorted(docs, key=lambda d: d["uploaded_at"])[-1]
+    # The newest year's balance sheet; among equals, the latest upload.
+    doc = sorted(docs, key=lambda d: (docmatrix.fiscal_year_of(d) or 0,
+                                      docmatrix.covers(d, "bilanz"), d["uploaded_at"]))[-1]
 
     if provider.info.external:
         sme = check_answers(get_questionnaire(AUDIENCE_UNTERNEHMEN),
@@ -545,8 +533,15 @@ def run_quick_check(store: CaseStore, case_id: str, today: Optional[date] = None
         "engageable": s["engageable"],
         "top_findings": ranked[:3],
         "more_findings": max(0, len(ranked) - 3),
-        "key_ratios": {k: s["key_ratios"][k] for k in
-                       ("eigenkapitalquote", "kapitaldienstfaehigkeit_inkl_neu", "ebit_marge")},
+        "score": s["score"],
+        "scoring_basis": s["scoring_basis"],
+        "score_generic": s["score_generic"],
+        "band_generic": s["band_generic"],
+        "key_ratios": s["key_ratios"],
+        # The free check shows where the biggest levers are; the full list, the
+        # simulation and the lender fit stay in the paid report.
+        "improvements": s["improvements"][:3],
+        "projection": s["projection"],
         "data_notes": asm.notes,
         "disclaimer": s["disclaimer"],
     }

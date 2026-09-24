@@ -133,6 +133,9 @@ class CaseStore(abc.ABC):
     def remove_document(self, case_id: str, doc_id: str) -> None: ...
 
     @abc.abstractmethod
+    def update_document_meta(self, case_id: str, doc_id: str, **fields: Any) -> dict: ...
+
+    @abc.abstractmethod
     def write_artifact(self, case_id: str, name: str, text: str) -> None: ...
 
     @abc.abstractmethod
@@ -330,6 +333,19 @@ class LocalCaseStore(CaseStore):
             index = [x for x in self.list_documents(case_id) if x["doc_id"] != doc_id]
             self._write_json(d / "documents" / "index.json", index)
             self.update_meta(case_id)
+
+    def update_document_meta(self, case_id: str, doc_id: str, **fields: Any) -> dict:
+        with self._lock:
+            self._entry(case_id, doc_id)
+            d = self._case_dir(case_id)
+            index = self.list_documents(case_id)
+            for e in index:
+                if e["doc_id"] == doc_id:
+                    e["meta"] = {**(e.get("meta") or {}), **fields}
+                    entry = e
+            self._write_json(d / "documents" / "index.json", index)
+            self.update_meta(case_id)
+            return entry
 
     # ----------------------------------------------------------- artifacts
     def _artifact_path(self, case_id: str, name: str) -> Path:

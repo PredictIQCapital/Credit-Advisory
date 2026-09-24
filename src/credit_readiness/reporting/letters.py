@@ -31,9 +31,29 @@ def firm_name() -> str:
     return os.environ.get("CRA_FIRM_NAME", "Credit Readiness Advisory")
 
 
-def _doc_lines(statuses: list[dict], source: str, only_outstanding: bool) -> list[str]:
+def _grid_lines(overview: dict, doc_type: str) -> list[str]:
+    """Missing and explained cells of the financial-statements grid for one type."""
+    grid = overview.get("doc_matrix")
+    if not grid:
+        return []
+    rows = [r for r in grid["rows"]
+            if r["doc_type"] == doc_type or (doc_type == "susa_vorjahr" and r["id"] == "susa")]
+    out = []
+    for r in rows:
+        cells = r["cells"][1:2] if doc_type == "susa_vorjahr" else (
+            r["cells"][:1] if r["id"] == "susa" else r["cells"])
+        missing = [str(c["year"]) for c in cells if c["state"] == "missing"]
+        if missing:
+            out.append(f"  Es fehlt: {r['title_de']} {', '.join(missing)}  ")
+        for c in cells:
+            if c["note"]:
+                out.append(f"  *Anmerkung:* {r['title_de']} {c['year']}: {c['note']}  ")
+    return out
+
+
+def _doc_lines(overview: dict, source: str, only_outstanding: bool) -> list[str]:
     lines = []
-    for s in statuses:
+    for s in overview["documents"]:
         if s["source"] != source:
             continue
         if only_outstanding and not s["outstanding"] and not (
@@ -47,14 +67,9 @@ def _doc_lines(statuses: list[dict], source: str, only_outstanding: bool) -> lis
         have = f" -- bereits {s['count']} erhalten" if s["count"] else ""
         lines.append(f"- [ ] **{d.title}** ({need}, {fmt}{count}){have}  ")
         lines.append(f"  {d.description}  ")
-        years = (s.get("years") or {}).get("slots") or []
-        missing = [str(y["year"]) for y in years if not y["files"] and not y["note"]]
-        if missing:
-            lines.append(f"  Es fehlen die Geschaeftsjahre: {', '.join(missing)}  ")
-        notes = ([f"{y['year']}: {y['note']}" for y in years if y["note"]]
-                 + ([s["note"]] if s.get("note") else []))
-        for n in notes:
-            lines.append(f"  *Anmerkung:* {n}  ")
+        lines.extend(_grid_lines(overview, s["id"]))
+        if s.get("note"):
+            lines.append(f"  *Anmerkung:* {s['note']}  ")
     return lines
 
 
@@ -92,12 +107,12 @@ def letter_unternehmen(overview: dict, sme: dict, today: Optional[date] = None) 
         out.append("Ihr Fragebogen ist vollstaendig -- vielen Dank.")
     out.append("")
 
-    own = _doc_lines(overview["documents"], SOURCE_UNTERNEHMEN, only_outstanding=True)
+    own = _doc_lines(overview, SOURCE_UNTERNEHMEN, only_outstanding=True)
     out += ["## 2. Unterlagen von Ihnen", ""]
     out += own or ["Alle Unterlagen, die wir von Ihnen benoetigen, liegen vor."]
     out.append("")
 
-    stb = _doc_lines(overview["documents"], SOURCE_STEUERBERATER, only_outstanding=True)
+    stb = _doc_lines(overview, SOURCE_STEUERBERATER, only_outstanding=True)
     out += ["## 3. Unterlagen von Ihrer Steuerberatung", ""]
     if stb:
         if sme.get("steuerberater_kontakt_erlaubt"):
@@ -138,7 +153,7 @@ def letter_steuerberater(overview: dict, sme: dict, today: Optional[date] = None
             "(etwa einen Rangruecktritt), erhalten Sie von uns eine gesonderte "
             "Abstimmungsvorlage.", ""]
 
-    docs = _doc_lines(overview["documents"], SOURCE_STEUERBERATER, only_outstanding=True)
+    docs = _doc_lines(overview, SOURCE_STEUERBERATER, only_outstanding=True)
     out += ["## 1. Unterlagen", ""]
     out += docs or ["Alle Unterlagen liegen bereits vor -- vielen Dank."]
     out += ["",

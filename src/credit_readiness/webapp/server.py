@@ -69,6 +69,7 @@ from ..casefile import (
     CaseStoreError,
     LocalCaseStore,
 )
+from ..intake import docmatrix
 from ..intake.documents import DOCUMENT_TYPES, DOCUMENT_TYPES_BY_ID, SOURCE_LABELS
 from ..intake.questionnaire import AUDIENCES, QUESTIONNAIRES
 from ..intake.translations_en import document_with_english, questionnaire_with_english
@@ -107,6 +108,8 @@ _ROUTE_TABLE = [
     ("GET", rf"/api/cases/{_CASE}/documents/(?P<doc>[a-f0-9]{{12}})", "download"),
     ("DELETE", rf"/api/cases/{_CASE}/documents/(?P<doc>[a-f0-9]{{12}})", "delete_doc"),
     ("PUT", rf"/api/cases/{_CASE}/document-notes", "doc_note"),
+    ("PUT", rf"/api/cases/{_CASE}/doc-matrix", "doc_matrix"),
+    ("PUT", rf"/api/cases/{_CASE}/documents/(?P<doc>[a-f0-9]{{12}})/meta", "doc_meta"),
     ("POST", rf"/api/cases/{_CASE}/invite", "invite"),
     ("POST", rf"/api/cases/{_CASE}/submit", "submit"),
     ("POST", rf"/api/cases/{_CASE}/stage", "stage"),
@@ -128,6 +131,8 @@ PUBLIC_HANDLERS = {"meta", "me", "login", "logout", "register", "form"}
 
 
 MAX_NOTE_CHARS = 500
+#: Months a BWA covers, cumulated from the start of the fiscal year.
+BWA_PERIODS = ("1", "1-3", "1-6", "1-12")
 
 
 class ApiError(Exception):
@@ -422,7 +427,23 @@ class Handler(BaseHTTPRequestHandler):
     def h_upload(self, principal, cid: str) -> None:
         self._case(principal, cid)
         body = self._obj()
-        doc_type = str(body.get("doc_type", ""))
+        meta: dict = {}
+        replaces: list[str] = []
+        cell = body.get("cell")
+        if cell:
+            # A file dropped into the financial-statements grid: the cell says
+            # which document type and year it is, so the company never has to.
+            try:
+                row, year = str(cell["row"]), int(cell["year"])
+                cfg = docmatrix.settings(self.store.get_meta(cid), self.today or date.today())
+                doc_type, meta = docmatrix.upload_target(row, year, cfg)
+            except (KeyError, TypeError, ValueError) as e:
+                raise ApiError(HTTPStatus.BAD_REQUEST, str(e) or "Ungueltige Zelle") from None
+            replaces = [d["doc_id"] for d in self.store.list_documents(cid)
+                        if d["doc_type"] == doc_type and docmatrix.fiscal_year_of(d) == year
+                        and docmatrix.covers(d, row)]
+        else:
+            doc_type = str(body.get("doc_type", ""))
         dt = DOCUMENT_TYPES_BY_ID.get(doc_type)
         if dt is None:
             raise ApiError(HTTPStatus.BAD_REQUEST, f"Unbekannter Dokumenttyp '{doc_type}'")
@@ -432,44 +453,73 @@ class Handler(BaseHTTPRequestHandler):
             content = base64.b64decode(str(body.get("content_base64", "")), validate=True)
         except (binascii.Error, ValueError):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Dateiinhalt nicht lesbar") from None
-        meta = {k: body[k] for k in ("period_end", "period_months", "account_label")
-                if body.get(k) not in (None, "")}
+        for k in ("period_end", "period_months", "account_label"):
+            if body.get(k) not in (None, "") and k not in meta:
+                meta[k] = body[k]
         note = str(body.get("note") or "").strip()
         if note:
-            # Free text explaining the document ("Entwurf, Testat folgt"). Kept
-            # short: it is a label for the reader, not a place for a second file.
             meta["note"] = note[:MAX_NOTE_CHARS]
         if "period_end" in meta:
             try:
                 date.fromisoformat(str(meta["period_end"]))
             except ValueError:
                 raise ApiError(HTTPStatus.BAD_REQUEST, "Stichtag ungueltig (JJJJ-MM-TT)") from None
-        replaces = []
-        if body.get("fiscal_year") not in (None, ""):
-            if doc_type != wf.YEARLY_DOC:
-                raise ApiError(HTTPStatus.BAD_REQUEST, "Geschaeftsjahr nur fuer Jahresabschluesse")
-            try:
-                year = int(body["fiscal_year"])
-            except (TypeError, ValueError):
-                year = 0
-            if not 1980 <= year <= date.today().year:
-                raise ApiError(HTTPStatus.BAD_REQUEST, "Geschaeftsjahr ungueltig")
-            meta["fiscal_year"] = year
-            # One file per year: a new upload for a year replaces the old one.
-            replaces = [d["doc_id"] for d in self.store.list_documents(cid)
-                        if d["doc_type"] == doc_type and wf.fiscal_year_of(d) == year]
+        if doc_type == "bwa_aktuell":
+            meta.update(self._bwa_meta(body))
         meta["uploaded_by"] = principal.email
         with self.lock:
             entry = self.store.add_document(cid, doc_type, str(body.get("filename", "")), content, meta)
             for old_id in replaces:
                 self.store.remove_document(cid, old_id)
+            if meta.get("bwa_stand"):
+                # The BWA's month is the answer to "how current is your BWA?";
+                # fill it in unless the company already answered.
+                answers = self.store.load_answers(cid, "unternehmen")
+                if not answers.get("bwa_stand"):
+                    self.store.save_answers(cid, "unternehmen", {**answers, "bwa_stand": meta["bwa_stand"]})
         self._json(201, {"document": entry, "overview": self._overview(principal, cid)})
+
+    @staticmethod
+    def _bwa_meta(body: dict) -> dict:
+        out = {}
+        period = str(body.get("bwa_period") or "")
+        if period:
+            if period not in BWA_PERIODS:
+                raise ApiError(HTTPStatus.BAD_REQUEST, "Zeitraum der BWA ungueltig")
+            out["bwa_period"] = period
+        stand = str(body.get("bwa_stand") or "")
+        if stand:
+            if not re.fullmatch(r"(19|20)\d\d-(0[1-9]|1[0-2])", stand):
+                raise ApiError(HTTPStatus.BAD_REQUEST, "Stand der BWA ungueltig (JJJJ-MM)")
+            out["bwa_stand"] = stand
+        return out
+
+    def h_doc_matrix(self, principal, cid: str) -> None:
+        self._case(principal, cid)
+        with self.lock:
+            wf.set_doc_matrix(self.store, cid, self._obj(), today=self.today)
+        self._json(200, self._overview(principal, cid))
+
+    def h_doc_meta(self, principal, cid: str, doc: str) -> None:
+        """Say which statements an annual-accounts file holds (the combined PDF)."""
+        self._case(principal, cid)
+        entry = self._doc_entry(cid, doc)
+        if entry["doc_type"] != docmatrix.ANNUAL:
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Nur fuer Jahresabschluesse")
+        if not principal.is_berater and (entry.get("meta") or {}).get("uploaded_by") != principal.email:
+            raise ApiError(HTTPStatus.FORBIDDEN, "Nur eigene Uploads koennen geaendert werden")
+        part = str(self._obj().get("part", ""))
+        if part not in docmatrix.PARTS:
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Unbekannter Teil")
+        with self.lock:
+            self.store.update_document_meta(cid, doc, part=part)
+        self._json(200, self._overview(principal, cid))
 
     def h_doc_note(self, principal, cid: str) -> None:
         self._case(principal, cid)
         body = self._obj()
         key = str(body.get("key", ""))
-        dt = DOCUMENT_TYPES_BY_ID.get(key.partition(":")[0])
+        dt = DOCUMENT_TYPES_BY_ID.get(docmatrix.note_doc_type(key) or "")
         if dt is None:
             raise ApiError(HTTPStatus.BAD_REQUEST, f"Unbekannte Unterlage '{key}'")
         if not principal.is_berater and dt.source not in UPLOAD_SOURCES[principal.role]:
