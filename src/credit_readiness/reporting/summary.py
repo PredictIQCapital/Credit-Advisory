@@ -58,6 +58,14 @@ def result_summary(result) -> dict:
         "top_lender_key_after": next(
             (o.lender.key for o in result.routing_after if o.eligible), None
         ),
+        # Where the company sits in its sector, for the dashboard's ratio bars.
+        "benchmark": [
+            {"metric": b.metric, "value": b.company_value, "median": b.sector_median,
+             "q25": b.quartiles[0] if b.quartiles else None,
+             "q75": b.quartiles[2] if b.quartiles else None,
+             "verdict": b.verdict, "percentile": b.percentile}
+            for b in result.benchmark
+        ],
         "improvements": [
             {"factor": i.label, "current": i.format(i.current), "target": i.format(i.target),
              "points_gain": round(i.points_gain, 1),

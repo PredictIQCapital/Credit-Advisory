@@ -553,8 +553,14 @@ function docsPanel(ov, opts) {
     (groups[s.source] = groups[s.source] || []).push(s);
   }
   const out = el("div");
+  if (!opts.sources || opts.sources.includes("steuerberater")) {
+    const annual = defs.jahresabschluesse;
+    out.append(statementsGrid(ov, { canUpload: opts.canUpload(annual), onChange: opts.onChange }),
+      bwaCard(ov, { canUpload: opts.canUpload(defs.bwa_aktuell), onChange: opts.onChange }));
+  }
   for (const src of ["unternehmen", "steuerberater", "berater"].filter((x) => groups[x])) {
-    const list = groups[src];
+    const list = groups[src].filter((s) => !GRID_TYPES.has(s.id) && s.id !== "bwa_aktuell");
+    if (!list.length) continue;
     const done = list.filter((s) => s.satisfied).length;
     let title = t(...SOURCE[src]);
     if (S.me.role === "unternehmen" && src === "unternehmen") title = t("Von Ihnen", "From you");
@@ -631,27 +637,6 @@ function uploadControl(def, opts, row, extra) {
   return el("div", { class: "doc-action" }, fields, btn, input);
 }
 
-function noteField(key, value, editable) {
-  if (!editable) return value ? el("div", { class: "doc-note ro", text: `${t("Anmerkung", "Note")}: ${value}` }) : null;
-  const saved = el("span", { class: "small muted saved" });
-  const input = el("input", { type: "text", maxlength: 500, value: value || "",
-    placeholder: t("Anmerkung (optional) – z. B. „Entwurf, Testat folgt“ oder „liegt nicht vor, weil …“",
-      "Note (optional) – e.g. \"draft, audit to follow\" or \"not available because …\"") });
-  let last = value || "";
-  const save = async () => {
-    const v = input.value.trim();
-    if (v === last) return;
-    try {
-      setOv(await api("PUT", `/api/cases/${S.ovCid}/document-notes`, { key, note: v }));
-      last = v;
-      saved.textContent = t("✓ gespeichert", "✓ saved");
-    } catch (e) { toast(e.message, true); }
-  };
-  input.addEventListener("change", save);
-  input.addEventListener("keydown", (e) => { if (e.key === "Enter") input.blur(); });
-  return el("div", { class: "doc-note" }, input, saved);
-}
-
 function docRow({ state, title, badge, sub, files, note }) {
   const icon = { ok: "✓", need: "!", info: "i", opt: "○" }[state];
   return el("div", { class: "doc-row" },
@@ -669,47 +654,13 @@ function docCard(s, def, opts) {
   const title = el("span", {}, qtext(def, "title"), def.parser ? el("span", { class: "pill ok", style: "margin-left:8px", text: t("wird automatisch ausgewertet", "read automatically") }) : null);
   const sub = qtext(def, "why");
 
-  if (s.years) {
-    S.extraYears = S.extraYears || {};
-    const extraYears = S.extraYears[S.ovCid] || [];
-    const slots = s.years.slots.slice();
-    for (const y of extraYears) if (!slots.some((x) => x.year === y)) slots.push({ year: y, required: false, files: [], note: "" });
-    slots.sort((a, b) => b.year - a.year);
-    const shown = opts.onlyLatestYear ? slots.slice(0, 1) : slots;
-    const latest = slots.length ? slots[0].year : null;
-    const box = el("div", { class: "doc-group" },
-      el("div", { class: "doc-group-head" }, el("div", { class: "tt" }, title), el("div", { class: "ds", text: sub })));
-    for (const slot of shown) {
-      const has = slot.files.length > 0;
-      const state = has ? "ok" : slot.note ? "info" : slot.required ? "need" : "opt";
-      const label = t(`Jahresabschluss ${slot.year}`, `Annual accounts ${slot.year}`) + (slot.year === latest ? t(" (aktuellster)", " (latest)") : "");
-      const row = docRow({
-        state, title: label,
-        badge: has ? t("liegt vor", "received") : slot.required ? t("erforderlich", "required") : t("empfohlen", "recommended"),
-        files: slot.files.map((f) => fileLine(f, o)),
-        note: noteField(`jahresabschluesse:${slot.year}`, slot.note, canUpload),
-      });
-      if (canUpload) row.append(uploadControl(def, o, row, { year: slot.year, label: has ? t("Ersetzen", "Replace") : t("Datei wählen", "Choose file") }));
-      box.append(row);
-    }
-    if (s.years.undated.length && !opts.onlyLatestYear) {
-      box.append(docRow({ state: "ok", title: t("Ohne Jahresangabe", "Without a year"), files: s.years.undated.map((f) => fileLine(f, o)) }));
-    }
-    if (canUpload && !opts.onlyLatestYear && slots.length) {
-      const oldest = Math.min(...slots.map((x) => x.year));
-      box.append(el("button", { class: "link-btn small add-year", type: "button", text: t(`+ weiteres Jahr hinzufügen (${oldest - 1})`, `+ add another year (${oldest - 1})`),
-        onclick: () => { S.extraYears[S.ovCid] = extraYears.concat([oldest - 1]); opts.onChange(); } }));
-    }
-    return box;
-  }
-
   const has = s.files.length > 0;
   const state = s.satisfied ? "ok" : s.note ? "info" : s.required ? "need" : "opt";
   const row = docRow({
     state, title, sub,
     badge: s.satisfied ? t("liegt vor", "received") : reqLabel(s),
     files: s.files.map((f) => fileLine(f, o)),
-    note: noteField(s.id, s.note, canUpload),
+    note: noteToggle(s.id, s.note, canUpload, opts.onChange),
   });
   if (canUpload) row.append(uploadControl(def, o, row, {
     label: !has ? t("Datei wählen", "Choose file") : def.multiple ? t("Weitere Datei", "Add file") : t("Ersetzen", "Replace") }));
@@ -832,126 +783,6 @@ function kpi(label, value, sub) {
 
 // ------------------------------------------------------------------ SME (company) view
 
-const SME_STEPS = [
-  { id: "company", de: "Ihr Unternehmen", en: "Your company", sub: ["Stammdaten", "Basic data"], sections: ["unternehmen"] },
-  { id: "need", de: "Ihr Vorhaben", en: "Your financing need", sub: ["Betrag, Zweck, Sicherheiten", "Amount, purpose, collateral"], sections: ["vorhaben"] },
-  { id: "loans", de: "Bestehende Finanzierungen", en: "Current financing", sub: ["Kredite, Kontokorrent, Gesellschafter", "Loans, overdraft, shareholders"], sections: ["finanzierungen", "gesellschafter"] },
-  { id: "behaviour", de: "Reporting & Zahlungen", en: "Reporting & payments", sub: ["BWA, Zahlungsverhalten", "BWA, payment behaviour"], sections: ["verhalten"] },
-  { id: "documents", de: "Unterlagen", en: "Documents", sub: ["Hochladen", "Upload"] },
-  { id: "advisor", de: "Steuerberater & Einwilligung", en: "Tax advisor & consent", sub: ["Einladen, zustimmen", "Invite, consent"], sections: ["einwilligung"] },
-  { id: "submit", de: "Absenden & Ergebnis", en: "Submit & result", sub: ["Übermitteln, Bericht", "Send, report"] },
-];
-
-function smeStepDone(ov, step) {
-  const secs = Object.fromEntries(ov.sections.unternehmen.map((s) => [s.id, s]));
-  if (step.sections) return step.sections.every((id) => secs[id] && secs[id].complete);
-  if (step.id === "documents") return ov.outstanding_documents.unternehmen.length === 0;
-  if (step.id === "submit") return !!ov.submitted_at;
-  return false;
-}
-
-function renderSmeFull(ov, part) {
-  const doneFlags = SME_STEPS.map((s) => smeStepDone(ov, s));
-  let stepId = part;
-  if (!SME_STEPS.some((s) => s.id === stepId)) {
-    stepId = ov.report_released || ov.submitted_at ? "submit" : (SME_STEPS[doneFlags.indexOf(false)] || SME_STEPS[0]).id;
-  }
-  const idx = SME_STEPS.findIndex((s) => s.id === stepId);
-  const step = SME_STEPS[idx];
-  const doneCount = doneFlags.filter(Boolean).length;
-
-  const stepper = el("nav", { class: "stepper" },
-    el("div", { class: "progress" },
-      el("div", { class: "small muted", text: t("Ihr Fortschritt", "Your progress") }),
-      el("div", { style: "font-weight:700;color:var(--navy)", text: t(`${doneCount} von ${SME_STEPS.length} Schritten erledigt`, `${doneCount} of ${SME_STEPS.length} steps done`) }),
-      el("div", { class: "meter" }, el("span", { style: `width:${Math.round(doneCount / SME_STEPS.length * 100)}%` }))),
-    SME_STEPS.map((s, i) => el("button", {
-      class: "step" + (i === idx ? " active" : "") + (doneFlags[i] ? " done" : ""),
-      onclick: () => go(`case/${ov.meta.case_id}/${s.id}`),
-    }, el("span", { class: "n", text: doneFlags[i] ? "✓" : String(i + 1) }),
-    el("span", {}, el("div", { class: "t", text: t(s.de, s.en) }), el("div", { class: "s", text: t(...s.sub) })))));
-
-  const prevBtn = idx > 0 ? el("button", { class: "btn btn-ghost", text: t("← Zurück", "← Back"), onclick: () => go(`case/${ov.meta.case_id}/${SME_STEPS[idx - 1].id}`) }) : el("span");
-  const nextStep = SME_STEPS[idx + 1];
-  let body;
-
-  if (step.sections) {
-    const form = qForm("unternehmen", step.sections, ov.raw_answers.unternehmen || {}, ov.answer_errors.unternehmen || {});
-    const save = el("button", { class: "btn btn-primary", text: nextStep ? t("Speichern & weiter →", "Save & continue →") : t("Speichern", "Save") });
-    save.addEventListener("click", () => guarded(save, async () => {
-      const newOv = await saveAnswers("unternehmen", form.collect());
-      const errs = Object.keys(newOv.answer_errors.unternehmen).filter((k) => step.sections.some((sid) => sectionHas(sid, k)));
-      if (errs.length) { toast(t("Bitte die markierten Angaben prüfen", "Please check the highlighted answers"), true); return renderSmeFull(newOv, step.id); }
-      toast(t("Gespeichert", "Saved"));
-      go(`case/${ov.meta.case_id}/${nextStep ? nextStep.id : step.id}`);
-    }));
-    const extra = step.id === "advisor" ? inviteStbPanel(ov) : null;
-    body = el("div", {},
-      el("div", { class: "panel" },
-        el("div", { class: "small muted", text: t(`Schritt ${idx + 1} von ${SME_STEPS.length}`, `Step ${idx + 1} of ${SME_STEPS.length}`) }),
-        el("h1", { style: "font-size:26px;margin:4px 0 18px", text: t(step.de, step.en) }),
-        form.node),
-      extra,
-      el("div", { class: "wizard-nav" }, prevBtn, save));
-  } else if (step.id === "documents") {
-    const own = ov.outstanding_documents.unternehmen.length;
-    body = el("div", {},
-      el("div", { class: "panel" },
-        el("div", { class: "small muted", text: t(`Schritt ${idx + 1} von ${SME_STEPS.length}`, `Step ${idx + 1} of ${SME_STEPS.length}`) }),
-        el("h1", { style: "font-size:26px;margin:4px 0 6px", text: t("Unterlagen", "Documents") }),
-        el("p", { class: "muted", text: t("Laden Sie hoch, was Sie selbst haben. Den Rest fordern wir bei Ihrer Steuerberatung an. Nur die Saldenliste (CSV) und Kontoumsätze (CSV) werden automatisch gelesen – PDFs lesen wir selbst.", "Upload what you have yourself; we request the rest from your tax advisor. Only the trial balance (CSV) and bank statements (CSV) are read automatically – we read PDFs ourselves.") }),
-        own ? nextBanner("warn", t(`Noch ${own} Unterlage(n) von Ihnen offen`, `${own} document(s) from you still missing`), ov.outstanding_documents.unternehmen.map(docTitle).join(" · ")) : nextBanner("done", t("Alle Unterlagen von Ihnen liegen vor", "All documents from you are in"), t("Danke! Weiter zum nächsten Schritt.", "Thank you! On to the next step.")),
-        docsPanel(ov, { canUpload: (d) => d.source !== "berater", onChange: () => renderSmeFull(S.ov, "documents") })),
-      el("div", { class: "wizard-nav" }, prevBtn, el("button", { class: "btn btn-primary", text: t("Weiter →", "Continue →"), onclick: () => go(`case/${ov.meta.case_id}/${nextStep.id}`) })));
-  } else {
-    body = smeSubmitStep(ov, prevBtn, idx);
-  }
-
-  mount(shell([
-    el("div", { class: "page-head" },
-      el("div", {},
-        el("div", { class: "crumbs", text: ov.meta.case_id }),
-        el("h1", { text: t(`Willkommen, ${S.me.name.split(" ")[0]}`, `Welcome, ${S.me.name.split(" ")[0]}`) }),
-        el("div", { class: "sub", text: `${ov.meta.company_name} · ${smeStatusText(ov)}` }))),
-    tierTracker(ov),
-    el("div", { class: "wizard" }, stepper, el("div", { class: "wizard-body" }, body)),
-    accountFooter(),
-  ]));
-}
-
-function sectionHas(sectionId, qid) {
-  const s = S.meta.questionnaires.unternehmen.sections.find((x) => x.id === sectionId);
-  return s && s.questions.some((q) => q.id === qid);
-}
-
-function smeStatusText(ov) {
-  if (ov.report_released) return t("Ihr Ergebnis liegt vor", "Your result is ready");
-  if (ov.submitted_at) return t("Wir analysieren Ihre Unterlagen", "We are analysing your documents");
-  return t("Bitte vervollständigen Sie Ihre Angaben", "Please complete your information");
-}
-
-function inviteStbPanel(ov) {
-  const invited = (ov.members || {}).steuerberater || [];
-  const raw = ov.raw_answers.unternehmen || {};
-  const email = el("input", { type: "email", value: raw.steuerberater_email || "" });
-  const name = el("input", { type: "text", value: raw.steuerberater_kanzlei || "" });
-  const btn = el("button", { class: "btn btn-dark", text: t("Steuerberatung einladen", "Invite tax advisor") });
-  btn.addEventListener("click", () => guarded(btn, async () => {
-    const res = await api("POST", `/api/cases/${S.ovCid}/invite`, { role: "steuerberater", email: email.value, name: name.value });
-    setOv(res.overview);
-    showInvite(res.invite);
-    renderSmeFull(S.ov, "advisor");
-  }));
-  return el("div", { class: "panel" },
-    el("h2", { text: t("Ihre Steuerberatung einladen", "Invite your tax advisor") }),
-    el("p", { class: "muted", text: t("Ihre Kanzlei bekommt einen eigenen, auf Ihren Fall beschränkten Zugang: Sie bestätigt die Buchhaltungsfakten und lädt ihre Unterlagen direkt hoch. Keine Umgliederung ohne ihre Freigabe.", "Your tax firm gets its own access, limited to your case: it confirms the accounting facts and uploads its documents directly. No reclassification without its approval.") }),
-    el("div", { class: "q-grid" },
-      el("label", { class: "field" }, el("span", { class: "lbl", text: t("Kanzlei", "Firm") }), name),
-      el("label", { class: "field" }, el("span", { class: "lbl", text: t("E-Mail der Kanzlei", "Firm's e-mail") }), email)),
-    btn,
-    invited.length ? el("p", { class: "small", style: "margin-top:12px;color:var(--teal-2)", text: t(`Eingeladen: ${invited.join(", ")}`, `Invited: ${invited.join(", ")}`) }) : null);
-}
-
 function showInvite(inv) {
   openModal((box, close) => {
     box.append(el("h3", { text: t("Einladung erstellt", "Invitation created") }));
@@ -967,50 +798,6 @@ function showInvite(inv) {
   });
 }
 
-function smeSubmitStep(ov, prevBtn, idx) {
-  const cid = ov.meta.case_id;
-  if (ov.report_released && ov.latest_summary) {
-    return el("div", {},
-      nextBanner("done", t("Ihr Ergebnis ist da", "Your result is ready"), t("Ihr Berater hat die Analyse geprüft und freigegeben. Nächster Schritt: Maßnahmen gemeinsam umsetzen.", "Your advisor reviewed and released the analysis. Next: implement the measures together.")),
-      resultView(ov.latest_summary, cid, false),
-      explainBox(cid, "report"));
-  }
-  const missing = ov.missing_answers.unternehmen;
-  const outstanding = [...ov.outstanding_documents.unternehmen, ...ov.outstanding_documents.steuerberater].map(docTitle);
-  if (ov.submitted_at) {
-    const stages = [
-      [t("Angaben übermittelt", "Information submitted"), true],
-      [t("Unterlagen vollständig", "Documents complete"), ov.documents_complete],
-      [t("Analyse durch Ihren Berater", "Analysis by your advisor"), false],
-      [t("Ergebnis & Maßnahmenplan", "Result & action plan"), false],
-    ];
-    const cur = stages.findIndex((s) => !s[1]);
-    return el("div", { class: "panel" },
-      el("h1", { style: "font-size:26px", text: t("Vielen Dank – wir sind dran", "Thank you – we're on it") }),
-      el("p", { class: "muted", text: t(`Übermittelt am ${fdate(ov.submitted_at)}. Sie hören von uns, sobald Ihr Ergebnis freigegeben ist.`, `Submitted on ${fdate(ov.submitted_at)}. We'll be in touch as soon as your result is released.`) }),
-      el("ul", { class: "timeline", style: "margin-top:18px" }, stages.map((s, i) =>
-        el("li", { class: s[1] ? "done" : i === cur ? "cur" : "" }, el("span", { class: "d" }), el("b", { text: s[0] })))),
-      outstanding.length ? el("div", { style: "margin-top:10px" }, nextBanner("warn", t("Noch offen", "Still missing"), outstanding.join(" · "),
-        el("button", { class: "btn btn-ghost btn-sm", text: t("Zu den Unterlagen", "Go to documents"), onclick: () => go(`case/${cid}/documents`) }))) : null);
-  }
-  const btn = el("button", { class: "btn btn-primary btn-lg", text: t("An Ihren Berater übermitteln", "Send to your advisor"), disabled: missing.length > 0 });
-  btn.addEventListener("click", () => guarded(btn, async () => {
-    setOv(await api("POST", `/api/cases/${cid}/submit`));
-    toast(t("Übermittelt – vielen Dank!", "Submitted – thank you!"));
-    renderSmeFull(S.ov, "submit");
-  }));
-  return el("div", {},
-    el("div", { class: "panel" },
-      el("div", { class: "small muted", text: t(`Schritt ${idx + 1} von ${SME_STEPS.length}`, `Step ${idx + 1} of ${SME_STEPS.length}`) }),
-      el("h1", { style: "font-size:26px;margin:4px 0 6px", text: t("Prüfen & übermitteln", "Review & submit") }),
-      el("p", { class: "muted", text: t("Sobald Sie übermitteln, prüft Ihr Berater die Angaben und erstellt die Analyse. Fehlende Unterlagen können Sie auch danach noch hochladen.", "Once you submit, your advisor reviews everything and prepares the analysis. You can still upload missing documents afterwards.") }),
-      missing.length ? nextBanner("warn", t("Pflichtangaben fehlen noch", "Required answers are missing"), missing.join(" · "))
-        : nextBanner("done", t("Alle Pflichtangaben sind vollständig", "All required answers are complete"), t("Sie können übermitteln.", "You can submit now.")),
-      outstanding.length ? el("div", {}, el("h3", { text: t("Noch offene Unterlagen", "Documents still missing") }), el("ul", { class: "list-plain" }, outstanding.map((o) => el("li", { text: o })))) : null,
-      el("div", { style: "margin-top:20px" }, btn)),
-    el("div", { class: "wizard-nav" }, prevBtn, el("span")));
-}
-
 // ------------------------------------------------------------------ SME: tiers + quick check
 
 const hasOrder = (ov, product) => (ov.orders || []).some((o) => o.product === product);
@@ -1019,63 +806,6 @@ const price = (key) => {
   if (!p) return t("kostenlos", "free");
   return key === "advisor" ? t(`ab ${nf(p)} €`, `from €${nf(p)}`) : (lang() === "en" ? `€${nf(p)}` : `${nf(p)} €`);
 };
-
-function renderSmeCase(ov, part) {
-  if (hasOrder(ov, "report") || ov.submitted_at || ov.report_released) {
-    return renderSmeFull(ov, part);
-  }
-  return renderQuickCheck(ov, part);
-}
-
-function tierTracker(ov) {
-  const tiers = [
-    ["quick", !!ov.quick_check, t("Ergebnis liegt vor", "result ready")],
-    ["report", hasOrder(ov, "report"), ov.report_released ? t("freigegeben", "released") : t("bestellt", "ordered")],
-    ["advisor", hasOrder(ov, "advisor"), t("angefragt", "requested")],
-  ];
-  return el("div", { class: "tiers" }, tiers.map(([key, done, doneText], i) =>
-    el("div", { class: "tier" + (done ? " done" : "") },
-      el("span", { class: "n", text: done ? "✓" : String(i + 1) }),
-      el("div", {},
-        el("b", { text: t(S.meta.products[key].de.replace("Vollstaendiger", "Vollständiger"), S.meta.products[key].en) }),
-        el("div", { class: "small muted", text: done ? doneText : price(key) })))));
-}
-
-const QUICK_QUESTIONS = [
-  "rechtsform", "branche", "mitarbeiter", "gruendungsjahr", "betrag", "zweck", "laufzeit_jahre",
-  "hat_gesellschafterdarlehen", "rangruecktritt", "tilgung_gesamt_jahr", "kontokorrent_limit",
-  "kontokorrent_inanspruchnahme", "steuerrueckstaende", "bwa_frequenz", "bwa_stand",
-];
-
-function renderQuickCheck(ov, part) {
-  const cid = ov.meta.case_id;
-  const hasDoc = (ov.documents.find((d) => d.id === "jahresabschluesse") || { files: [] }).files.length > 0;
-  const steps = [
-    ["upload", t("Jahresabschluss", "Annual accounts"), hasDoc],
-    ["figures", t("Zahlen bestätigen", "Confirm figures"), !!ov.figures_confirmed],
-    ["facts", t("Eckdaten", "Key facts"), QUICK_QUESTIONS.filter((q) => ["rechtsform", "branche", "betrag", "zweck", "steuerrueckstaende", "bwa_stand", "hat_gesellschafterdarlehen"].includes(q))
-      .every((q) => (ov.raw_answers.unternehmen || {})[q] !== undefined && (ov.raw_answers.unternehmen || {})[q] !== null && (ov.raw_answers.unternehmen || {})[q] !== "")],
-    ["result", t("Ergebnis", "Result"), !!ov.quick_check],
-  ];
-  let cur = steps.some(([id]) => id === part) ? part : (ov.quick_check ? "result" : (steps.find((x) => !x[2]) || steps[3])[0]);
-  const idx = steps.findIndex(([id]) => id === cur);
-
-  const bar = el("div", { class: "qc-steps" }, steps.map(([id, label, done], i) =>
-    el("button", { class: "qc-step" + (i === idx ? " active" : "") + (done ? " done" : ""), onclick: () => go(`case/${cid}/${id}`) },
-      el("span", { class: "n", text: done ? "✓" : String(i + 1) }), label)));
-
-  const bodies = { upload: qcUpload, figures: qcFigures, facts: qcFacts, result: qcResult };
-  mount(shell([
-    el("div", { class: "page-head" }, el("div", {},
-      el("div", { class: "crumbs", text: cid }),
-      el("h1", { text: t(`Ihr kostenloser Kredit-Check, ${S.me.name.split(" ")[0]}`, `Your free credit check, ${S.me.name.split(" ")[0]}`) }),
-      el("div", { class: "sub", text: t("In rund 5 Minuten sehen Sie, was eine Bank in Ihren Zahlen sieht.", "In about 5 minutes you'll see what a bank sees in your numbers.") }))),
-    tierTracker(ov),
-    bar,
-    bodies[cur](ov),
-    accountFooter(),
-  ]));
-}
 
 function aiBadge() {
   const ai = S.meta.ai;
@@ -1088,35 +818,6 @@ function aiBadge() {
           "Your document is sent to the AI provider only with your consent. The AI only reads figures – the assessment uses transparent rules. You confirm every figure yourself.")
         : t("Ihr Dokument verlässt unseren Server nicht. Die Auslesung schlägt Zahlen vor – Sie prüfen und bestätigen jede einzelne.",
           "Your document never leaves our server. The reader proposes figures – you check and confirm each one.") })));
-}
-
-function qcUpload(ov) {
-  const cid = ov.meta.case_id;
-  const status = ov.documents.find((d) => d.id === "jahresabschluesse");
-  const def = S.meta.documents.find((d) => d.id === "jahresabschluesse");
-  const consentNeeded = S.meta.ai.external && (ov.raw_answers.unternehmen || {}).ki_einwilligung !== true;
-  const consent = el("input", { type: "checkbox" });
-  const readBtn = el("button", { class: "btn btn-primary", text: t("Zahlen auslesen →", "Read figures →"), disabled: !status.files.length });
-  readBtn.addEventListener("click", () => guarded(readBtn, async () => {
-    if (consentNeeded) {
-      if (!consent.checked) throw new Error(t("Bitte der KI-Auslesung zustimmen – oder Zahlen manuell eintragen.", "Please consent to AI reading – or enter the figures manually."));
-      await saveAnswers("unternehmen", Object.assign({}, ov.raw_answers.unternehmen, { ki_einwilligung: true }));
-    }
-    readBtn.textContent = t("Lese Zahlen aus …", "Reading figures …");
-    const res = await api("POST", `/api/cases/${cid}/extract`, {});
-    setOv(res.overview);
-    toast(t(`${Object.keys(res.extraction.fields).length} Positionen gefunden – bitte prüfen`, `${Object.keys(res.extraction.fields).length} items found – please check`));
-    go(`case/${cid}/figures`);
-  }));
-  return el("div", { class: "panel" },
-    el("h2", { text: t("1. Laden Sie Ihren letzten Jahresabschluss hoch", "1. Upload your latest annual accounts") }),
-    el("p", { class: "muted", text: t("Bilanz und Gewinn- und Verlustrechnung als PDF – so, wie Sie sie von Ihrem Steuerberater bekommen haben.", "Balance sheet and profit & loss as a PDF – as you received it from your tax advisor.") }),
-    aiBadge(),
-    docCard(status, def, { canUpload: () => true, onlyLatestYear: true, onChange: () => renderQuickCheck(S.ov, "upload") }),
-    consentNeeded ? el("label", { class: "checkbox" }, consent, el("span", { text: t("Ich willige ein, dass mein Jahresabschluss zur automatischen Auslesung an den KI-Dienstleister übermittelt wird.", "I consent to my annual accounts being sent to the AI provider for automatic reading.") })) : null,
-    el("div", { class: "wizard-nav" },
-      el("button", { class: "btn btn-ghost", text: t("Zahlen lieber selbst eintragen", "I'd rather enter the figures myself"), onclick: () => go(`case/${cid}/figures`) }),
-      readBtn));
 }
 
 function qcFigures(ov) {
@@ -1155,7 +856,7 @@ function qcFigures(ov) {
     }))))));
   const pEnd = el("input", { type: "date", value: src.period_end || "" });
   const pMonths = el("input", { type: "number", min: 1, max: 12, value: src.period_months || 12, style: "width:90px" });
-  const btn = el("button", { class: "btn btn-primary", text: t("Zahlen bestätigen & weiter →", "Confirm figures & continue →") });
+  const btn = el("button", { class: "btn btn-primary", text: t("Zahlen bestätigen →", "Confirm figures →") });
   btn.addEventListener("click", () => guarded(btn, async () => {
     if (!pEnd.value) { pEnd.focus(); throw new Error(t("Bitte den Bilanzstichtag angeben", "Please enter the balance-sheet date")); }
     if (!recompute() && !confirm(t("Die Summen passen nicht zusammen. Trotzdem bestätigen? Der Check wird dann vermutlich abgelehnt.", "The totals don't match. Confirm anyway? The check will probably be refused."))) return;
@@ -1163,10 +864,10 @@ function qcFigures(ov) {
     const res = await api("PUT", `/api/cases/${cid}/figures`, { figures, period_end: pEnd.value, period_months: Number(pMonths.value || 12) });
     setOv(res.overview);
     toast(t("Zahlen bestätigt", "Figures confirmed"));
-    go(`case/${cid}/facts`);
+    go(`case/${cid}/result`);
   }));
   const node = el("div", { class: "panel" },
-    el("h2", { text: t("2. Stimmen diese Zahlen?", "2. Are these figures right?") }),
+    el("h2", { text: t("Stimmen diese Zahlen?", "Are these figures right?") }),
     el("p", { class: "muted", text: ov.extraction
       ? t(`Ausgelesen aus ${ov.extraction.filename} (${ov.extraction.provider_label}). Bitte jede Zahl mit Ihrem Jahresabschluss vergleichen und bei Bedarf korrigieren. Erst nach Ihrer Bestätigung wird gerechnet.`,
         `Read from ${ov.extraction.filename} (${ov.extraction.provider_label}). Please compare every figure with your annual accounts and correct where needed. Nothing is calculated until you confirm.`)
@@ -1176,73 +877,9 @@ function qcFigures(ov) {
       el("label", { class: "field" }, el("span", { class: "lbl", text: t("Bilanzstichtag", "Balance-sheet date") }), pEnd),
       el("label", { class: "field" }, el("span", { class: "lbl", text: t("Zeitraum (Monate)", "Period (months)") }), pMonths)),
     tables, totals,
-    el("div", { class: "wizard-nav" }, el("button", { class: "btn btn-ghost", text: t("← Zurück", "← Back"), onclick: () => go(`case/${cid}/upload`) }), btn));
+    el("div", { class: "wizard-nav" }, el("a", { class: "btn btn-ghost", href: `#case/${cid}/documents`, text: t("← Unterlagen", "← Documents") }), btn));
   recompute();
   return node;
-}
-
-function qcFacts(ov) {
-  const cid = ov.meta.case_id;
-  const form = qForm("unternehmen", null, ov.raw_answers.unternehmen || {}, ov.answer_errors.unternehmen || {}, QUICK_QUESTIONS);
-  const btn = el("button", { class: "btn btn-primary", text: t("Ergebnis berechnen →", "Calculate result →") });
-  btn.addEventListener("click", () => guarded(btn, async () => {
-    const n = await saveAnswers("unternehmen", form.collect());
-    const errs = QUICK_QUESTIONS.filter((q) => n.answer_errors.unternehmen[q]);
-    if (errs.length) { toast(t("Bitte markierte Angaben prüfen", "Please check highlighted answers"), true); return renderQuickCheck(n, "facts"); }
-    const res = await api("POST", `/api/cases/${cid}/quickcheck`);
-    setOv(res.overview);
-    if (!res.ok) {
-      S.lastQuick = res;
-      toast(t("Ergebnis noch nicht möglich", "Result not possible yet"), true);
-      return renderQuickCheck(S.ov, "result");
-    }
-    S.lastQuick = null;
-    go(`case/${cid}/result`);
-  }));
-  return el("div", { class: "panel" },
-    el("h2", { text: t("3. Ein paar Eckdaten", "3. A few key facts") }),
-    el("p", { class: "muted", text: t("Was nicht im Jahresabschluss steht, aber jede Bank fragt. Rund 2 Minuten.", "What isn't in the annual accounts but every bank asks. About 2 minutes.") }),
-    form.node,
-    el("div", { class: "wizard-nav" }, el("button", { class: "btn btn-ghost", text: t("← Zurück", "← Back"), onclick: () => go(`case/${cid}/figures`) }), btn));
-}
-
-function qcResult(ov) {
-  const cid = ov.meta.case_id;
-  const q = ov.quick_check;
-  const failed = S.lastQuick && !S.lastQuick.ok ? S.lastQuick : null;
-  if (!q) {
-    return el("div", { class: "panel" },
-      el("h2", { text: t("4. Ihr Ergebnis", "4. Your result") }),
-      failed ? nextBanner("warn", t("Noch nicht möglich", "Not possible yet"), failed.blocking.join(" · ")) : el("p", { class: "muted", text: t("Bitte die Schritte 1–3 abschließen.", "Please complete steps 1–3.") }));
-  }
-  const [tone, title, text] = verdictInfo({ verdict: q.verdict });
-  const k = q.key_ratios;
-  return el("div", {},
-    el("div", { class: "result-hero" },
-      el("div", { class: "panel" },
-        el("div", { class: "panel-title" }, el("h2", { text: t("Ihr Schnell-Check", "Your quick check") }), el("span", { class: "pill info", text: t("automatisch · vorläufig", "automatic · preliminary") })),
-        el("div", { style: "display:flex;gap:18px;align-items:center" },
-          bandBox(q.band, t("Readiness-Band", "Readiness band")),
-          el("div", {}, el("b", { style: "color:var(--navy)", text: bandText(q.band) }),
-            el("div", { class: "small muted", text: t("A (sehr gut) bis E (substanzielle Schwäche). Kein Rating.", "A (very good) to E (substantive weakness). Not a rating.") }))),
-        el("div", { class: "kpis", style: "grid-template-columns:repeat(3,1fr);margin-top:16px" },
-          kpi(t("Eigenkapitalquote", "Equity ratio"), pct(k.eigenkapitalquote), ""),
-          kpi(t("Kapitaldienst", "Debt service cover"), xf(k.kapitaldienstfaehigkeit_inkl_neu), t("inkl. Wunschkredit", "incl. new loan")),
-          kpi(t("EBIT-Marge", "EBIT margin"), pct(k.ebit_marge), ""))),
-      el("div", { class: `verdict ${tone}` }, el("h3", { text: title }), el("p", { text: text }))),
-    el("div", { class: "panel", style: "margin-top:18px" },
-      el("h2", { text: t("Die drei wichtigsten Punkte", "The three most important points") }),
-      q.top_findings.map((f, i) => {
-        const txt = FINDING[f.rule] ? FINDING[f.rule][lang()] : [f.title, ""];
-        return el("div", { class: "fcard" }, el("div", { class: "n", text: String(i + 1) }),
-          el("div", {}, el("h4", { text: txt[0] }), el("div", { class: "muted", text: txt[1] }),
-            el("div", { class: "meta" }, el("span", { class: "pill " + (f.fixable ? "ok" : "bad"), text: f.fixable ? t("behebbar", "fixable") : t("nicht durch Aufbereitung behebbar", "not fixable by presentation") }))));
-      }),
-      q.more_findings ? el("p", { class: "small", style: "margin-top:12px;color:var(--navy-2);font-weight:600", text: t(`+ ${q.more_findings} weitere Punkte im vollständigen Bericht`, `+ ${q.more_findings} more points in the full report`) }) : null,
-      q.data_notes.length ? el("details", { style: "margin-top:12px" }, el("summary", { class: "small muted", text: t("Datengrundlage", "Data basis") }), el("ul", { class: "list-plain small muted" }, q.data_notes.map((n) => el("li", { text: n })))) : null),
-    explainBox(cid, "quick"),
-    offerCards(ov),
-    el("p", { class: "disclaimer", text: q.disclaimer }));
 }
 
 function explainBox(cid, which) {
@@ -1265,42 +902,6 @@ function explainBox(cid, which) {
     el("div", { class: "actions" }, b1),
     el("div", { class: "ask" }, question, b2),
     out);
-}
-
-function offerCards(ov) {
-  const cid = ov.meta.case_id;
-  const card = (key, bullets, cta, primary) => {
-    const ordered = hasOrder(ov, key);
-    const note = el("textarea", { placeholder: key === "advisor" ? t("Wann passt Ihnen ein Gespräch? (optional)", "When would a call suit you? (optional)") : t("Anmerkung (optional)", "Note (optional)"), style: "min-height:60px" });
-    const btn = el("button", { class: "btn " + (primary ? "btn-primary" : "btn-dark"), text: ordered ? t("Bestellt ✓", "Ordered ✓") : cta, disabled: ordered });
-    btn.addEventListener("click", () => guarded(btn, async () => {
-      if (!confirm(key === "report" ? t(`Vollständigen Bericht für ${price("report")} verbindlich bestellen? Sie erhalten eine Rechnung.`, `Order the full report for ${price("report")}? You will receive an invoice.`)
-        : t("Beratungsgespräch anfragen? Wir melden uns mit einem Angebot.", "Request an advisor call? We'll come back with an offer."))) return;
-      setOv(await api("POST", `/api/cases/${cid}/order`, { product: key, note: note.value }));
-      toast(t("Vielen Dank – bestellt", "Thank you – ordered"));
-      render();
-    }));
-    return el("div", { class: "offer" + (primary ? " featured" : "") },
-      primary ? el("span", { class: "pill ok", text: t("Empfohlen", "Recommended") }) : null,
-      el("h3", { text: t(S.meta.products[key].de.replace("Vollstaendiger", "Vollständiger"), S.meta.products[key].en) }),
-      el("div", { class: "price", style: "font-size:30px", text: price(key) }),
-      el("ul", { class: "feature-list" }, bullets.map((b) => el("li", { text: b }))),
-      ordered ? null : note, btn);
-  };
-  return el("div", { class: "panel", style: "margin-top:18px" },
-    el("h2", { text: t("So geht es weiter", "Where to go from here") }),
-    el("div", { class: "grid-2" },
-      card("report", [
-        t("Alle Befunde, nicht nur die ersten drei", "All findings, not just the first three"),
-        t("Vorher/Nachher: was jede Maßnahme bringt", "Before/after: what each measure achieves"),
-        t("Passender Kreditgebertyp und Förderprogramme", "Best-fitting lender type and public programmes"),
-        t("Von einem Kreditanalysten geprüft und freigegeben", "Reviewed and released by a credit analyst"),
-      ], t("Bericht bestellen", "Order report"), true),
-      card("advisor", [
-        t("Persönliches Gespräch mit Ihrem Berater", "Personal call with your advisor"),
-        t("Abstimmung mit Ihrem Steuerberater", "Sign-off with your tax advisor"),
-        t("Begleitung bis zum Bankgespräch", "Support up to the bank meeting"),
-      ], t("Gespräch anfragen", "Request a call"), false)));
 }
 
 function accountFooter() {

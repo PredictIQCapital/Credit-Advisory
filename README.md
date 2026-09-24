@@ -29,15 +29,21 @@ This starts three pages with four fictional companies:
 | `/investors` | investor one-pager: problem, solution, market, model, status |
 | `/app` | the portal: log in or register, then a view per role |
 
+Companies get a workspace: a sidebar that opens on hover (overview, company,
+financing, documents, figures, result, plan, history) and a dashboard with
+score, next steps, ratios against the sector, plan, company data, document
+status and recent activity. Annual accounts and trial balances are uploaded
+into a grid of statements by fiscal year; every document can carry a note.
+
 Demo logins (password `demo1234`, also shown as one-click buttons on the login page):
 
 | Login | Role | What you see |
 |---|---|---|
 | `berater@demo.de` | advisor | pipeline of all cases; run analysis; release reports; letters; outcomes |
-| `anna.mueller@demo.de` | company | 7-step guided flow, all complete; released result: fixable, B -> A |
+| `anna.mueller@demo.de` | company | workspace complete; released report: fixable, B -> A |
 | `elif.yilmaz@demo.de` | company | the honest no: genuine credit risk, advised not to apply |
-| `jan.petersen@demo.de` | company | questionnaire half done |
-| `jonas.weber@demo.de` | company | just registered: the flow from step 1 |
+| `jan.petersen@demo.de` | company | free quick check done (band C), documents still open |
+| `jonas.weber@demo.de` | company | just registered: empty workspace, next steps on the dashboard |
 | `kanzlei@demo.de` | tax advisor | only its clients' cases; confirmations, uploads, sign-off sheet |
 
 Delete `data/demo/` to reset the demo; it is re-created on the next start.

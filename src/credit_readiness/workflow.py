@@ -538,6 +538,7 @@ def run_quick_check(store: CaseStore, case_id: str, today: Optional[date] = None
         "score_generic": s["score_generic"],
         "band_generic": s["band_generic"],
         "key_ratios": s["key_ratios"],
+        "benchmark": s["benchmark"],
         # The free check shows where the biggest levers are; the full list, the
         # simulation and the lender fit stay in the paid report.
         "improvements": s["improvements"][:3],
