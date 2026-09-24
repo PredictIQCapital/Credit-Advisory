@@ -30,6 +30,7 @@ from dataclasses import dataclass, field
 from datetime import date
 from typing import Any, Optional
 
+from .. import nace
 from ..models import LegalForm, Sector
 
 AUDIENCE_UNTERNEHMEN = "unternehmen"
@@ -171,6 +172,12 @@ FRAGEBOGEN_UNTERNEHMEN = Questionnaire(
                          why="Kennzahlen werden mit dem Branchenmedian verglichen -- "
                              "eine niedrige EK-Quote ist im Gastgewerbe etwas anderes "
                              "als in der IT."),
+                Question("nace_code", "Wirtschaftszweig (WZ 2008 / NACE-Code)", "text",
+                         help="z. B. C25.62 oder 25.62 -- steht auf der "
+                              "Gewerbeanmeldung und in der Creditreform-Auskunft",
+                         why="Banken ordnen nach diesem Code ein. Ist er angegeben, "
+                             "bestimmt er die Vergleichsbranche; die Auswahl oben "
+                             "dient dann nur der Kontrolle."),
                 Question("mitarbeiter", "Anzahl Mitarbeiter (Vollzeitaequivalente)",
                          "int", required=True),
                 Question("gruendungsjahr", "Gruendungsjahr", "int", required=True),
@@ -572,5 +579,11 @@ def check_answers(questionnaire: Questionnaire, raw_answers: dict) -> AnswerChec
             if q.required:
                 result.missing.append(q.label)
             continue
+        if q.id == "nace_code":
+            parsed = nace.parse(value)
+            if parsed is None:
+                result.errors[q.id] = f"'{value}' ist kein gueltiger WZ-2008-/NACE-Code"
+                continue
+            value = parsed.code
         result.values[q.id] = value
     return result

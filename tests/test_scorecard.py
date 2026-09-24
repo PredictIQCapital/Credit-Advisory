@@ -220,3 +220,105 @@ def test_uncalibrated_factors_are_declared_as_such():
     assert "Convention, not calibration" in sc.__doc__
     for key in CALIBRATED:
         assert "Bundesbank" in FACTORS_BY_KEY[key].note, f"{key} does not name its source"
+
+
+# ---------------------------------------------------------------------------
+# Sector-specific curves (ADR-005)
+# ---------------------------------------------------------------------------
+
+from credit_readiness.models import Sector  # noqa: E402
+from credit_readiness.scorecard import (  # noqa: E402
+    ANCHOR_SCORES,
+    CALIBRATION,
+    GENERIC_BASIS,
+    curve_for,
+)
+
+
+def test_calibration_table_matches_the_generic_anchor_tests():
+    """CALIBRATION drives the sector curves; CALIBRATED above checks the generic
+    ones. They must name the same factors and the same Bundesbank metrics."""
+    assert {k: v[0] for k, v in CALIBRATION.items()} == {k: v[0] for k, v in CALIBRATED.items()}
+
+
+@pytest.mark.parametrize("sector", list(Sector))
+@pytest.mark.parametrize("factor_key", sorted(CALIBRATION))
+@pytest.mark.parametrize("revenue", [1_500_000, 5_000_000, 20_000_000])
+def test_sector_curve_meets_the_sector_quartiles(sector, factor_key, revenue):
+    """Every sector curve puts q25/median/q75 of its own cell at 58/70/82
+    (inverted for lower-is-better) and stays sorted."""
+    fd = FACTORS_BY_KEY[factor_key]
+    curve = curve_for(fd, sector, revenue)
+    xs = [x for x, _ in curve.breakpoints]
+    assert xs == sorted(xs) and len(set(xs)) == len(xs)
+
+    found = benchmarks.sector_cell(CALIBRATION[factor_key][0], sector, revenue)
+    if found is None:
+        assert curve.basis == GENERIC_BASIS
+        return
+    metric, convert, higher = CALIBRATION[factor_key]
+    cell, _ = found
+    expected = ANCHOR_SCORES if higher else ANCHOR_SCORES[::-1]
+    for q, score in zip(("q25", "q50", "q75"), expected):
+        assert interpolate(convert(cell[q]), curve.breakpoints) == pytest.approx(score)
+    assert sector.value in curve.basis
+
+
+@pytest.mark.parametrize("sector", list(Sector))
+@pytest.mark.parametrize("factor_key", sorted(CALIBRATION))
+def test_sector_curve_is_monotone(sector, factor_key):
+    """More equity never scores lower; more supplier days never score higher."""
+    fd = FACTORS_BY_KEY[factor_key]
+    ys = [y for _, y in curve_for(fd, sector, 5_000_000).breakpoints]
+    higher = CALIBRATION[factor_key][2]
+    assert ys == (sorted(ys) if higher else sorted(ys, reverse=True))
+
+
+def test_repayment_factors_never_move_with_the_sector():
+    """DSCR, leverage and interest cover measure repayment, not typicality."""
+    for key in ("kapitaldienstfaehigkeit_inkl_neu", "dynamischer_verschuldungsgrad",
+                "zinsdeckungsgrad"):
+        fd = FACTORS_BY_KEY[key]
+        for sector in Sector:
+            curve = curve_for(fd, sector, 5_000_000)
+            assert curve.breakpoints == fd.breakpoints
+            assert curve.basis == GENERIC_BASIS
+
+
+def test_weak_tail_stays_absolute():
+    """Zero equity scores the same in every sector: a weak sector does not make
+    insolvency less likely."""
+    fd = FACTORS_BY_KEY["eigenkapitalquote"]
+    generic = interpolate(0.0, fd.breakpoints)
+    for sector in Sector:
+        assert interpolate(0.0, curve_for(fd, sector, 5_000_000).breakpoints) == generic
+
+
+def test_median_retailer_is_typical_not_borderline():
+    """The case that motivated ADR-005: a retailer at the retail median equity
+    ratio scores at the median anchor on the sector curve."""
+    fd = FACTORS_BY_KEY["eigenkapitalquote"]
+    cell, _ = benchmarks.sector_cell("eigenmittel_pct_bilanzsumme", Sector.RETAIL, 5_000_000)
+    median = cell["q50"] / 100
+    assert interpolate(median, fd.breakpoints) < 65.0            # generic: borderline-ish
+    assert interpolate(median, curve_for(fd, Sector.RETAIL, 5_000_000).breakpoints) == \
+        pytest.approx(70.0)
+
+
+def test_generic_score_available_alongside_sector_score(case_01):
+    ratios = compute_ratios(case_01)
+    sector = evaluate(case_01, ratios)
+    generic = evaluate(case_01, ratios, sector_specific=False)
+    assert sector.sector_specific and not generic.sector_specific
+    assert generic.basis_label == GENERIC_BASIS
+    assert all(f.basis == GENERIC_BASIS for f in generic.factors)
+    assert sector.total_score != generic.total_score
+
+
+def test_missing_sector_cell_falls_back_to_the_generic_curve(monkeypatch):
+    monkeypatch.setattr(benchmarks, "sector_cell", lambda *a, **k: None)
+    fd = FACTORS_BY_KEY["eigenkapitalquote"]
+    curve = curve_for(fd, Sector.RETAIL, 5_000_000)
+    assert curve.breakpoints == fd.breakpoints
+    assert curve.basis == GENERIC_BASIS
+    assert "Standardkurve" in curve.note

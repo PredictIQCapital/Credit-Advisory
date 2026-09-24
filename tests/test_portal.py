@@ -328,7 +328,7 @@ def test_demo_seed_tells_the_intended_stories(tmp_path):
     mueller = wf.case_overview(store, ids["mueller"], today=TODAY)
     gastro = wf.case_overview(store, ids["gastro"], today=TODAY)
     assert mueller["report_released"] and mueller["latest_summary"]["engageable"]
-    assert (mueller["latest_summary"]["band"], mueller["latest_summary"]["score"]) == ("B", 65.0)
+    assert (mueller["latest_summary"]["band"], mueller["latest_summary"]["score"]) == ("B", 65.6)
     assert gastro["latest_summary"]["verdict"].startswith("nicht behebbar")
     assert gastro["meta"]["stage"] == "abgeschlossen"
     assert store.read_outcomes()[0]["outcome"] == "ADVISED_NOT_TO_APPLY"

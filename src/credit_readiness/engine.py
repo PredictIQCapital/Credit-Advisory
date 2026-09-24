@@ -50,6 +50,10 @@ class DiagnosticResult:
     sensitivity: Optional[SensitivityResult] = None
     rejection: Optional[RejectionScreen] = None
     validation_issues: list[ValidationIssue] = field(default_factory=list)
+    #: The same file on the all-sector curves. Printed next to the sector score
+    #: because sector scoring says "typical for its sector", not "low-risk
+    #: sector" -- lenders price the latter separately (ADR-005).
+    scorecard_generic: Optional[ScorecardResult] = None
     generated_on: date = field(default_factory=date.today)
     disclaimer: str = DISCLAIMER
 
@@ -118,4 +122,5 @@ def run_diagnostic(case: ClientCase, strict: bool = True) -> DiagnosticResult:
         sensitivity=analyse_sensitivity(case, scorecard),
         rejection=screen_rejection(case, ratios),
         validation_issues=issues,
+        scorecard_generic=evaluate(case, ratios, sector_specific=False),
     )

@@ -101,15 +101,44 @@ Re-run `python scripts/import_bundesbank_ratios.py <pdf-folder>` after each new
 Bundesbank edition, then check tests/test_scorecard.py::test_bundesbank_anchors,
 which re-derives the anchors from the shipped dataset and fails if the
 breakpoints and the data have drifted apart.
+
+SECTOR-SPECIFIC CURVES
+======================
+The breakpoints written out in FACTORS are the *generic* curves: all sectors,
+SME size classes averaged. For the six calibrated factors, evaluate() by
+default moves the three anchor points onto the quartiles of the client's own
+sector and revenue class (see ADR-005). A retailer at the retail median equity
+ratio then scores 70, the same as a manufacturer at the manufacturing median,
+instead of being measured against a standard set mostly by other sectors.
+
+The anchors move; the tails are handled by what they mean:
+
+  * the *weak* tail stays at its absolute, economic limits (zero equity, a
+    negative margin, 120 days to pay suppliers) -- insolvency does not become
+    less likely because the sector is weak; points the new anchors overtake
+    are dropped;
+  * the *strong* tail is stretched in proportion to the upper-quartile anchor,
+    because "exceptionally strong" is relative to what is normal.
+
+The debt-service, leverage and interest-cover factors never move. They
+measure whether the loan can be repaid, and the sector does not change the
+answer. Where a sector has no published cell for a metric, that factor keeps
+its generic curve (the fallback the product spec asks for), and the factor
+says so.
+
+Sector scoring answers "is this company typical for its sector?". It does not
+answer "is this sector risky?", which lenders price separately. That is why
+the engine also computes the generic score and the report prints both.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional, Sequence
+from typing import Callable, Optional, Sequence
 
-from .models import ClientCase
+from . import benchmarks
+from .models import ClientCase, Sector
 from .ratios import RatioSet
 from .formatting import de
 
@@ -344,6 +373,117 @@ FACTORS: tuple[FactorDefinition, ...] = (
 FACTORS_BY_KEY = {f.key: f for f in FACTORS}
 
 
+# ---------------------------------------------------------------------------
+# Sector-specific curves (see SECTOR-SPECIFIC CURVES in the module docstring)
+# ---------------------------------------------------------------------------
+
+#: factor key -> (Bundesbank metric, conversion from the published unit to
+#: ours, higher_is_better). The single source of truth for which factors are
+#: calibrated; tests/test_scorecard.py checks the generic curves against it.
+CALIBRATION: dict[str, tuple[str, Callable[[float], float], bool]] = {
+    "eigenkapitalquote": ("eigenmittel_pct_bilanzsumme", lambda v: v / 100, True),
+    "ebit_marge": ("ergebnis_vor_steuern_pct_umsatz",
+                   lambda v: v / 100 + benchmarks.EBT_TO_EBIT_ADJUSTMENT, True),
+    "liquiditaet_2_grades": ("liquiditaet_2_pct", lambda v: v / 100, True),
+    "gesamtkapitalrentabilitaet_bbk": ("ergebnis_plus_zins_pct_bilanzsumme",
+                                       lambda v: v / 100, True),
+    "anlagendeckungsgrad_ii": ("langfr_kapital_pct_anlagevermoegen",
+                               lambda v: v / 100, True),
+    "kreditorenlaufzeit_tage": ("verb_ll_pct_materialaufwand",
+                                lambda v: v * 365 / 100, False),
+}
+
+#: Scores at the 25th percentile, median and 75th percentile (see CALIBRATION).
+ANCHOR_SCORES = (58.0, 70.0, 82.0)
+
+GENERIC_BASIS = "Alle Branchen (Standardkurve)"
+
+
+def _anchor_indices(bps: Sequence[tuple[float, float]], higher_is_better: bool) -> list[int]:
+    """Positions of the q25/median/q75 anchors in a generic curve, ascending x."""
+    ys = [y for _, y in bps]
+    low, mid, high = ANCHOR_SCORES
+    if higher_is_better:
+        return [ys.index(low), ys.index(mid), ys.index(high)]
+    # Lower is better: the good (82) end comes first, and a capped curve holds
+    # 82 on several points -- the anchor is the last of them.
+    return [len(ys) - 1 - ys[::-1].index(high), ys.index(mid), ys.index(low)]
+
+
+def rebased_breakpoints(
+    fd: FactorDefinition, quartiles: tuple[float, float, float]
+) -> tuple[tuple[float, float], ...]:
+    """The generic curve of `fd` with its anchors moved onto `quartiles`.
+
+    `quartiles` are (q25, q50, q75) already converted to the factor's unit.
+    """
+    _, _, higher = CALIBRATION[fd.key]
+    bps = list(fd.breakpoints)
+    i0, i1, i2 = _anchor_indices(bps, higher)
+    q25, q50, q75 = quartiles
+    anchors = [(q25, bps[i0][1]), (q50, bps[i1][1]), (q75, bps[i2][1])]
+
+    def stretch(points, old_anchor, new_anchor):
+        if old_anchor > 0 and new_anchor > 0:
+            k = new_anchor / old_anchor
+            return [(x * k, y) for x, y in points]
+        return points
+
+    below, above = bps[:i0], bps[i2 + 1:]
+    if higher:
+        # Weak tail below: absolute. Strong tail above: stretched.
+        below = [(x, y) for x, y in below if x < q25]
+        above = stretch(above, bps[i2][0], q75)
+    else:
+        below = stretch(below, bps[i0][0], q25)
+        above = [(x, y) for x, y in above if x > q75]
+    return tuple(below + anchors + above)
+
+
+@dataclass(frozen=True)
+class FactorCurve:
+    breakpoints: tuple[tuple[float, float], ...]
+    basis: str                # which population the anchors come from
+    note: str
+
+
+def _format_anchor(fd: FactorDefinition, x: float) -> str:
+    if fd.unit == "percent":
+        return f"{de(x * 100, 1)}%"
+    if fd.unit == "days":
+        return f"{de(x, 1)} Tage"
+    return de(x, 2)
+
+
+def curve_for(
+    fd: FactorDefinition, sector: Optional[Sector], revenue: Optional[float]
+) -> FactorCurve:
+    """The curve a factor is scored on for this sector and revenue.
+
+    Generic whenever the factor is not calibrated, no sector is given, or the
+    sector has no usable published cell for the metric.
+    """
+    spec = CALIBRATION.get(fd.key)
+    if spec is None or sector is None:
+        return FactorCurve(fd.breakpoints, GENERIC_BASIS, fd.note)
+    metric, convert, _ = spec
+    found = benchmarks.sector_cell(metric, sector, revenue)
+    if found is None:
+        return FactorCurve(
+            fd.breakpoints, GENERIC_BASIS,
+            (fd.note + " Keine Branchendaten fuer diese Kennzahl: Standardkurve.").strip(),
+        )
+    cell, size_key = found
+    q = tuple(convert(cell[k]) for k in ("q25", "q50", "q75"))
+    if not (q[0] < q[1] < q[2]):
+        # A degenerate published cell cannot carry a curve.
+        return FactorCurve(fd.breakpoints, GENERIC_BASIS, fd.note)
+    basis = f"{sector.value}, {benchmarks.SIZE_LABELS[size_key]}"
+    note = (f"Stuetzstellen {'/'.join(_format_anchor(fd, x) for x in q)} = "
+            f"Bundesbank-Quartile {basis}.")
+    return FactorCurve(rebased_breakpoints(fd, q), basis, note)
+
+
 def payment_behaviour_index(case: ClientCase) -> float:
     """Collapse payment signals into a 0-100 index (100 = clean).
 
@@ -374,6 +514,7 @@ class FactorScore:
     unit: str
     note: str = ""
     missing_reason: str = ""
+    basis: str = GENERIC_BASIS       # population the curve is anchored to
 
     @property
     def points_lost(self) -> float:
@@ -412,6 +553,18 @@ class ScorecardResult:
     band: Band
     factors: list[FactorScore] = field(default_factory=list)
     coverage: float = 1.0            # share of nominal weight actually scored
+    sector: Optional[Sector] = None  # set when sector-specific curves were requested
+
+    @property
+    def sector_specific(self) -> bool:
+        """Whether at least one factor was scored on a sector curve."""
+        return any(f.basis != GENERIC_BASIS for f in self.factors if f.key in CALIBRATION)
+
+    @property
+    def basis_label(self) -> str:
+        if not self.sector_specific:
+            return GENERIC_BASIS
+        return f"Branchenspezifisch: {self.sector.value}"
 
     @property
     def ranked_weaknesses(self) -> list[FactorScore]:
@@ -457,8 +610,14 @@ def _raw_value(key: str, case: ClientCase, ratios: RatioSet) -> tuple[Optional[f
     return None, reasons.get(key, "Nicht berechenbar aus den vorliegenden Daten")
 
 
-def evaluate(case: ClientCase, ratios: RatioSet) -> ScorecardResult:
+def evaluate(
+    case: ClientCase, ratios: RatioSet, sector_specific: bool = True
+) -> ScorecardResult:
     """Score a case against the factor set.
+
+    With `sector_specific` (the default) the calibrated factors are scored on
+    curves anchored to the client's sector and revenue class; pass False for
+    the generic all-sector score the report prints alongside it.
 
     Missing factors are excluded and the remaining weights renormalised, so a
     thin file is not silently punished for data the client has not supplied yet.
@@ -467,6 +626,8 @@ def evaluate(case: ClientCase, ratios: RatioSet) -> ScorecardResult:
     zero rather than dropped.
     """
     raw: list[tuple[FactorDefinition, Optional[float], Optional[float], str]] = []
+    sector = case.profile.sector if sector_specific else None
+    curves = {fd.key: curve_for(fd, sector, ratios.umsatz) for fd in FACTORS}
 
     for fd in FACTORS:
         value, reason = _raw_value(fd.key, case, ratios)
@@ -480,7 +641,7 @@ def evaluate(case: ClientCase, ratios: RatioSet) -> ScorecardResult:
             raw.append((fd, None, None, reason))
             continue
 
-        raw.append((fd, value, interpolate(value, fd.breakpoints), ""))
+        raw.append((fd, value, interpolate(value, curves[fd.key].breakpoints), ""))
 
     scorable_weight = sum(fd.weight for fd, _, s, _ in raw if s is not None)
     nominal_total = sum(fd.weight for fd in FACTORS)
@@ -498,8 +659,9 @@ def evaluate(case: ClientCase, ratios: RatioSet) -> ScorecardResult:
                 weight=applied_weight,
                 nominal_weight=fd.weight,
                 unit=fd.unit,
-                note=fd.note,
+                note=curves[fd.key].note,
                 missing_reason=reason if score is None else "",
+                basis=curves[fd.key].basis,
             )
         )
 
@@ -509,4 +671,5 @@ def evaluate(case: ClientCase, ratios: RatioSet) -> ScorecardResult:
         band=band_for(total),
         factors=factors,
         coverage=round(scorable_weight / nominal_total, 3) if nominal_total else 0.0,
+        sector=sector,
     )

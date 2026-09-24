@@ -32,6 +32,7 @@ from typing import Any, Optional
 from ..ai.extraction import to_statements
 from ..ingest.bank_csv import BankAnalysis, BankCsvError, analyse_bank_csv
 from ..ingest.datev import DatevMappingError, parse_datev_susa
+from .. import nace
 from ..formatting import de
 from ..models import BalanceSheet, IncomeStatement
 from .questionnaire import (
@@ -129,10 +130,21 @@ def build_payload(
     bs, gu = current
 
     # ------------------------------------------------------------ profile
+    sector = sme["branche"]
+    code = nace.parse(sme.get("nace_code"))
+    if code is not None:
+        # The code is a registered fact, the dropdown a self-assessment: the
+        # code wins, and a contradiction is worth a line in the notes.
+        prov["profile.sector"] = f"WZ 2008 {code.code}"
+        if code.sector.value != sector:
+            notes.append(f"Branche laut WZ-Code {code.code}: {code.sector.value} "
+                         f"(Selbstauskunft: {sector}). Verwendet wird der WZ-Code.")
+        sector = code.sector.value
     profile = {
         "name": sme["firmenname"],
         "legal_form": sme["rechtsform"],
-        "sector": sme["branche"],
+        "sector": sector,
+        "nace_code": code.code if code else None,
         "employees": sme["mitarbeiter"],
         "founded_year": sme["gruendungsjahr"],
         "hrb_number": sme.get("hrb_nummer"),

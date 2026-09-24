@@ -94,7 +94,8 @@ def render_markdown(result: DiagnosticResult, data_basis: dict | None = None) ->
     w(f"**Fall-ID:** {c.case_id}  ")
     w(f"**Erstellt:** {result.generated_on.isoformat()}  ")
     w(f"**Rechtsform:** {c.profile.legal_form.value}  ")
-    w(f"**Branche:** {c.profile.sector.value}  ")
+    nace_txt = f" (WZ {c.profile.nace_code})" if c.profile.nace_code else ""
+    w(f"**Branche:** {c.profile.sector.value}{nace_txt}  ")
     w(f"**Mitarbeiter:** {c.profile.employees} ({c.profile.size_class})  ")
     if c.request:
         w(
@@ -112,11 +113,24 @@ def render_markdown(result: DiagnosticResult, data_basis: dict | None = None) ->
     w(f"|---|---|")
     w(f"| **Readiness-Band** | **{s.band.value}** - {s.band.interpretation} |")
     w(f"| Indikativer Gesamtwert | {de(s.total_score, 1)} / 100 |")
+    w(f"| Bewertungsmassstab | {s.basis_label} |")
+    g = result.scorecard_generic
+    if g is not None and s.sector_specific:
+        w(f"| Zum Vergleich: alle Branchen | {de(g.total_score, 1)} / 100, Band {g.band.value} |")
     w(f"| Datenabdeckung | {de(s.coverage*100)}% der Bewertungsfaktoren |")
     w(f"| **Einordnung** | **{result.verdict.value}** |")
     w("")
     w(_VERDICT_GUIDANCE[result.verdict])
     w("")
+    if s.sector_specific:
+        w("*Bewertungsmassstab:* Eigenkapital, Rentabilitaet, Liquiditaet, "
+          "Anlagendeckung und Kreditorenlaufzeit werden an den Quartilen der "
+          f"eigenen Branche gemessen ({s.sector.value}, Bundesbank). "
+          "Kapitaldienstfaehigkeit, Verschuldung und Zinsdeckung gelten fuer alle "
+          "Branchen gleich, weil sie die Rueckzahlung selbst betreffen. Der Wert "
+          "\"alle Branchen\" zeigt, wie dieselben Zahlen ohne Branchenbezug "
+          "aussehen -- Kreditgeber bewerten das Branchenrisiko zusaetzlich.")
+        w("")
 
     sim = result.simulation
     if sim.applied:

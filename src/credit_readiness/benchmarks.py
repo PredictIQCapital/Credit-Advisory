@@ -110,6 +110,34 @@ def quartiles(
     return None
 
 
+SIZE_LABELS = {
+    "unter_2m": "Umsatz unter 2 Mio. EUR",
+    "2_bis_10m": "Umsatz 2-10 Mio. EUR",
+    "10_bis_50m": "Umsatz 10-50 Mio. EUR",
+    "ab_50m": "Umsatz ab 50 Mio. EUR",
+    "insgesamt": "alle Groessenklassen",
+}
+
+
+def sector_cell(
+    metric: str, sector: Sector, revenue: Optional[float] = None
+) -> Optional[tuple[dict, str]]:
+    """(quartiles, size key) from the sector's own figures, or None.
+
+    Unlike quartiles(), this never falls back to all sectors: the scorecard
+    uses it to decide whether a sector-specific curve exists at all, and a
+    silent fallback would label an all-sector curve as a sector one.
+    """
+    block = _dataset()["sectors"].get(_SECTOR_KEYS[sector])
+    if not block:
+        return None
+    for size_key in (size_class(revenue), "insgesamt"):
+        cell = block.get(size_key, {}).get(metric)
+        if cell and all(k in cell for k in ("q25", "q50", "q75")):
+            return cell, size_key
+    return None
+
+
 def percentile(value: float, cell: dict, higher_is_better: bool = True) -> float:
     """Where a value sits in the published distribution, 0-100.
 

@@ -18,9 +18,17 @@ ______________________________
 
 **Branche** **(Pflicht)**
 
-[ ] Verarbeitendes Gewerbe   [ ] Baugewerbe   [ ] Grosshandel   [ ] Einzelhandel   [ ] Verkehr und Lagerei   [ ] Gastgewerbe   [ ] Information und Kommunikation   [ ] Freiberufliche und technische Dienstleistungen   [ ] Gesundheitswesen   [ ] Sonstige Dienstleistungen
+[ ] Verarbeitendes Gewerbe   [ ] Baugewerbe   [ ] Grosshandel   [ ] Einzelhandel   [ ] Verkehr und Lagerei   [ ] Gastgewerbe   [ ] Information und Kommunikation   [ ] Freiberufliche und technische Dienstleistungen   [ ] Gesundheitswesen   [ ] Sonstige Dienstleistungen   [ ] Andere Branche
 
 > Warum wir fragen: Kennzahlen werden mit dem Branchenmedian verglichen -- eine niedrige EK-Quote ist im Gastgewerbe etwas anderes als in der IT.
+
+**Wirtschaftszweig (WZ 2008 / NACE-Code)**
+
+*z. B. C25.62 oder 25.62 -- steht auf der Gewerbeanmeldung und in der Creditreform-Auskunft*
+
+______________________________
+
+> Warum wir fragen: Banken ordnen nach diesem Code ein. Ist er angegeben, bestimmt er die Vergleichsbranche; die Auswahl oben dient dann nur der Kontrolle.
 
 **Anzahl Mitarbeiter (Vollzeitaequivalente)** **(Pflicht)**
 

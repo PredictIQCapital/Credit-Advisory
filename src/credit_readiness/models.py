@@ -40,6 +40,10 @@ class Sector(str, Enum):
     PROFESSIONAL_SERVICES = "Freiberufliche und technische Dienstleistungen"
     HEALTHCARE = "Gesundheitswesen"
     OTHER_SERVICES = "Sonstige Dienstleistungen"
+    #: No Bundesbank sector of its own (agriculture, energy, motor-vehicle
+    #: trade, real estate, ...): benchmarked against all sectors, scored on the
+    #: generic curves. See nace.py.
+    OTHER = "Andere Branche"
 
 
 @dataclass
@@ -52,6 +56,7 @@ class CompanyProfile:
     hrb_number: Optional[str] = None
     city: Optional[str] = None
     country: str = "DE"
+    nace_code: Optional[str] = None      # WZ 2008 / NACE Rev. 2, e.g. "C25.62"
 
     @property
     def age_years(self) -> int:
