@@ -282,7 +282,9 @@ class Handler(BaseHTTPRequestHandler):
     def _check_origin(self) -> None:
         """Reject cross-site writes (belt and braces next to SameSite=Strict)."""
         origin = self.headers.get("Origin")
-        if origin is not None and urlparse(origin).netloc != self.headers.get("Host", ""):
+        # Behind a proxy (Vercel) the public host arrives as X-Forwarded-Host.
+        hosts = {self.headers.get("Host", ""), self.headers.get("X-Forwarded-Host", "")} - {""}
+        if origin is not None and urlparse(origin).netloc not in hosts:
             raise ApiError(HTTPStatus.FORBIDDEN, "Fremder Ursprung abgelehnt")
 
     def _token(self) -> Optional[str]:
@@ -300,7 +302,9 @@ class Handler(BaseHTTPRequestHandler):
         return self.sessions.get(self._token())
 
     def _cookie_header(self, token: str, max_age: int) -> dict:
-        return {"Set-Cookie": f"{COOKIE}={token}; Path=/; HttpOnly; SameSite=Strict; Max-Age={max_age}"}
+        # Secure once served over HTTPS (Vercel); plain http stays usable on localhost.
+        secure = "; Secure" if self.headers.get("X-Forwarded-Proto", "").lower() == "https" else ""
+        return {"Set-Cookie": f"{COOKIE}={token}; Path=/; HttpOnly; SameSite=Strict; Max-Age={max_age}{secure}"}
 
     # --------------------------------------------------------- dispatch
     def do_GET(self) -> None:

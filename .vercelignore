@@ -1,0 +1,12 @@
+# Only the portal goes to Vercel. Client data never does (it is not in git
+# either); documents, tests and scripts are not needed at runtime.
+data/
+docs/
+tests/
+scripts/
+output/
+supabase/
+.env
+.env.*
+*.pdf
+previous-claude-chat.md

@@ -24,6 +24,9 @@ where = ["src"]
 [tool.setuptools.package-data]
 credit_readiness = ["webapp/static/*", "reference/*.json"]
 
+[tool.vercel]
+entrypoint = "api.index:handler"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
