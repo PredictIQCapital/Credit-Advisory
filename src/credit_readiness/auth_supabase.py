@@ -33,6 +33,12 @@ from .supa import Supabase, SupabaseError, q
 SLIDE_EVERY_SECONDS = 300
 
 
+def _log_mail_failure(kind: str, e: SupabaseError) -> None:
+    """A mail Supabase could not send (wrong SMTP password, say) -- for the server log only."""
+    import sys
+    print(f"[auth] {kind} e-mail not sent: HTTP {e.status} {e.body}", file=sys.stderr)
+
+
 def _now() -> datetime:
     return datetime.now(timezone.utc)
 
@@ -90,7 +96,8 @@ class SupabaseUserStore:
         except SupabaseError as e:
             if e.status == 429:
                 raise AuthError("Bitte einige Minuten warten, bevor Sie erneut senden.") from None
-            # Anything else stays silent: the answer must not reveal accounts.
+            # The visitor gets no hint (it must not reveal accounts); the log does.
+            _log_mail_failure("confirmation", e)
 
     def send_password_reset(self, email: str, redirect_to: str = "") -> None:
         try:
@@ -98,6 +105,7 @@ class SupabaseUserStore:
         except SupabaseError as e:
             if e.status == 429:
                 raise AuthError("Bitte einige Minuten warten, bevor Sie erneut senden.") from None
+            _log_mail_failure("password reset", e)
 
     def reset_with_token(self, access_token: str, password: str) -> str:
         """Set the password from a reset link. Returns the account's e-mail."""
