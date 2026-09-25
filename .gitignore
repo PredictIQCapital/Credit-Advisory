@@ -22,3 +22,8 @@ data/demo/
 
 # Working artefact, not project history.
 previous-claude-chat.md
+
+# Vercel CLI link (local only)
+.vercel/
+
+.vercel
