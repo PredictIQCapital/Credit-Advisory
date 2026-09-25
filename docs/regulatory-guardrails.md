@@ -95,7 +95,7 @@ commercially sensitive.
 
 | Requirement | Implementation |
 |---|---|
-| EU hosting | Frankfurt region; no US sub-processors without an assessment |
+| EU hosting | Frankfurt region; no US sub-processors without an assessment. Database and file storage: Supabase project in eu-central-1 (Frankfurt), verified 2026-09-25; region cannot be changed after creation |
 | Encryption | at rest and in transit |
 | Data processing agreements | with **every** vendor, including the open-banking aggregator |
 | Documented legal basis | per client, in the engagement letter |
