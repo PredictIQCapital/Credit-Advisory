@@ -205,12 +205,15 @@ def main(argv: list[str] | None = None) -> int:
     p_serve.add_argument("--port", type=int, default=8765)
     p_serve.add_argument("--data-dir", help="Ablage (Standard: data/clients)")
     p_serve.add_argument("--open", action="store_true", help="Browser oeffnen")
+    p_serve.add_argument("--local", action="store_true",
+                         help="Ordner statt Supabase verwenden, auch wenn .env gesetzt ist")
     p_serve.add_argument("--demo", action="store_true",
                          help="Demo mit fiktiven Unternehmen (Ablage data/demo)")
     p_serve.set_defaults(func=cmd_serve)
 
     p_user = sub.add_parser("user", help="Konten verwalten")
     p_user.add_argument("--data-dir", help="Ablage (Standard: data/clients)")
+    p_user.add_argument("--local", action="store_true", help="Ordner statt Supabase")
     us = p_user.add_subparsers(dest="user_command", required=True)
     u = us.add_parser("add", help="Konto anlegen")
     u.add_argument("email")
@@ -293,12 +296,15 @@ def cmd_serve(args: argparse.Namespace) -> int:
     from .webapp.server import serve
 
     serve(host=args.host, port=args.port, data_dir=args.data_dir, open_browser=args.open,
-          demo=args.demo)
+          demo=args.demo, local=True if args.local else None)
     return 0
 
 
 def cmd_user(args: argparse.Namespace) -> int:
-    users = UserStore(LocalCaseStore(args.data_dir).root)
+    from .config import backends
+
+    _, users, _, where = backends(args.data_dir, True if getattr(args, "local", False) else None)
+    print(f"Ablage: {where}")
     try:
         if args.user_command == "add":
             p = users.create(args.email, args.name, args.role, args.password)

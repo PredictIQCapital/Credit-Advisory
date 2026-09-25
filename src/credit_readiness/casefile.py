@@ -112,6 +112,9 @@ class CaseStore(abc.ABC):
     def set_stage(self, case_id: str, stage: str, note: str = "") -> dict: ...
 
     @abc.abstractmethod
+    def delete_case(self, case_id: str) -> None: ...
+
+    @abc.abstractmethod
     def save_answers(self, case_id: str, audience: str, answers: dict) -> None: ...
 
     @abc.abstractmethod
@@ -260,6 +263,11 @@ class LocalCaseStore(CaseStore):
                 meta["updated_at"] = now
                 self._write_json(self._case_dir(case_id) / "case_meta.json", meta)
             return meta
+
+    def delete_case(self, case_id: str) -> None:
+        import shutil
+        with self._lock:
+            shutil.rmtree(self._case_dir(case_id))
 
     # ------------------------------------------------------------- answers
     def save_answers(self, case_id: str, audience: str, answers: dict) -> None:

@@ -843,12 +843,13 @@ def make_server(
     verbose: bool = False,
     users: Optional[UserStore] = None,
     demo: bool = False,
+    sessions=None,
 ) -> ThreadingHTTPServer:
     store = store or LocalCaseStore()
     handler = type("BoundHandler", (Handler,), {
         "store": store,
         "users": users or UserStore(store.root),
-        "sessions": SessionManager(),
+        "sessions": sessions or SessionManager(),
         "today": today,
         "demo": demo,
         "lock": threading.Lock(),
@@ -860,22 +861,24 @@ def make_server(
 
 def serve(
     host: str = "127.0.0.1", port: int = 8765, data_dir: Optional[str] = None,
-    open_browser: bool = False, demo: bool = False,
+    open_browser: bool = False, demo: bool = False, local: Optional[bool] = None,
 ) -> None:
-    if demo:
-        from ..demo import DEMO_ROOT, DEMO_USERS, seed_demo
-        data_dir = data_dir or str(DEMO_ROOT)
-        store = LocalCaseStore(data_dir)
-        if UserStore(store.root).count() == 0:
-            print("Demo-Daten werden angelegt ...")
-            seed_demo(store)
-    else:
-        store = LocalCaseStore(data_dir)
-    users = UserStore(store.root)
-    server = make_server(store, host, port, users=users, demo=demo)
+    from ..config import backends
+    from ..demo import DEMO_ROOT, DEMO_USERS, seed_demo
+
+    if demo and local is None and data_dir is None:
+        # Without Supabase the demo keeps its own folder, apart from client data.
+        from ..config import use_supabase
+        if not use_supabase():
+            data_dir = str(DEMO_ROOT)
+    store, users, sessions, where = backends(data_dir, local)
+    if demo and users.count() == 0:
+        print("Demo-Daten werden angelegt ...")
+        seed_demo(store, users=users)
+    server = make_server(store, host, port, users=users, demo=demo, sessions=sessions)
     url = f"http://{host}:{server.server_port}/"
     print(f"Credit Readiness laeuft: {url}")
-    print(f"Ablage: {store.root}")
+    print(f"Ablage: {where}")
     if demo:
         print("\nDemo-Zugaenge (Passwort jeweils: demo1234):")
         for email, _, role, _ in DEMO_USERS:

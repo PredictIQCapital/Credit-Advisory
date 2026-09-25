@@ -312,12 +312,12 @@ def _upload_pdf(store, cid, doc_type, name, text, by):
                        {"uploaded_by": by})
 
 
-def seed_demo(store: LocalCaseStore, today: Optional[date] = None) -> dict[str, str]:
+def seed_demo(store, today: Optional[date] = None, users=None) -> dict[str, str]:
     """Create demo users and cases in an EMPTY store. Returns {key: case_id}."""
     today = today or date.today()
-    users = UserStore(store.root)
+    users = users or UserStore(store.root)
     if users.count():
-        raise RuntimeError(f"{store.root} enthaelt bereits Konten -- Demo nur in leerer Ablage")
+        raise RuntimeError("Die Ablage enthaelt bereits Konten -- Demo nur in leerer Ablage")
     for email, name, role, _ in DEMO_USERS:
         users.create(email, name, role, DEMO_PASSWORD)
     ids: dict[str, str] = {}

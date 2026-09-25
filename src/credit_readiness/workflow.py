@@ -766,14 +766,12 @@ def delete_client_data(store: CaseStore, users, email: str) -> list[str]:
     figures -- no names or documents); docs/ai-and-data-protection.md explains
     why and how it is removed on explicit request.
     """
-    import shutil
-
     from .auth import ROLE_UNTERNEHMEN
 
     deleted = []
     for meta in store.list_cases():
         if email in (meta.get("members") or {}).get(ROLE_UNTERNEHMEN, []):
-            shutil.rmtree(store.root / meta["case_id"])
+            store.delete_case(meta["case_id"])
             deleted.append(meta["case_id"])
     users.delete(email)
     return deleted
