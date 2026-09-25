@@ -31,6 +31,11 @@ def load_env(path: Path) -> dict[str, str]:
     return env
 
 
+def base_url(url: str) -> str:
+    """The project URL, also when the Data API address (.../rest/v1/) was copied."""
+    return re.sub(r"/(rest|auth|storage)/v1/?$", "", url.strip().rstrip("/"))
+
+
 def masked(key: str) -> str:
     return f"{key[:12]}... ({len(key)} characters)" if key else "(empty)"
 
@@ -67,7 +72,7 @@ def main() -> int:
     if not ok:
         return 1
 
-    url, secret = env["SUPABASE_URL"], env["SUPABASE_SECRET_KEY"]
+    url, secret = base_url(env["SUPABASE_URL"]), env["SUPABASE_SECRET_KEY"]
     if not re.fullmatch(r"https://[a-z0-9]{20}\.supabase\.co/?", url):
         print(f"CHECK    SUPABASE_URL looks unusual: {url} (expected https://<20-letter-ref>.supabase.co)")
     if secret == env["SUPABASE_PUBLISHABLE_KEY"]:
