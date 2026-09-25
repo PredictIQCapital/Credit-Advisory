@@ -193,3 +193,18 @@ def test_supabase_accounts_and_sessions():
     finally:
         users.delete(email)
     assert users.get(email) is None
+
+
+def test_results_are_kept_in_order(store):
+    cid = store.create_case("Alpha GmbH")["case_id"]
+    base = {"kind": "quick", "model_version": "m-000000000000", "band": "B", "score": 66.0,
+            "score_generic": 65.0, "band_generic": "B", "verdict": "behebbar", "sector": "Einzelhandel",
+            "nace_code": None, "size_class": "2_bis_10m", "coverage": 1.0, "created_by": None,
+            "summary": {"band": "B"}}
+    factors = [{"factor_key": "eigenkapitalquote", "value": 0.2, "score": 63.0, "weight": 0.16,
+                "points_lost": 5.9, "basis": "Einzelhandel"}]
+    store.record_result(cid, {**base, "factors": factors})
+    store.record_result(cid, {**base, "kind": "report", "score": 70.0, "factors": factors})
+    rows = store.list_results(cid)
+    assert [r["kind"] for r in rows] == ["quick", "report"]
+    assert float(rows[1]["score"]) == 70.0

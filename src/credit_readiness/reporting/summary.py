@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 
+from ..model_export import model_version
+
+
 def result_summary(result) -> dict:
     r = result.ratios
     return {
@@ -14,6 +17,7 @@ def result_summary(result) -> dict:
         "band_interpretation": result.scorecard.band.interpretation,
         "score": result.scorecard.total_score,
         "coverage": result.scorecard.coverage,
+        "model_version": model_version(),
         "scoring_basis": result.scorecard.basis_label,
         "score_generic": result.scorecard_generic.total_score if result.scorecard_generic else None,
         "band_generic": result.scorecard_generic.band.value if result.scorecard_generic else None,

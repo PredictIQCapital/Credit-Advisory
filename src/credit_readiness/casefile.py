@@ -160,6 +160,13 @@ class CaseStore(abc.ABC):
     @abc.abstractmethod
     def list_artifacts(self, case_id: str) -> list[str]: ...
 
+    # Every quick check and report, with the model version that computed it.
+    @abc.abstractmethod
+    def record_result(self, case_id: str, record: dict) -> None: ...
+
+    @abc.abstractmethod
+    def list_results(self, case_id: str) -> list[dict]: ...
+
     @abc.abstractmethod
     def append_outcome(self, row: dict) -> None: ...
 
@@ -427,6 +434,17 @@ class LocalCaseStore(CaseStore):
     def list_artifacts(self, case_id: str) -> list[str]:
         d = self._case_dir(case_id) / "artifacts"
         return sorted(p.name for p in d.iterdir() if p.is_file()) if d.is_dir() else []
+
+    # -------------------------------------------------------------- results
+    def record_result(self, case_id: str, record: dict) -> None:
+        with self._lock:
+            path = self._case_dir(case_id) / "results.json"
+            rows = self._read_json(path, [])
+            rows.append({**record, "created_at": _now()})
+            self._write_json(path, rows)
+
+    def list_results(self, case_id: str) -> list[dict]:
+        return self._read_json(self._case_dir(case_id) / "results.json", [])
 
     # ------------------------------------------------------------- outcomes
     def append_outcome(self, row: dict) -> None:

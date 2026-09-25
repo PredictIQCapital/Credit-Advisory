@@ -473,6 +473,37 @@ def release_report(store: CaseStore, case_id: str, released: bool = True) -> dic
     return store.get_meta(case_id)
 
 
+def result_record(result, summary: dict, kind: str, actor: str = "") -> dict:
+    """One row for app.results: the headline, the model version, every factor."""
+    from . import benchmarks
+
+    card = result.scorecard
+    generic = result.scorecard_generic
+    return {
+        "kind": kind, "model_version": summary["model_version"],
+        "band": card.band.value, "score": card.total_score,
+        "score_generic": generic.total_score if generic else None,
+        "band_generic": generic.band.value if generic else None,
+        "verdict": result.verdict.value, "sector": result.case.profile.sector.value,
+        "nace_code": result.case.profile.nace_code,
+        "size_class": benchmarks.size_class(result.ratios.umsatz),
+        "coverage": card.coverage, "created_by": actor or None, "summary": summary,
+        "factors": [{"factor_key": f.key, "value": f.value, "score": f.score,
+                     "weight": round(f.weight, 6), "points_lost": round(f.points_lost, 4),
+                     "basis": f.basis} for f in card.factors],
+    }
+
+
+def _record(store: CaseStore, case_id: str, record: dict) -> None:
+    """Store a result row. A failure is logged, never shown: the result itself stands."""
+    import sys
+
+    try:
+        store.record_result(case_id, record)
+    except Exception as e:  # noqa: BLE001 -- recording must not break the check
+        print(f"[results] {case_id}: result not recorded: {e}", file=sys.stderr)
+
+
 def run_case_diagnostic(
     store: CaseStore, case_id: str, today: Optional[date] = None, strict: bool = True
 ) -> dict:
@@ -507,6 +538,7 @@ def run_case_diagnostic(
     store.write_artifact(case_id, "diagnostik.md", md)
     store.write_artifact(case_id, "diagnostik.html", markdown_to_html(md, title))
     store.write_artifact(case_id, "summary.json", json.dumps(summary, indent=2, ensure_ascii=False))
+    _record(store, case_id, result_record(result, summary, "report"))
 
     sme = check_answers(get_questionnaire(AUDIENCE_UNTERNEHMEN),
                         store.load_answers(case_id, AUDIENCE_UNTERNEHMEN)).values
@@ -706,8 +738,10 @@ def run_quick_check(store: CaseStore, case_id: str, today: Optional[date] = None
         "projection": s["projection"],
         "data_notes": asm.notes,
         "disclaimer": s["disclaimer"],
+        "model_version": s["model_version"],
     }
     store.write_artifact(case_id, QUICK_CHECK, json.dumps(quick, indent=2, ensure_ascii=False))
+    _record(store, case_id, result_record(result, s, "quick"))
     store.update_meta(case_id, quick_check_at=quick["generated_at"])
     return {"ok": True, "quick_check": quick}
 

@@ -16,7 +16,7 @@ import csv
 import hashlib
 import io
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Optional
 
 from .casefile import (
@@ -168,7 +168,9 @@ class SupabaseCaseStore(CaseStore):
         self.sb.upload(path, content, _MIME.get(clean.rsplit(".", 1)[-1].lower(), "application/octet-stream"))
         row = {"doc_id": doc_id, "case_id": case_id, "doc_type": doc_type, "filename": clean,
                "storage_path": path, "size": len(content), "sha256": hashlib.sha256(content).hexdigest(),
-               "uploaded_at": _now(), "meta": dict(meta or {})}
+               # Microseconds: two uploads in one second keep their order.
+               "uploaded_at": datetime.now(timezone.utc).isoformat(timespec="microseconds"),
+               "meta": dict(meta or {})}
         try:
             self.sb.insert("documents", row, returning=False)
         except SupabaseError:
@@ -264,6 +266,21 @@ class SupabaseCaseStore(CaseStore):
         self._check_id(case_id)
         rows = self.sb.select("artifacts", f"case_id=eq.{q(case_id)}&select=name&order=name.asc")
         return [r["name"] for r in rows]
+
+    # -------------------------------------------------------------- results
+    def record_result(self, case_id: str, record: dict) -> None:
+        self._check_id(case_id)
+        factors = record.get("factors") or []
+        row = {k: v for k, v in record.items() if k != "factors"}
+        created = self.sb.insert("results", {"case_id": case_id, **row})
+        if factors:
+            rid = created[0]["id"]
+            self.sb.insert("result_factors", [{"result_id": rid, **f} for f in factors], returning=False)
+
+    def list_results(self, case_id: str) -> list[dict]:
+        self._check_id(case_id)
+        return self.sb.select("results", f"case_id=eq.{q(case_id)}&order=created_at.asc,id.asc"
+                                         "&select=*,result_factors(*)")
 
     # ------------------------------------------------------------- outcomes
     def append_outcome(self, row: dict) -> None:
