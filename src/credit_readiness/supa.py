@@ -13,11 +13,11 @@ keeps a Vercel function small and quick to start.
 
 from __future__ import annotations
 
+import http.client
 import json
 import re
-import urllib.error
+import threading
 import urllib.parse
-import urllib.request
 from typing import Any, Optional
 
 SCHEMA = "app"
@@ -43,6 +43,8 @@ class Supabase:
         if not url or not secret_key:
             raise ValueError("SUPABASE_URL und SUPABASE_SECRET_KEY sind noetig")
         self.url = base_url(url)
+        self._host = urllib.parse.urlparse(self.url).netloc
+        self._local = threading.local()
         self.secret = secret_key
         self.publishable = publishable_key or secret_key
 
@@ -64,19 +66,42 @@ class Supabase:
             data = json.dumps(body).encode("utf-8")
             h["Content-Type"] = "application/json"
         h.update(headers or {})
-        req = urllib.request.Request(self.url + path, data=data, method=method, headers=h)
-        try:
-            with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+        # One kept-alive HTTPS connection per thread: a fresh TLS handshake per
+        # call costs several round trips, and a page makes a dozen calls.
+        # A kept-alive connection the server has since closed fails on first
+        # use; only then is the request retried, once, on a fresh connection --
+        # a request on a fresh connection is never sent twice.
+        while True:
+            reused = getattr(self._local, "conn", None) is not None
+            conn = self._conn()
+            try:
+                conn.request(method, path, body=data, headers=h)
+                r = conn.getresponse()
                 payload = r.read()
-                ctype = r.headers.get("Content-Type", "")
-                return r.status, (json.loads(payload) if payload and "json" in ctype else payload), dict(r.headers)
-        except urllib.error.HTTPError as e:
-            payload = e.read()
+            except (http.client.HTTPException, ConnectionError, OSError):
+                self._local.conn = None
+                conn.close()
+                if not reused:
+                    raise
+                continue
+            if r.getheader("Connection", "").lower() == "close":
+                self._local.conn = None
+            break
+        ctype = r.getheader("Content-Type", "")
+        if r.status >= 400:
             try:
                 parsed = json.loads(payload)
             except ValueError:
                 parsed = payload.decode("utf-8", "replace")[:300]
-            raise SupabaseError(e.code, parsed, what) from None
+            raise SupabaseError(r.status, parsed, what)
+        return r.status, (json.loads(payload) if payload and "json" in ctype else payload), dict(r.getheaders())
+
+    def _conn(self) -> http.client.HTTPSConnection:
+        conn = getattr(self._local, "conn", None)
+        if conn is None:
+            conn = http.client.HTTPSConnection(self._host, timeout=TIMEOUT)
+            self._local.conn = conn
+        return conn
 
     # ------------------------------------------------------------------ data
     def select(self, table: str, query: str = "") -> list[dict]:
