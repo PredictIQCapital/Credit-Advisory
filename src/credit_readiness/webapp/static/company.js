@@ -26,6 +26,7 @@ const ICON_PATHS = {
   users: ["M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2", "M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z", "M22 21v-2a4 4 0 0 0-3-3.9", "M16 3.1a4 4 0 0 1 0 7.8"],
   arrow: ["M5 12h14", "M13 6l6 6-6 6"],
   shield: ["M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z", "M9 12l2 2 4-4"],
+  key: ["M15 7a4 4 0 1 1-3.9 4.9L3 20v-3h3v-3h3l1.1-1.1A4 4 0 0 1 15 7z", "M16 10h.01"],
   chat: ["M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"],
   download: ["M12 4v11", "M7 10l5 5 5-5", "M4 20h16"],
 };
@@ -157,6 +158,7 @@ function wsShell(ov, page, content, headAction) {
     agreements: ov.agreements.some((a) => a.outdated) ? el("span", { class: "nb warn", text: "!" }) : null,
     plan: el("span", { class: "nb plain", text: wsPlan(ov) === "quick" ? t("Free", "Free") : wsPlan(ov) === "report" ? "390 €" : "Pro" }),
   };
+  const pwBtn = el("button", { class: "side-item", type: "button", onclick: changePasswordModal }, icon("key"), el("span", { class: "lbl", text: t("Passwort ändern", "Change password") }));
   const logout = el("button", { class: "side-item", type: "button" }, icon("logout"), el("span", { class: "lbl", text: t("Abmelden", "Log out") }));
   logout.addEventListener("click", () => guarded(logout, async () => {
     await api("POST", "/api/auth/logout");
@@ -177,6 +179,7 @@ function wsShell(ov, page, content, headAction) {
       el("div", { class: "side-me" }, el("div", { class: "avatar", text: initials(S.me.name) }),
         el("div", { class: "lbl" }, el("b", { text: S.me.name }), el("span", { text: S.me.email }))),
       el("div", { class: "lbl side-lang" }, langToggle(), el("a", { class: "small", href: "/", text: t("Website", "Website") })),
+      pwBtn,
       logout));
   const menuBtn = el("button", { class: "ws-menu", type: "button", "aria-label": t("Menü", "Menu"), onclick: () => side.classList.toggle("open") }, icon("menu"));
   const title = WS_NAV.find((n) => n.id === page);

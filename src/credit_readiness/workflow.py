@@ -369,13 +369,17 @@ def case_overview(store: CaseStore, case_id: str, today: Optional[date] = None) 
 
 
 def register_client(store: CaseStore, users, company_name: str, name: str, email: str,
-                    password: str) -> tuple[Any, dict]:
-    """Self-registration of an SME: account + case + pre-filled contact answers."""
+                    password: str, account=None) -> tuple[Any, dict]:
+    """Self-registration of an SME: account + case + pre-filled contact answers.
+
+    `account` is an already-created principal (Supabase sign-up, which sends
+    the confirmation e-mail); without it the account is created here.
+    """
     from .auth import ROLE_UNTERNEHMEN
 
     if not (company_name or "").strip():
         raise CaseStoreError("Firmenname fehlt")
-    principal = users.create(email, name, ROLE_UNTERNEHMEN, password)
+    principal = account or users.create(email, name, ROLE_UNTERNEHMEN, password)
     meta = store.create_case(company_name)
     store.update_meta(meta["case_id"], members={ROLE_UNTERNEHMEN: [principal.email]})
     store.save_answers(meta["case_id"], AUDIENCE_UNTERNEHMEN, {

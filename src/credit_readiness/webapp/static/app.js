@@ -44,7 +44,12 @@ async function api(method, url, body) {
     go("login");
     throw new Error(t("Sitzung abgelaufen - bitte erneut anmelden", "Session expired - please log in again"));
   }
-  if (!res.ok) throw new Error((data && data.error) || `Error ${res.status}`);
+  if (!res.ok) {
+    const err = new Error((data && data.error) || `Error ${res.status}`);
+    err.data = data || {};
+    err.status = res.status;
+    throw err;
+  }
   return data;
 }
 
@@ -197,6 +202,7 @@ function shell(content) {
       langToggle(),
       el("div", { class: "avatar", text: initials(me.name) }),
       el("div", {}, el("div", { class: "nm", text: me.name }), el("div", { class: "rl", text: roleLabel(me.role) })),
+      el("button", { class: "btn btn-ghost btn-sm hide-sm", text: t("Passwort", "Password"), onclick: changePasswordModal }),
       logout)));
   const parts = [bar];
   if (S.meta.demo) {
@@ -277,6 +283,10 @@ function renderAuth(mode) {
       guarded(btn, async () => {
         try {
           const res = await api("POST", "/api/auth/register", { company_name: f.company.value, name: f.name.value, email: f.email.value, password: f.password.value, consent: true });
+          if (res.verify_email) {
+            S.authEmail = res.email;
+            return go("check-email");
+          }
           S.me = res.user;
           await loadCases();
           toast(t("Willkommen! Ihr Konto ist angelegt.", "Welcome! Your account is ready."));
@@ -288,21 +298,37 @@ function renderAuth(mode) {
     const email = el("input", { type: "email", required: true, autocomplete: "username" });
     const pw = el("input", { type: "password", required: true, autocomplete: "current-password" });
     const btn = el("button", { class: "btn btn-dark btn-lg", type: "submit", style: "width:100%", text: t("Anmelden", "Log in") });
+    const resendBox = el("div", { class: "auth-note warn", hidden: true });
     form = el("form", { novalidate: true },
       el("h1", { style: "font-size:28px", text: t("Willkommen zurück", "Welcome back") }),
       el("p", { class: "muted", text: t("Melden Sie sich an, um Ihren Fall zu sehen.", "Log in to see your case.") }),
+      authNotice(),
       err,
+      resendBox,
       el("label", { class: "field" }, el("span", { class: "lbl", text: t("E-Mail", "E-mail") }), email),
       el("label", { class: "field" }, el("span", { class: "lbl", text: t("Passwort", "Password") }), pw),
+      S.meta.email_auth ? el("div", { class: "auth-forgot" }, el("a", { href: "#forgot", text: t("Passwort vergessen?", "Forgot your password?") })) : null,
       btn);
     form.addEventListener("submit", (ev) => {
       ev.preventDefault();
       err.hidden = true;
+      resendBox.hidden = true;
       guarded(btn, async () => {
-        try { await login(email.value, pw.value); } catch (e) { showErr(e.message); }
+        try { await login(email.value, pw.value); } catch (e) {
+          if (e.data && e.data.unconfirmed) {
+            resendBox.replaceChildren(
+              el("span", { text: t("Ihre E-Mail-Adresse ist noch nicht bestätigt. Bitte klicken Sie auf den Link in unserer E-Mail.", "Your e-mail address is not confirmed yet. Please click the link in our e-mail.") }),
+              resendButton(() => email.value));
+            resendBox.hidden = false;
+          } else showErr(e.message);
+        }
       });
     });
   }
+
+  if (mode === "forgot") form = forgotForm();
+  if (mode === "reset") form = resetForm();
+  if (mode === "check-email") form = checkEmailPanel();
 
   const tabs = el("div", { class: "auth-tabs" },
     el("button", { class: mode !== "register" ? "active" : "", text: t("Anmelden", "Log in"), onclick: () => go("login") }),
@@ -342,6 +368,145 @@ function agreementLink(id) {
   } });
 }
 
+// ------------------------------------------------------------------ account e-mails
+// Supabase Auth sends the confirmation and password-reset e-mails; their links
+// lead back to /app with the result in the URL fragment (read in boot()).
+
+function authNotice() {
+  const n = S.authNotice;
+  if (!n) return null;
+  S.authNotice = null;
+  return el("div", { class: "auth-note " + (n.kind || "ok"), text: n.text });
+}
+
+function resendButton(getEmail) {
+  const b = el("button", { class: "link-btn small", type: "button", text: t("E-Mail erneut senden", "Send the e-mail again") });
+  b.addEventListener("click", () => guarded(b, async () => {
+    const email = getEmail();
+    if (!email) throw new Error(t("Bitte E-Mail-Adresse eingeben", "Please enter your e-mail address"));
+    await api("POST", "/api/auth/resend", { email });
+    toast(t("Wir haben die E-Mail erneut gesendet.", "We sent the e-mail again."));
+  }));
+  return b;
+}
+
+function forgotForm() {
+  const email = el("input", { type: "email", required: true, autocomplete: "username" });
+  const done = el("div", { class: "auth-note ok", hidden: true });
+  const btn = el("button", { class: "btn btn-dark btn-lg", type: "submit", style: "width:100%", text: t("Link zum Zurücksetzen senden", "Send reset link") });
+  const form = el("form", { novalidate: true },
+    el("h1", { style: "font-size:28px", text: t("Passwort vergessen", "Forgot your password") }),
+    el("p", { class: "muted", text: t("Geben Sie Ihre E-Mail-Adresse ein. Wir schicken Ihnen einen Link, mit dem Sie ein neues Passwort festlegen.", "Enter your e-mail address. We will send you a link to set a new password.") }),
+    done,
+    el("label", { class: "field" }, el("span", { class: "lbl", text: t("E-Mail", "E-mail") }), email),
+    btn,
+    el("p", { class: "small", style: "margin-top:14px" }, el("a", { href: "#login", text: t("← Zurück zur Anmeldung", "← Back to log in") })));
+  form.addEventListener("submit", (ev) => {
+    ev.preventDefault();
+    guarded(btn, async () => {
+      await api("POST", "/api/auth/forgot", { email: email.value });
+      done.textContent = t("Falls es ein Konto mit dieser Adresse gibt, ist der Link unterwegs. Bitte prüfen Sie auch den Spam-Ordner.",
+        "If an account exists for this address, the link is on its way. Please also check your spam folder.");
+      done.hidden = false;
+    });
+  });
+  return form;
+}
+
+function resetForm() {
+  const token = S.resetToken;
+  if (!token) {
+    S.authNotice = { kind: "warn", text: t("Der Link ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen an.", "The link is invalid or has expired. Please request a new one.") };
+    return forgotForm();
+  }
+  const pw = el("input", { type: "password", required: true, minlength: 8, autocomplete: "new-password" });
+  const pw2 = el("input", { type: "password", required: true, minlength: 8, autocomplete: "new-password" });
+  const err = el("div", { class: "form-error", hidden: true });
+  const btn = el("button", { class: "btn btn-primary btn-lg", type: "submit", style: "width:100%", text: t("Neues Passwort speichern", "Save new password") });
+  const form = el("form", { novalidate: true },
+    el("h1", { style: "font-size:28px", text: t("Neues Passwort festlegen", "Set a new password") }),
+    el("p", { class: "muted", text: t("Mindestens 8 Zeichen. Danach melden Sie sich mit dem neuen Passwort an; andere Anmeldungen werden beendet.", "At least 8 characters. Then log in with the new password; other sessions are ended.") }),
+    err,
+    el("label", { class: "field" }, el("span", { class: "lbl", text: t("Neues Passwort", "New password") }), pw),
+    el("label", { class: "field" }, el("span", { class: "lbl", text: t("Neues Passwort wiederholen", "Repeat new password") }), pw2),
+    btn);
+  form.addEventListener("submit", (ev) => {
+    ev.preventDefault();
+    err.hidden = true;
+    if (pw.value.length < 8) { err.textContent = t("Mindestens 8 Zeichen.", "At least 8 characters."); err.hidden = false; return; }
+    if (pw.value !== pw2.value) { err.textContent = t("Die Passwörter stimmen nicht überein.", "The passwords do not match."); err.hidden = false; return; }
+    guarded(btn, async () => {
+      try {
+        await api("POST", "/api/auth/reset", { access_token: token, password: pw.value });
+        S.resetToken = null;
+        S.authNotice = { kind: "ok", text: t("Ihr Passwort ist geändert. Bitte melden Sie sich an.", "Your password has been changed. Please log in.") };
+        go("login");
+      } catch (e) { err.textContent = e.message; err.hidden = false; }
+    });
+  });
+  return form;
+}
+
+function checkEmailPanel() {
+  const email = S.authEmail || "";
+  return el("div", {},
+    el("h1", { style: "font-size:28px", text: t("Bitte bestätigen Sie Ihre E-Mail", "Please confirm your e-mail") }),
+    el("p", { text: t(`Wir haben eine E-Mail an ${email} geschickt. Klicken Sie auf den Link darin – danach können Sie sich anmelden.`, `We sent an e-mail to ${email}. Click the link in it – then you can log in.`) }),
+    el("p", { class: "small muted", text: t("Keine E-Mail? Bitte prüfen Sie den Spam-Ordner oder senden Sie sie erneut.", "No e-mail? Please check your spam folder or send it again.") }),
+    el("div", { class: "actions" }, resendButton(() => email), el("a", { class: "btn btn-ghost btn-sm", href: "#login", text: t("Zur Anmeldung", "Go to log in") })));
+}
+
+/** Logged-in users change their password here; other sessions end. */
+function changePasswordModal() {
+  openModal((box, close) => {
+    const cur = el("input", { type: "password", autocomplete: "current-password" });
+    const pw = el("input", { type: "password", minlength: 8, autocomplete: "new-password" });
+    const pw2 = el("input", { type: "password", minlength: 8, autocomplete: "new-password" });
+    const err = el("div", { class: "form-error", hidden: true });
+    const save = el("button", { class: "btn btn-primary", text: t("Passwort ändern", "Change password") });
+    save.addEventListener("click", () => guarded(save, async () => {
+      err.hidden = true;
+      if (pw.value.length < 8) { err.textContent = t("Mindestens 8 Zeichen.", "At least 8 characters."); err.hidden = false; return; }
+      if (pw.value !== pw2.value) { err.textContent = t("Die neuen Passwörter stimmen nicht überein.", "The new passwords do not match."); err.hidden = false; return; }
+      try {
+        await api("POST", "/api/auth/password", { current_password: cur.value, new_password: pw.value });
+        close();
+        toast(t("Passwort geändert. Andere Anmeldungen wurden beendet.", "Password changed. Other sessions were ended."));
+      } catch (e) { err.textContent = e.message; err.hidden = false; }
+    }));
+    box.append(
+      el("h3", { text: t("Passwort ändern", "Change password") }),
+      err,
+      el("label", { class: "field" }, el("span", { class: "lbl", text: t("Bisheriges Passwort", "Current password") }), cur),
+      el("label", { class: "field" }, el("span", { class: "lbl", text: t("Neues Passwort (mind. 8 Zeichen)", "New password (min. 8 characters)") }), pw),
+      el("label", { class: "field" }, el("span", { class: "lbl", text: t("Neues Passwort wiederholen", "Repeat new password") }), pw2),
+      el("div", { class: "foot" }, el("button", { class: "btn btn-ghost", text: t("Abbrechen", "Cancel"), onclick: close }), save));
+  });
+}
+
+/** Reads what a Supabase e-mail link put into the URL fragment, then removes it. */
+function readAuthLink() {
+  const h = location.hash.replace(/^#/, "");
+  if (!/(^|&)(access_token|error|error_code)=/.test(h)) return;
+  const p = new URLSearchParams(h);
+  history.replaceState(null, "", location.pathname + location.search);
+  if (p.get("error") || p.get("error_code")) {
+    const expired = p.get("error_code") === "otp_expired";
+    S.authNotice = { kind: "warn", text: expired
+      ? t("Der Link ist abgelaufen oder wurde schon benutzt. Bitte fordern Sie einen neuen an.", "The link has expired or was already used. Please request a new one.")
+      : (p.get("error_description") || t("Der Link konnte nicht verwendet werden.", "The link could not be used.")) };
+    location.hash = "login";
+    return;
+  }
+  if (p.get("type") === "recovery") {
+    S.resetToken = p.get("access_token");
+    location.hash = "reset";
+    return;
+  }
+  S.authNotice = { kind: "ok", text: t("Ihre E-Mail-Adresse ist bestätigt. Sie können sich jetzt anmelden.", "Your e-mail address is confirmed. You can log in now.") };
+  location.hash = "login";
+}
+
 async function login(email, password) {
   S.me = await api("POST", "/api/auth/login", { email, password });
   await loadCases();
@@ -358,7 +523,7 @@ async function render() {
   if (!S.ready) return;
   document.getElementById("modal-root").replaceChildren();
   const r = route();
-  if (!S.me) return renderAuth(r.page === "register" ? "register" : "login");
+  if (!S.me) return renderAuth(["register", "forgot", "reset", "check-email"].includes(r.page) ? r.page : "login");
   try {
     if (r.page === "case" && r.cid) return await renderCase(r.cid, r.part);
     return await renderHome();
@@ -1309,6 +1474,7 @@ function advOutcome(ov) {
 // ------------------------------------------------------------------ boot
 
 async function boot() {
+  readAuthLink();
   try {
     S.meta = await api("GET", "/api/meta");
   } catch (e) {

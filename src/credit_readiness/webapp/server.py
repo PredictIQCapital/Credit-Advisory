@@ -57,6 +57,7 @@ from ..auth import (
     ROLE_STEUERBERATER,
     ROLE_UNTERNEHMEN,
     AuthError,
+    EmailNotConfirmed,
     Principal,
     SessionManager,
     UserStore,
@@ -102,6 +103,10 @@ _ROUTE_TABLE = [
     ("POST", r"/api/auth/login", "login"),
     ("POST", r"/api/auth/logout", "logout"),
     ("POST", r"/api/auth/register", "register"),
+    ("POST", r"/api/auth/resend", "resend"),
+    ("POST", r"/api/auth/forgot", "forgot"),
+    ("POST", r"/api/auth/reset", "reset"),
+    ("POST", r"/api/auth/password", "password"),
     ("GET", r"/api/cases", "list_cases"),
     ("POST", r"/api/cases", "create_case"),
     ("GET", rf"/api/cases/{_CASE}", "get_case"),
@@ -138,7 +143,8 @@ _ROUTE_TABLE = [
     ("GET", r"/forms/(?P<form>unternehmen|steuerberater|unterlagen)\.html", "form"),
 ]
 ROUTES = [(m, re.compile("^" + p + "$"), h) for m, p, h in _ROUTE_TABLE]
-PUBLIC_HANDLERS = {"meta", "me", "login", "logout", "register", "form"}
+PUBLIC_HANDLERS = {"meta", "me", "login", "logout", "register", "form",
+                   "resend", "forgot", "reset"}
 
 
 MAX_NOTE_CHARS = 500
@@ -391,7 +397,73 @@ class Handler(BaseHTTPRequestHandler):
 
     # ------------------------------------------------------------ public
     def h_meta(self, principal) -> None:
-        self._json(200, meta_payload(self.demo))
+        self._json(200, {**meta_payload(self.demo),
+                         "email_auth": bool(getattr(self.users, "supports_email", False))})
+
+    def _site_url(self) -> str:
+        """Where links in e-mails lead: CRA_SITE_URL, else the address this request came to."""
+        import os
+        configured = os.environ.get("CRA_SITE_URL", "").rstrip("/")
+        if configured:
+            return configured
+        host = self.headers.get("X-Forwarded-Host") or self.headers.get("Host", "")
+        proto = self.headers.get("X-Forwarded-Proto") or ("http" if host.startswith(("127.", "localhost")) else "https")
+        return f"{proto}://{host}"
+
+    def _needs_email(self) -> None:
+        if not getattr(self.users, "supports_email", False):
+            raise ApiError(HTTPStatus.NOT_IMPLEMENTED,
+                           "E-Mail-Funktionen gibt es nur mit Supabase. Lokal: Berater setzt das Passwort.")
+
+    def h_resend(self, principal) -> None:
+        self._needs_email()
+        email = str(self._obj().get("email", "")).strip().lower()
+        try:
+            self.users.resend_confirmation(email, self._site_url() + "/app")
+        except AuthError as e:
+            raise ApiError(HTTPStatus.TOO_MANY_REQUESTS, str(e)) from None
+        self._json(200, {"ok": True})
+
+    def h_forgot(self, principal) -> None:
+        self._needs_email()
+        email = str(self._obj().get("email", "")).strip().lower()
+        try:
+            self.users.send_password_reset(email, self._site_url() + "/app")
+        except AuthError as e:
+            raise ApiError(HTTPStatus.TOO_MANY_REQUESTS, str(e)) from None
+        # Same answer whether or not the address has an account.
+        self._json(200, {"ok": True})
+
+    def h_reset(self, principal) -> None:
+        self._needs_email()
+        body = self._obj()
+        try:
+            email = self.users.reset_with_token(str(body.get("access_token", "")), str(body.get("password", "")))
+        except AuthError as e:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(e)) from None
+        self.sessions.destroy_all(email)
+        self.sessions.clear_failures(email)
+        self._json(200, {"ok": True, "email": email})
+
+    def h_password(self, principal) -> None:
+        body = self._obj()
+        current, new = str(body.get("current_password", "")), str(body.get("new_password", ""))
+        if current == new:
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Das neue Passwort muss sich vom bisherigen unterscheiden")
+        try:
+            ok = self.users.authenticate(principal.email, current) is not None
+        except EmailNotConfirmed:
+            ok = False
+        if not ok:
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Das bisherige Passwort stimmt nicht")
+        try:
+            self.users.set_password(principal.email, new)
+        except AuthError as e:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(e)) from None
+        # Every other login of this account ends; this one continues.
+        self.sessions.destroy_all(principal.email)
+        token = self.sessions.create(principal)
+        self._json(200, {"ok": True}, self._cookie_header(token, self.sessions.ttl))
 
     def h_me(self, principal) -> None:
         # 200 with user=null rather than 401: "not logged in" is a normal state.
@@ -403,7 +475,13 @@ class Handler(BaseHTTPRequestHandler):
         if self.sessions.locked_out(email):
             raise ApiError(HTTPStatus.TOO_MANY_REQUESTS,
                            "Zu viele Fehlversuche. Bitte in einigen Minuten erneut versuchen.")
-        p = self.users.authenticate(email, str(body.get("password", "")))
+        try:
+            p = self.users.authenticate(email, str(body.get("password", "")))
+        except EmailNotConfirmed:
+            self._json(HTTPStatus.FORBIDDEN, {"error": "Bitte bestaetigen Sie zuerst Ihre E-Mail-Adresse "
+                                                       "ueber den Link, den wir Ihnen geschickt haben.",
+                                              "unconfirmed": True})
+            return
         if p is None:
             self.sessions.record_failure(email)
             raise ApiError(HTTPStatus.UNAUTHORIZED, "E-Mail oder Passwort ist falsch")
@@ -419,11 +497,20 @@ class Handler(BaseHTTPRequestHandler):
         body = self._obj()
         if body.get("consent") is not True:
             raise ApiError(HTTPStatus.BAD_REQUEST, "Bitte der Datenverarbeitung zustimmen")
+        confirmed, account = True, None
         with self.lock:
+            if getattr(self.users, "supports_email", False):
+                # Supabase sends the confirmation e-mail; the account works
+                # once the link in it is clicked.
+                if not str(body.get("company_name", "")).strip():
+                    raise ApiError(HTTPStatus.BAD_REQUEST, "Firmenname fehlt")
+                account, confirmed = self.users.signup(
+                    str(body.get("email", "")), str(body.get("name", "")), ROLE_UNTERNEHMEN,
+                    str(body.get("password", "")), self._site_url() + "/app")
             p, meta = wf.register_client(
                 self.store, self.users, str(body.get("company_name", "")),
                 str(body.get("name", "")), str(body.get("email", "")),
-                str(body.get("password", "")))
+                str(body.get("password", "")), account=account)
             # Registering is signing: the typed name is the signature under the
             # terms and the privacy notice shown on the form. A name that does
             # not read as first + last name leaves the gate for the first login.
@@ -432,6 +519,9 @@ class Handler(BaseHTTPRequestHandler):
                                    p.name, p.email, self._ip(), self.headers.get("User-Agent", ""))
             except agreements.AgreementError:
                 pass
+        if not confirmed:
+            self._json(201, {"verify_email": True, "email": p.email, "case_id": meta["case_id"]})
+            return
         token = self.sessions.create(p)
         self._json(201, {"user": p.public(), "case_id": meta["case_id"]},
                    self._cookie_header(token, self.sessions.ttl))

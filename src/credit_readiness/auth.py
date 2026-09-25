@@ -49,6 +49,10 @@ MAX_FAILED_LOGINS = 8
 LOCKOUT_SECONDS = 300
 
 
+class EmailNotConfirmed(ValueError):
+    """Correct password, but the address has not been confirmed yet."""
+
+
 class AuthError(ValueError):
     pass
 
@@ -93,6 +97,9 @@ class Principal:
 
 class UserStore:
     """Users in <root>/users.json. Small, file-based, replaceable."""
+
+    #: The folder store sends no e-mail: no confirmation, no reset link.
+    supports_email = False
 
     def __init__(self, root: str | Path):
         self.path = Path(root) / "users.json"
@@ -197,6 +204,12 @@ class SessionManager:
     def destroy(self, token: Optional[str]) -> None:
         with self._lock:
             self._sessions.pop(token or "", None)
+
+    def destroy_all(self, email: str) -> None:
+        """Log an account out everywhere (after a password change or reset)."""
+        with self._lock:
+            for t in [t for t, (p, _) in self._sessions.items() if p.email == email]:
+                del self._sessions[t]
 
     # -- brute-force brake -------------------------------------------------
     def locked_out(self, email: str) -> bool:

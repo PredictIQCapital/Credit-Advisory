@@ -176,15 +176,55 @@ class Supabase:
         self._request("DELETE", f"/auth/v1/admin/users/{auth_id}", what="delete user")
 
     def sign_in(self, email: str, password: str) -> Optional[dict]:
-        """The Auth user on a correct password, None on a wrong one."""
+        """The Auth user on a correct password, None on a wrong one.
+
+        Raises EmailNotConfirmed when the password is right but the address
+        has not been confirmed from the e-mail yet.
+        """
+        from .auth import EmailNotConfirmed
+
         try:
             _, out, _ = self._request("POST", "/auth/v1/token?grant_type=password", key=self.publishable,
                                       body={"email": email, "password": password}, what="sign in")
         except SupabaseError as e:
+            code = e.body.get("error_code") or e.body.get("code") if isinstance(e.body, dict) else ""
+            if code == "email_not_confirmed":
+                raise EmailNotConfirmed(email) from None
             if e.status in (400, 401):
                 return None
             raise
         return out.get("user")
+
+    # Self-service flows. Supabase Auth sends the e-mails; each link leads back
+    # to `redirect_to`, which must be listed under Authentication -> URL
+    # Configuration -> Redirect URLs.
+    @staticmethod
+    def _redirect(redirect_to: str) -> str:
+        return f"?redirect_to={urllib.parse.quote(redirect_to, safe='')}" if redirect_to else ""
+
+    def sign_up(self, email: str, password: str, name: str, redirect_to: str = "") -> dict:
+        """Create an account the owner confirms by e-mail. Returns the Auth response."""
+        _, out, _ = self._request("POST", "/auth/v1/signup" + self._redirect(redirect_to), key=self.publishable,
+                                  body={"email": email, "password": password, "data": {"name": name}},
+                                  what="sign up")
+        return out or {}
+
+    def resend_confirmation(self, email: str, redirect_to: str = "") -> None:
+        body = {"type": "signup", "email": email}
+        if redirect_to:
+            body["options"] = {"email_redirect_to": redirect_to}
+        self._request("POST", "/auth/v1/resend", key=self.publishable, body=body, what="resend")
+
+    def send_password_reset(self, email: str, redirect_to: str = "") -> None:
+        self._request("POST", "/auth/v1/recover" + self._redirect(redirect_to), key=self.publishable,
+                      body={"email": email}, what="recover")
+
+    def set_password_with_token(self, access_token: str, password: str) -> dict:
+        """Set a new password with the token from a reset link. Returns the Auth user."""
+        h = {"Authorization": f"Bearer {access_token}"}
+        _, user, _ = self._request("PUT", "/auth/v1/user", key=self.publishable, body={"password": password},
+                                   headers=h, what="reset password")
+        return user
 
 
 def q(value: Any) -> str:

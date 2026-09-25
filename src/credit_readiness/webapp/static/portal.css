@@ -272,3 +272,10 @@ table.figs input { padding: 7px 9px; text-align: right; }
   .page { padding: 20px 16px 60px; }
   .topbar-inner { padding: 0 16px; }
 }
+
+/* Account e-mails: notices on the login page, forgot link. */
+.auth-note { border-radius: 12px; padding: 12px 14px; margin: 0 0 14px; font-size: 14px; display: grid; gap: 8px; }
+.auth-note.ok { background: var(--teal-soft); color: var(--teal-2); }
+.auth-note.warn { background: var(--amber-soft); color: var(--amber); }
+.auth-note .link-btn { justify-self: start; }
+.auth-forgot { text-align: right; margin: -6px 0 14px; font-size: 14px; }

@@ -42,8 +42,77 @@ def _iso(dt: datetime) -> str:
 
 
 class SupabaseUserStore:
+    #: Supabase Auth sends confirmation and password-reset e-mails.
+    supports_email = True
+
     def __init__(self, client: Supabase):
         self.sb = client
+
+    # -- self-service ------------------------------------------------------
+    def signup(self, email: str, name: str, role: str, password: str,
+               redirect_to: str = "") -> tuple[Principal, bool]:
+        """Register through Supabase Auth, which e-mails a confirmation link.
+
+        Returns (principal, confirmed). `confirmed` is False while the link
+        has not been clicked -- unless "Confirm email" is switched off in the
+        project, in which case Supabase confirms at once.
+        """
+        if role not in ROLES:
+            raise AuthError(f"Unbekannte Rolle '{role}'")
+        email = normalise_email(email)
+        if len(password or "") < MIN_PASSWORD_LENGTH:
+            raise AuthError(f"Passwort muss mindestens {MIN_PASSWORD_LENGTH} Zeichen haben")
+        name = (name or "").strip() or email
+        if self.get(email):
+            raise AuthError("Fuer diese E-Mail-Adresse besteht bereits ein Konto")
+        try:
+            out = self.sb.sign_up(email, password, name, redirect_to)
+        except SupabaseError as e:
+            if e.status == 422:
+                raise AuthError(str(e.body.get("msg") if isinstance(e.body, dict) else e)) from None
+            if e.status == 429:
+                raise AuthError("Zu viele Anmeldungen in kurzer Zeit. Bitte spaeter erneut versuchen.") from None
+            raise
+        user = out.get("user") or out
+        # Supabase answers an already-registered address with an empty
+        # identity list instead of an error (so that sign-up cannot be used to
+        # probe for accounts).
+        if not user.get("id") or user.get("identities") == []:
+            raise AuthError("Fuer diese E-Mail-Adresse besteht bereits ein Konto")
+        self.sb.insert("users", {"email": email, "name": name, "role": role, "auth_id": user["id"]},
+                       returning=False)
+        confirmed = bool(out.get("access_token") or user.get("email_confirmed_at") or user.get("confirmed_at"))
+        return Principal(email, name, role), confirmed
+
+    def resend_confirmation(self, email: str, redirect_to: str = "") -> None:
+        try:
+            self.sb.resend_confirmation((email or "").strip().lower(), redirect_to)
+        except SupabaseError as e:
+            if e.status == 429:
+                raise AuthError("Bitte einige Minuten warten, bevor Sie erneut senden.") from None
+            # Anything else stays silent: the answer must not reveal accounts.
+
+    def send_password_reset(self, email: str, redirect_to: str = "") -> None:
+        try:
+            self.sb.send_password_reset((email or "").strip().lower(), redirect_to)
+        except SupabaseError as e:
+            if e.status == 429:
+                raise AuthError("Bitte einige Minuten warten, bevor Sie erneut senden.") from None
+
+    def reset_with_token(self, access_token: str, password: str) -> str:
+        """Set the password from a reset link. Returns the account's e-mail."""
+        if len(password or "") < MIN_PASSWORD_LENGTH:
+            raise AuthError(f"Passwort muss mindestens {MIN_PASSWORD_LENGTH} Zeichen haben")
+        try:
+            user = self.sb.set_password_with_token(access_token, password)
+        except SupabaseError as e:
+            if e.status in (401, 403):
+                raise AuthError("Der Link ist abgelaufen. Bitte fordern Sie einen neuen an.") from None
+            if e.status == 422:
+                raise AuthError("Bitte ein anderes Passwort waehlen (nicht das bisherige, mind. "
+                                f"{MIN_PASSWORD_LENGTH} Zeichen).") from None
+            raise
+        return user["email"]
 
     def count(self) -> int:
         return len(self.sb.select("users", "select=email"))
@@ -141,6 +210,10 @@ class DbSessionManager:
     def destroy(self, token: Optional[str]) -> None:
         if token:
             self.sb.delete("sessions", f"token_sha256=eq.{self._hash(token)}")
+
+    def destroy_all(self, email: str) -> None:
+        """Log an account out everywhere (after a password change or reset)."""
+        self.sb.delete("sessions", f"email=eq.{q(email)}")
 
     # -- brute-force brake -------------------------------------------------
     def _recent(self, email: str) -> list[dict]:
