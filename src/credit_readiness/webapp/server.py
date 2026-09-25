@@ -106,6 +106,7 @@ _ROUTE_TABLE = [
     ("POST", r"/api/auth/resend", "resend"),
     ("POST", r"/api/auth/forgot", "forgot"),
     ("POST", r"/api/auth/reset", "reset"),
+    ("POST", r"/api/auth/confirm", "confirm"),
     ("POST", r"/api/auth/password", "password"),
     ("GET", r"/api/cases", "list_cases"),
     ("POST", r"/api/cases", "create_case"),
@@ -144,7 +145,7 @@ _ROUTE_TABLE = [
 ]
 ROUTES = [(m, re.compile("^" + p + "$"), h) for m, p, h in _ROUTE_TABLE]
 PUBLIC_HANDLERS = {"meta", "me", "login", "logout", "register", "form",
-                   "resend", "forgot", "reset"}
+                   "resend", "forgot", "reset", "confirm"}
 
 
 MAX_NOTE_CHARS = 500
@@ -437,12 +438,24 @@ class Handler(BaseHTTPRequestHandler):
     def h_reset(self, principal) -> None:
         self._needs_email()
         body = self._obj()
+        password = str(body.get("password", ""))
         try:
-            email = self.users.reset_with_token(str(body.get("access_token", "")), str(body.get("password", "")))
+            if body.get("token_hash"):
+                email = self.users.reset_with_token_hash(str(body["token_hash"]), password)
+            else:
+                email = self.users.reset_with_token(str(body.get("access_token", "")), password)
         except AuthError as e:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(e)) from None
         self.sessions.destroy_all(email)
         self.sessions.clear_failures(email)
+        self._json(200, {"ok": True, "email": email})
+
+    def h_confirm(self, principal) -> None:
+        self._needs_email()
+        try:
+            email = self.users.confirm_email(str(self._obj().get("token_hash", "")))
+        except AuthError as e:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(e)) from None
         self._json(200, {"ok": True, "email": email})
 
     def h_password(self, principal) -> None:

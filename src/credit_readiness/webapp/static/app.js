@@ -415,7 +415,8 @@ function forgotForm() {
 
 function resetForm() {
   const token = S.resetToken;
-  if (!token) {
+  const tokenHash = S.resetTokenHash;
+  if (!token && !tokenHash) {
     S.authNotice = { kind: "warn", text: t("Der Link ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen an.", "The link is invalid or has expired. Please request a new one.") };
     return forgotForm();
   }
@@ -437,8 +438,9 @@ function resetForm() {
     if (pw.value !== pw2.value) { err.textContent = t("Die Passwörter stimmen nicht überein.", "The passwords do not match."); err.hidden = false; return; }
     guarded(btn, async () => {
       try {
-        await api("POST", "/api/auth/reset", { access_token: token, password: pw.value });
+        await api("POST", "/api/auth/reset", tokenHash ? { token_hash: tokenHash, password: pw.value } : { access_token: token, password: pw.value });
         S.resetToken = null;
+        S.resetTokenHash = null;
         S.authNotice = { kind: "ok", text: t("Ihr Passwort ist geändert. Bitte melden Sie sich an.", "Your password has been changed. Please log in.") };
         go("login");
       } catch (e) { err.textContent = e.message; err.hidden = false; }
@@ -487,9 +489,22 @@ function changePasswordModal() {
 /** Reads what a Supabase e-mail link put into the URL fragment, then removes it. */
 function readAuthLink() {
   const h = location.hash.replace(/^#/, "");
-  if (!/(^|&)(access_token|error|error_code)=/.test(h)) return;
+  if (!/(^|&)(access_token|token_hash|error|error_code)=/.test(h)) return;
   const p = new URLSearchParams(h);
   history.replaceState(null, "", location.pathname + location.search);
+  // Links from our e-mail templates carry only a code. It is spent on submit
+  // (reset) or by this page's own request (confirmation) -- never by a mail
+  // scanner that merely opens the link.
+  if (p.get("token_hash")) {
+    if (p.get("type") === "recovery") {
+      S.resetTokenHash = p.get("token_hash");
+      location.hash = "reset";
+    } else {
+      S.pendingConfirm = p.get("token_hash");
+      location.hash = "login";
+    }
+    return;
+  }
   if (p.get("error") || p.get("error_code")) {
     const expired = p.get("error_code") === "otp_expired";
     S.authNotice = { kind: "warn", text: expired
@@ -1475,6 +1490,17 @@ function advOutcome(ov) {
 
 async function boot() {
   readAuthLink();
+  if (S.pendingConfirm) {
+    try {
+      await fetch("/api/meta");     // wakes the function before the one call that counts
+      const r = await fetch("/api/auth/confirm", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token_hash: S.pendingConfirm }) });
+      const d = await r.json().catch(() => ({}));
+      S.authNotice = r.ok
+        ? { kind: "ok", text: t("Ihre E-Mail-Adresse ist bestätigt. Sie können sich jetzt anmelden.", "Your e-mail address is confirmed. You can log in now.") }
+        : { kind: "warn", text: d.error || t("Der Link konnte nicht verwendet werden.", "The link could not be used.") };
+    } catch (_) { /* notice stays empty; the login page still works */ }
+    S.pendingConfirm = null;
+  }
   try {
     S.meta = await api("GET", "/api/meta");
   } catch (e) {

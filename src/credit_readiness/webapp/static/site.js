@@ -5,7 +5,7 @@
 // in the URL fragment. If Supabase returns them to the Site URL (the home
 // page) rather than to /app, hand them on to the portal, which handles them.
 (function () {
-  const authLink = /(^#|&)(access_token|error_code|error)=/;
+  const authLink = /(^#|&)(access_token|token_hash|error_code|error)=/;
   if (location.pathname !== "/app" && authLink.test(location.hash)) {
     location.replace("/app" + location.hash);
   }

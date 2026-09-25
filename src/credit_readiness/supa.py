@@ -219,6 +219,17 @@ class Supabase:
         self._request("POST", "/auth/v1/recover" + self._redirect(redirect_to), key=self.publishable,
                       body={"email": email}, what="recover")
 
+    def verify_token_hash(self, token_hash: str, kind: str) -> dict:
+        """Use a code from an e-mail link ("recovery" or "email"). Returns the session.
+
+        The e-mail links carry only this code; it is spent here, when the
+        person acts on the page -- not when a mail scanner or a link preview
+        merely opens the link.
+        """
+        _, out, _ = self._request("POST", "/auth/v1/verify", key=self.publishable,
+                                  body={"type": kind, "token_hash": token_hash}, what="verify")
+        return out or {}
+
     def set_password_with_token(self, access_token: str, password: str) -> dict:
         """Set a new password with the token from a reset link. Returns the Auth user."""
         h = {"Authorization": f"Bearer {access_token}"}

@@ -279,3 +279,4 @@ table.figs input { padding: 7px 9px; text-align: right; }
 .auth-note.warn { background: var(--amber-soft); color: var(--amber); }
 .auth-note .link-btn { justify-self: start; }
 .auth-forgot { text-align: right; margin: -6px 0 14px; font-size: 14px; }
+.auth-note[hidden] { display: none; }

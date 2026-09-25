@@ -107,6 +107,29 @@ class SupabaseUserStore:
                 raise AuthError("Bitte einige Minuten warten, bevor Sie erneut senden.") from None
             _log_mail_failure("password reset", e)
 
+    def confirm_email(self, token_hash: str) -> str:
+        """Confirm an address from the code in the confirmation e-mail. Returns it."""
+        try:
+            out = self.sb.verify_token_hash(token_hash, "email")
+        except SupabaseError as e:
+            if e.status in (400, 401, 403, 404, 422):
+                raise AuthError("Der Link ist abgelaufen oder wurde schon benutzt.") from None
+            raise
+        return (out.get("user") or {}).get("email", "")
+
+    def reset_with_token_hash(self, token_hash: str, password: str) -> str:
+        """Set the password from the code in the reset e-mail. Returns the e-mail."""
+        if len(password or "") < MIN_PASSWORD_LENGTH:
+            raise AuthError(f"Passwort muss mindestens {MIN_PASSWORD_LENGTH} Zeichen haben")
+        try:
+            session = self.sb.verify_token_hash(token_hash, "recovery")
+        except SupabaseError as e:
+            if e.status in (400, 401, 403, 404, 422):
+                raise AuthError("Der Link ist abgelaufen oder wurde schon benutzt. "
+                                "Bitte fordern Sie einen neuen an.") from None
+            raise
+        return self.reset_with_token(session["access_token"], password)
+
     def reset_with_token(self, access_token: str, password: str) -> str:
         """Set the password from a reset link. Returns the account's e-mail."""
         if len(password or "") < MIN_PASSWORD_LENGTH:

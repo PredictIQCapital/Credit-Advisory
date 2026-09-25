@@ -88,6 +88,17 @@ class EmailUsers(UserStore):
             self.tokens["tok-" + email] = email
             self.sent.append(("reset", email, redirect_to))
 
+    def confirm_email(self, token_hash):
+        from credit_readiness.auth import AuthError
+        email = self.tokens.pop(token_hash, None)
+        if not email:
+            raise AuthError("Der Link ist abgelaufen oder wurde schon benutzt.")
+        self.unconfirmed.discard(email)
+        return email
+
+    def reset_with_token_hash(self, token_hash, password):
+        return self.reset_with_token(token_hash, password)
+
     def reset_with_token(self, access_token, password):
         from credit_readiness.auth import AuthError
         email = self.tokens.pop(access_token, None)
@@ -188,3 +199,22 @@ def test_supabase_signup_of_a_known_address_is_refused():
     with pytest.raises(AuthError):
         SupabaseUserStore(sb).signup("a@x.de", "Anna A", "unternehmen", "passwort-1")
     assert sb.inserted == []
+
+
+def test_confirmation_code_is_spent_by_the_page_not_by_opening_the_link(mail_env):
+    users, base = mail_env
+    c = Client(base)
+    c.call("POST", "/api/auth/register", {"company_name": "Neu GmbH", "name": "Nora Neu",
+                                          "email": "nora@test.de", "password": "nora-pass-1", "consent": True})
+    users.tokens["hash-nora"] = "nora@test.de"
+    assert c.call("POST", "/api/auth/confirm", {"token_hash": "hash-nora"}) == (200, {"ok": True, "email": "nora@test.de"})
+    assert c.call("POST", "/api/auth/confirm", {"token_hash": "hash-nora"})[0] == 400      # once only
+    c.login("nora@test.de", "nora-pass-1")
+
+
+def test_reset_with_the_code_from_the_email(mail_env):
+    users, base = mail_env
+    users.tokens["hash-b"] = "berater@test.de"
+    c = Client(base)
+    assert c.call("POST", "/api/auth/reset", {"token_hash": "hash-b", "password": "code-pass-12"})[0] == 200
+    Client(base).login("berater@test.de", "code-pass-12")
