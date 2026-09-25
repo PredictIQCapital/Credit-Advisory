@@ -112,6 +112,20 @@ def _register(base, company="Mueller Praezisionstechnik GmbH", email="anna@test.
 # ------------------------------------------------------------------ auth unit
 
 
+@pytest.mark.parametrize("raw, expected", [
+    ("/app", "/app"),
+    ("/api/index?__path=/app", "/app"),
+    ("/api/index?__path=/", "/"),
+    ("/api/index?__path=", "/"),
+    ("/api/index?__path=/api/cases/CRA-2026-0001/bankpack&sections=band,zahlen&format=pdf",
+     "/api/cases/CRA-2026-0001/bankpack?sections=band%2Czahlen&format=pdf"),
+    ("/api/index?__path=api/meta", "/api/meta"),
+])
+def test_original_path_survives_the_vercel_rewrite(raw, expected):
+    from credit_readiness.webapp.server import original_path
+    assert original_path(raw) == expected
+
+
 def test_password_hashing():
     h = hash_password("geheim123")
     assert h.startswith("pbkdf2_sha256$") and "geheim123" not in h

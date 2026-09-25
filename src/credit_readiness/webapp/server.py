@@ -47,7 +47,7 @@ from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, Optional
-from urllib.parse import parse_qs, unquote, urlparse
+from urllib.parse import parse_qs, unquote, urlencode, urlparse
 
 from .. import agreements
 from .. import workflow as wf
@@ -199,6 +199,24 @@ def _figure_fields() -> list[dict]:
             for f in FIELDS]
 
 
+#: Query parameter carrying the requested path through Vercel's rewrite
+#: (vercel.json sends every URL to one function as /api/index?__path=/...).
+PATH_PARAM = "__path"
+
+
+def original_path(raw: str) -> str:
+    """The URL the browser asked for, also when it arrives through the rewrite."""
+    parts = urlparse(raw)
+    query = parse_qs(parts.query, keep_blank_values=True)
+    if PATH_PARAM not in query:
+        return raw
+    path = query.pop(PATH_PARAM)[0] or "/"
+    if not path.startswith("/"):
+        path = "/" + path
+    rest = urlencode(query, doseq=True)
+    return path + ("?" + rest if rest else "")
+
+
 def view_for(principal: Principal, ov: dict) -> dict:
     """Strip what a role must not see from a case overview."""
     if principal.is_berater:
@@ -323,6 +341,7 @@ class Handler(BaseHTTPRequestHandler):
         self._dispatch("DELETE")
 
     def _dispatch(self, method: str) -> None:
+        self.path = original_path(self.path)
         path = unquote(urlparse(self.path).path)
         try:
             if method != "GET":
