@@ -1,5 +1,16 @@
 /* Shared by all pages: language switch (remembered per browser). */
 "use strict";
+
+// Links in confirmation and password-reset e-mails come back with the result
+// in the URL fragment. If Supabase returns them to the Site URL (the home
+// page) rather than to /app, hand them on to the portal, which handles them.
+(function () {
+  const authLink = /(^#|&)(access_token|error_code|error)=/;
+  if (location.pathname !== "/app" && authLink.test(location.hash)) {
+    location.replace("/app" + location.hash);
+  }
+})();
+
 (function () {
   function initialLang() {
     try {
