@@ -17,12 +17,17 @@ import http.client
 import json
 import re
 import threading
+import time
 import urllib.parse
 from typing import Any, Optional
 
 SCHEMA = "app"
 BUCKET = "case-files"
 TIMEOUT = 20
+# A kept-alive connection idle longer than this is not reused: on a serverless
+# host the instance sleeps between requests and the network drops the idle
+# connection without a word, so the next call would wait the full TIMEOUT.
+IDLE_MAX = 15
 
 
 class SupabaseError(RuntimeError):
@@ -72,8 +77,7 @@ class Supabase:
         # use; only then is the request retried, once, on a fresh connection --
         # a request on a fresh connection is never sent twice.
         while True:
-            reused = getattr(self._local, "conn", None) is not None
-            conn = self._conn()
+            conn, reused = self._conn()
             try:
                 conn.request(method, path, body=data, headers=h)
                 r = conn.getresponse()
@@ -96,12 +100,19 @@ class Supabase:
             raise SupabaseError(r.status, parsed, what)
         return r.status, (json.loads(payload) if payload and "json" in ctype else payload), dict(r.getheaders())
 
-    def _conn(self) -> http.client.HTTPSConnection:
+    def _conn(self) -> tuple[http.client.HTTPSConnection, bool]:
+        """This thread's connection, and whether it has carried a request before."""
         conn = getattr(self._local, "conn", None)
+        now = time.monotonic()
+        if conn is not None and now - getattr(self._local, "used", now) > IDLE_MAX:
+            conn.close()
+            conn = None
+        reused = conn is not None
         if conn is None:
             conn = http.client.HTTPSConnection(self._host, timeout=TIMEOUT)
             self._local.conn = conn
-        return conn
+        self._local.used = now
+        return conn, reused
 
     # ------------------------------------------------------------------ data
     def select(self, table: str, query: str = "") -> list[dict]:

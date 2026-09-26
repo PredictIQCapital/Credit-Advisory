@@ -1117,7 +1117,11 @@ function wsImprove(ov) {
   const cached = S.coach && S.coach.cid === cid ? S.coach.data : null;
   const draw = (data) => box.replaceChildren(...(data.locked ? coachLocked(ov, data) : coachFull(ov, data)));
   if (cached) draw(cached);
-  api("GET", `/api/cases/${cid}/coach`).then((data) => { S.coach = { cid, data }; draw(data); })
+  const slow = setTimeout(() => {
+    const note = box.querySelector(".card.muted");
+    if (note) note.textContent = t("Das dauert gerade etwas länger – Ihr Plan kommt gleich …", "This is taking a little longer – your plan is on its way …");
+  }, 6000);
+  api("GET", `/api/cases/${cid}/coach`).finally(() => clearTimeout(slow)).then((data) => { S.coach = { cid, data }; draw(data); })
     .catch((e) => box.replaceChildren(el("div", { class: "card" },
       nextBanner("warn", t("Noch kein Plan möglich", "No plan possible yet"), e.message,
         el("a", { class: "btn btn-ghost btn-sm", href: `#case/${cid}/overview`, text: t("Zur Übersicht", "To the overview") })))));
