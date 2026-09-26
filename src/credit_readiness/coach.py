@@ -276,12 +276,18 @@ def _pretty_de(text: Optional[str]) -> Optional[str]:
     return text
 
 
+def rating(score: Optional[float]) -> Optional[str]:
+    """A factor's standing in words. The company sees this, never the weights,
+    the points or the curve behind them -- the method stays ours."""
+    if score is None:
+        return None
+    return "strong" if score >= 70 else "average" if score >= 50 else "weak"
+
+
 def _factor_rows(card, lang: str = "de") -> list[dict]:
     return [{"key": f.key, "label": _factor_label(f.key, f.label, lang),
              "value": _figure(f.format_value(), lang) if f.value is not None else None,
-             "score": None if f.score is None else round(f.score, 1),
-             "weight": round(f.weight * 100, 1), "points_lost": round(f.points_lost, 2),
-             "basis": _basis(f.basis, lang),
+             "rating": rating(f.score),
              "missing": (MISSING_EN.get(f.missing_reason, f.missing_reason) if lang == "en"
                          else _pretty_de(f.missing_reason)) or None} for f in card.factors]
 
@@ -334,16 +340,19 @@ def plan(case: ClientCase, lang: str = "de") -> dict:
                "min": lv.bounds(case)[0], "max": lv.bounds(case)[1], "step": lv.bounds(case)[2],
                "current": lv.current(case)} for lv in LEVERS if lv.available(case)]
 
+    # The next band by name only: its cut-off is not disclosed. The page learns
+    # how many measures reach it, not where the line is.
     nb = _next_band(base)
+    reach = next((i for i, step in enumerate(path) if nb and step["score"] >= nb[1]), None)
     return {
         "score": base, "band": card.band.value,
         "sector": SECTOR_EN.get(case.profile.sector.value, case.profile.sector.value) if lang == "en"
         else case.profile.sector.value,
-        "next_band": {"band": nb[0], "threshold": nb[1], "points_needed": round(nb[1] - base, 1)} if nb else None,
+        "next_band": {"band": nb[0], "steps": None if reach is None else reach + 1} if nb else None,
         "measures": measures, "path": path,
         "gaps": [{"factor": _factor_label(i.key, i.label, lang),
                   "current": _figure(i.format(i.current), lang), "target": _figure(i.format(i.target), lang),
-                  "points": round(i.points_gain, 1), "euro_gap": round(i.euro_gap, -3) if i.euro_gap else None,
+                  "euro_gap": round(i.euro_gap, -3) if i.euro_gap else None,
                   "lever": GAP_LEVER_EN.get(i.lever, i.lever) if lang == "en" else _pretty_de(i.lever)}
                  for i in improvement.plan(case, ratios, card).items],
         "factors": _factor_rows(card, lang),
@@ -378,15 +387,16 @@ def simulate(case: ClientCase, adjustments: dict, lang: str = "de") -> dict:
     changes = [{"key": f.key, "label": _factor_label(f.key, f.label, lang),
                 "before": _figure(before[f.key].format_value(), lang) if before[f.key].value is not None else None,
                 "after": _figure(f.format_value(), lang) if f.value is not None else None,
-                "points": round((f.contribution - before[f.key].contribution), 2)}
+                "direction": "up" if f.contribution > before[f.key].contribution else "down"}
                for f in card.factors
                if f.score is not None and before[f.key].score is not None
                and abs(f.contribution - before[f.key].contribution) >= 0.05]
-    changes.sort(key=lambda c: -abs(c["points"]))
+    effect = {f.key: abs(f.contribution - before[f.key].contribution) for f in card.factors}
+    changes.sort(key=lambda c: -effect[c["key"]])
     nb = _next_band(score)
     return {"base": {"score": base, "band": base_band}, "score": score, "band": band,
             "delta": round(score - base, 1), "applied": applied, "changes": changes,
-            "next_band": {"band": nb[0], "points_needed": round(nb[1] - score, 1)} if nb else None}
+            "next_band": {"band": nb[0]} if nb else None}
 
 
 def entitled(meta: dict, role: str) -> bool:

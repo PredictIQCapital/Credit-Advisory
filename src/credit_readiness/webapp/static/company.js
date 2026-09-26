@@ -310,7 +310,7 @@ function leversBlock(items) {
   return el("div", { class: "levers" },
     el("div", { class: "eyebrow", text: t("Größte Hebel", "Biggest levers") }),
     items.slice(0, 3).map((i) => el("div", { class: "lever" },
-      el("span", { class: "gain", text: `+${nf(i.points_gain, 1)}` }),
+      i.points_gain != null ? el("span", { class: "gain", text: `+${nf(i.points_gain, 1)}` }) : el("span", { class: "gain", text: "↑" }),
       el("div", {}, el("b", { text: sysText(i.factor) }),
         el("small", { text: `${sysFig(i.current)} → ${sysFig(i.target)}` + (i.euro_gap ? ` · ${eur(Math.round(i.euro_gap / 1000) * 1000)}` : "") })))));
 }
@@ -1132,17 +1132,17 @@ function wsImprove(ov) {
 function coachHero(data) {
   const nb = data.next_band;
   const last = data.path && data.path.length ? data.path[data.path.length - 1] : null;
-  const reach = nb && data.path ? data.path.findIndex((p) => p.score >= nb.threshold) : -1;
+  const reach = nb && nb.steps ? nb.steps - 1 : -1;
   return el("section", { class: "card coach-hero" },
     el("div", { class: "score" },
       gauge({ band: data.band, score: data.score }),
       el("div", { class: "score-txt" },
         el("div", { class: "eyebrow", text: t("Ihr Ausgangspunkt", "Where you start") }),
         el("div", { class: "score-num" }, el("span", { class: "big", text: nf(data.score, 1) }), el("span", { class: "of", text: " / 100" })),
-        nb ? el("p", { class: "score-band", text: t(`Bis Band ${nb.band} fehlen ${nf(nb.points_needed, 1)} Punkte.`, `${nf(nb.points_needed, 1)} points to band ${nb.band}.`) })
+        nb ? el("p", { class: "score-band", text: t(`Ihr nächstes Ziel: Band ${nb.band}.`, `Your next goal: band ${nb.band}.`) })
           : el("p", { class: "score-band", text: t("Sie sind bereits im besten Band.", "You are already in the best band.") }),
-        reach >= 0 ? el("p", { class: "small", text: t(`Mit den ersten ${reach + 1} Maßnahmen unten erreichen Sie Band ${data.path[reach].band} (${nf(data.path[reach].score, 1)} Punkte).`,
-          `With the first ${reach + 1} measures below you reach band ${data.path[reach].band} (${nf(data.path[reach].score, 1)} points).`) })
+        reach >= 0 ? el("p", { class: "small", text: t(`Mit den ersten ${reach + 1} Maßnahmen unten erreichen Sie Band ${data.path[reach].band}.`,
+          `With the first ${reach + 1} measures below you reach band ${data.path[reach].band}.`) })
           : last ? el("p", { class: "small", text: t(`Alle Maßnahmen zusammen: ${nf(last.score, 1)} Punkte (Band ${last.band}).`, `All measures together: ${nf(last.score, 1)} points (band ${last.band}).`) }) : null)),
     data.path && data.path.length ? coachPath(data) : null);
 }
@@ -1152,13 +1152,12 @@ function coachPath(data) {
   const steps = [{ label: t("Heute", "Today"), score: data.score, band: data.band }]
     .concat(data.path.map((p) => ({ label: p.rule, score: p.score, band: p.band })));
   const lo = Math.max(0, Math.min(...steps.map((s) => s.score)) - 5);
-  const hi = Math.min(100, Math.max(...steps.map((s) => s.score), data.next_band ? data.next_band.threshold : 0) + 5);
+  const hi = Math.min(100, Math.max(...steps.map((s) => s.score)) + 5);
   const frac = (v) => 1 - (v - lo) / (hi - lo);
   const y = (v) => `${frac(v) * 100}%`;
   return el("div", { class: "path" },
     el("div", { class: "eyebrow", text: t("Ihr Weg, Schritt für Schritt", "Your path, step by step") }),
     el("div", { class: "path-chart" },
-      data.next_band ? el("div", { class: "path-line", style: `top:calc(22px + ${frac(data.next_band.threshold) * 130}px)` }, el("span", { text: t(`Band ${data.next_band.band} ab ${nf(data.next_band.threshold, 0)}`, `Band ${data.next_band.band} from ${nf(data.next_band.threshold, 0)}`) })) : null,
       steps.map((s, i) => el("div", { class: "path-step", title: `${s.label}: ${nf(s.score, 1)} (${s.band})` },
         el("div", { class: "path-col" }, el("span", { class: `path-dot band-${s.band}`, style: `top:${y(s.score)}` }, s.band)),
         el("div", { class: "path-lbl" }, el("b", { text: nf(s.score, 1) }), el("small", { text: i === 0 ? s.label : (FINDING[s.label] ? FINDING[s.label][lang()][0] : s.label) }))))));
@@ -1212,9 +1211,9 @@ function coachFull(ov, data) {
       el("div", { class: "card-head" }, el("h3", { text: t("Abstand zum Branchenüblichen", "Gap to what is typical in your sector") })),
       el("div", { class: "table-wrap" }, el("table", { class: "data" },
         el("thead", {}, el("tr", {}, el("th", { text: t("Kennzahl", "Ratio") }), el("th", { text: t("Heute", "Today") }),
-          el("th", { text: t("Branchenüblich", "Sector-typical") }), el("th", { text: t("Punkte", "Points") }), el("th", { text: t("Lücke", "Gap") }))),
+          el("th", { text: t("Branchenüblich", "Sector-typical") }), el("th", { text: t("Lücke", "Gap") }))),
         el("tbody", {}, data.gaps.map((g) => el("tr", {}, el("td", { text: g.factor }), el("td", { text: g.current }), el("td", { text: g.target }),
-          el("td", { text: pts(g.points) }), el("td", { text: g.euro_gap ? `${eur(g.euro_gap)} · ${g.lever}` : g.lever }))))))) : null,
+          el("td", { text: g.euro_gap ? `${eur(g.euro_gap)} · ${g.lever}` : g.lever }))))))) : null,
     coachBreakdown(data),
     el("p", { class: "disclaimer", text: t("Alle Werte sind Berechnungen nach unseren Bewertungsregeln auf Basis Ihrer Zahlen – keine Prognose und keine Zusage, wie ein Kreditgeber entscheidet.",
       "All values are calculations under our scoring rules on your own figures – not a forecast and no promise of how a lender decides.") }),
@@ -1243,9 +1242,10 @@ function coachSimulator(ov, data) {
             el("div", { class: "sim-arrow", text: "→" }),
             el("div", {}, el("small", { text: t("Mit Ihren Änderungen", "With your changes") }), el("b", { text: nf(r.score, 1) }), el("span", { class: `band-chip band-${r.band}`, text: r.band }))),
           el("p", { class: "sim-delta " + (r.delta > 0 ? "up" : r.delta < 0 ? "down" : ""), text: r.delta ? t(`${pts(r.delta)} Punkte`, `${pts(r.delta)} points`) : t("Noch keine Änderung", "No change yet") }),
-          r.next_band ? el("p", { class: "small muted", text: t(`Bis Band ${r.next_band.band}: noch ${nf(r.next_band.points_needed, 1)} Punkte`, `To band ${r.next_band.band}: ${nf(r.next_band.points_needed, 1)} points to go`) }) : el("p", { class: "small", text: t("Bestes Band erreicht.", "Best band reached.") }),
+          r.band !== r.base.band ? el("p", { class: "small", style: "text-align:center;font-weight:700;color:var(--teal-2)", text: t(`Damit erreichen Sie Band ${r.band}.`, `That takes you to band ${r.band}.`) })
+            : r.next_band ? el("p", { class: "small muted", style: "text-align:center", text: t(`Noch nicht Band ${r.next_band.band} – probieren Sie weitere Hebel.`, `Not yet band ${r.next_band.band} – try more levers.`) }) : null,
           r.changes.length ? el("ul", { class: "sim-changes" }, r.changes.slice(0, 6).map((c) => el("li", {},
-            el("span", { text: c.label }), el("span", { class: "muted", text: `${c.before || "–"} → ${c.after || "–"}` }), el("b", { class: c.points > 0 ? "up" : "down", text: pts(c.points) })))) : null].filter(Boolean));
+            el("span", { text: c.label }), el("span", { class: "muted", text: `${c.before || "–"} → ${c.after || "–"}` }), el("b", { class: c.direction, text: c.direction === "up" ? "↑" : "↓" })))) : null].filter(Boolean));
       } catch (e) { toast(e.message, true); } finally { result.classList.remove("busy"); }
     }, 350);
   };
@@ -1276,21 +1276,21 @@ function coachSimulator(ov, data) {
   return panel;
 }
 
+const RATING = { strong: ["stark", "strong", "good"], average: ["mittel", "average", "warn"], weak: ["schwach", "weak", "bad"] };
+
+/** The company's ratios with a plain rating – what counts, never how it is weighed. */
 function coachBreakdown(data) {
   return el("section", { class: "card" },
-    el("div", { class: "card-head" }, el("h3", { text: t("So entsteht Ihr Score", "How your score is built") }),
-      el("span", { class: "small muted", text: t("Gewichtete Summe der Faktoren · jede Punktzahl 0–100", "Weighted sum of the factors · each scored 0–100") })),
+    el("div", { class: "card-head" }, el("h3", { text: t("Ihre Kennzahlen im Überblick", "Your ratios at a glance") }),
+      el("span", { class: "small muted", text: t("Wie Banken Ihre Zahlen lesen", "How banks read your figures") })),
     el("div", { class: "table-wrap" }, el("table", { class: "data breakdown" },
-      el("thead", {}, el("tr", {}, el("th", { text: t("Faktor", "Factor") }), el("th", { text: t("Ihr Wert", "Your value") }),
-        el("th", { text: t("Punkte", "Points") }), el("th", { text: t("Gewicht", "Weight") }), el("th", { text: t("Verlust", "Lost") }), el("th", { text: t("Maßstab", "Measured against") }))),
-      el("tbody", {}, data.factors.map((f) => el("tr", { class: f.score == null ? "na" : "" },
+      el("thead", {}, el("tr", {}, el("th", { text: t("Kennzahl", "Ratio") }), el("th", { text: t("Ihr Wert", "Your value") }),
+        el("th", { text: t("Einschätzung", "Assessment") }))),
+      el("tbody", {}, data.factors.map((f) => el("tr", { class: f.rating ? "" : "na" },
         el("td", { text: f.label }),
         el("td", { text: f.value || "–" }),
-        el("td", {}, f.score == null ? el("span", { class: "small muted", text: f.missing || "–" })
-          : el("div", { class: "bd-bar" }, el("span", { style: `width:${f.score}%`, class: f.score >= 70 ? "good" : f.score >= 52 ? "warn" : "bad" }), el("b", { text: nf(f.score, 0) }))),
-        el("td", { text: `${nf(f.weight, 1)} %` }),
-        el("td", { text: f.points_lost ? `−${nf(f.points_lost, 1)}` : "0" }),
-        el("td", { class: "small muted", text: f.basis })))))));
+        el("td", {}, f.rating ? el("span", { class: `rating ${RATING[f.rating][2]}`, text: t(RATING[f.rating][0], RATING[f.rating][1]) })
+          : el("span", { class: "small muted", text: f.missing || t("keine Daten", "no data") }))))))));
 }
 
 function coachLocked(ov, data) {

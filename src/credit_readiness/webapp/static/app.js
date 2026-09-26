@@ -1009,11 +1009,12 @@ function improvementPanel(items) {
     el("div", { class: "table-wrap" }, el("table", { class: "data" },
       el("thead", {}, el("tr", {},
         el("th", { text: t("Kennzahl", "Ratio") }), el("th", { text: t("Heute", "Today") }),
-        el("th", { text: t("Branchenüblich", "Sector-typical") }), el("th", { text: t("Punkte", "Points") }),
+        el("th", { text: t("Branchenüblich", "Sector-typical") }),
+        items[0].points_gain != null ? el("th", { text: t("Punkte", "Points") }) : null,
         el("th", { text: t("Lücke", "Gap") }))),
       el("tbody", {}, items.slice(0, 4).map((i) => el("tr", {},
         el("td", { text: sysText(i.factor) }), el("td", { text: sysFig(i.current) }), el("td", { text: sysFig(i.target) }),
-        el("td", { text: `+${nf(i.points_gain, 1)}` }),
+        i.points_gain != null ? el("td", { text: `+${nf(i.points_gain, 1)}` }) : null,
         el("td", { text: i.euro_gap ? `${eur(Math.round(i.euro_gap / 1000) * 1000)} · ${sysText(i.lever)}` : sysText(i.lever) })))))));
 }
 
@@ -1487,8 +1488,9 @@ function advAnalysis(ov) {
         el("div", { class: "actions" },
           el("a", { class: "small", href: `/api/cases/${cid}/artifacts/summary.json`, target: "_blank", rel: "noopener", text: "summary.json" }),
           el("a", { class: "small", href: `/api/cases/${cid}/artifacts/case.json`, target: "_blank", rel: "noopener", text: "case.json" }),
-          el("a", { class: "small", href: `/api/cases/${cid}/artifacts/diagnostik.md`, target: "_blank", rel: "noopener", text: "Markdown" }))),
-      el("iframe", { class: "report-frame", src: `/api/cases/${cid}/artifacts/diagnostik.html?t=${Date.now()}`, title: "Report" })));
+          el("a", { class: "small", href: `/api/cases/${cid}/artifacts/diagnostik_intern.md`, target: "_blank", rel: "noopener", text: "Markdown" }),
+          el("a", { class: "small", href: `/api/cases/${cid}/artifacts/diagnostik.html`, target: "_blank", rel: "noopener", text: t("Fassung für das Unternehmen", "Company edition") }))),
+      el("iframe", { class: "report-frame", src: `/api/cases/${cid}/artifacts/diagnostik_intern.html?t=${Date.now()}`, title: "Report" })));
   return el("div", {}, parts);
 }
 

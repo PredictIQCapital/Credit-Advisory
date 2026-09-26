@@ -568,7 +568,8 @@ def run_case_diagnostic(
         }
 
     data_basis = asm.as_dict()
-    md = render_markdown(result, data_basis=data_basis)
+    md = render_markdown(result, data_basis=data_basis, client=True)
+    md_intern = render_markdown(result, data_basis=data_basis)
     summary = result_summary(result)
     title = f"Kreditfaehigkeits-Diagnostik {case.profile.name}"
 
@@ -576,6 +577,9 @@ def run_case_diagnostic(
     store.write_artifact(case_id, "assembly.json", json.dumps(data_basis, indent=2, ensure_ascii=False))
     store.write_artifact(case_id, "diagnostik.md", md)
     store.write_artifact(case_id, "diagnostik.html", markdown_to_html(md, title))
+    # The advisor's edition, with weights, points and the measuring basis.
+    store.write_artifact(case_id, "diagnostik_intern.md", md_intern)
+    store.write_artifact(case_id, "diagnostik_intern.html", markdown_to_html(md_intern, title))
     store.write_artifact(case_id, "summary.json", json.dumps(summary, indent=2, ensure_ascii=False))
     _record(store, case_id, result_record(result, summary, "report"))
 

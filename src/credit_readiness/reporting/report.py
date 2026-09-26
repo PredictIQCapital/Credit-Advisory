@@ -75,7 +75,10 @@ _PROVENANCE_LABELS = {
 }
 
 
-def render_markdown(result: DiagnosticResult, data_basis: dict | None = None) -> str:
+_RATING_DE = {"strong": "stark", "average": "mittel", "weak": "schwach"}
+
+
+def render_markdown(result: DiagnosticResult, data_basis: dict | None = None, client: bool = False) -> str:
     """Render the client report.
 
     `data_basis` is the optional assembly record (provenance, notes, parsed
@@ -113,16 +116,17 @@ def render_markdown(result: DiagnosticResult, data_basis: dict | None = None) ->
     w(f"|---|---|")
     w(f"| **Readiness-Band** | **{s.band.value}** - {s.band.interpretation} |")
     w(f"| Indikativer Gesamtwert | {de(s.total_score, 1)} / 100 |")
-    w(f"| Bewertungsmassstab | {s.basis_label} |")
+    if not client:
+        w(f"| Bewertungsmassstab | {s.basis_label} |")
     g = result.scorecard_generic
-    if g is not None and s.sector_specific:
+    if g is not None and s.sector_specific and not client:
         w(f"| Zum Vergleich: alle Branchen | {de(g.total_score, 1)} / 100, Band {g.band.value} |")
     w(f"| Datenabdeckung | {de(s.coverage*100)}% der Bewertungsfaktoren |")
     w(f"| **Einordnung** | **{result.verdict.value}** |")
     w("")
     w(_VERDICT_GUIDANCE[result.verdict])
     w("")
-    if s.sector_specific:
+    if s.sector_specific and not client:
         w("*Bewertungsmassstab:* Eigenkapital, Rentabilitaet, Liquiditaet, "
           "Anlagendeckung und Kreditorenlaufzeit werden an den Quartilen der "
           f"eigenen Branche gemessen ({s.sector.value}, Bundesbank). "
@@ -226,7 +230,11 @@ def render_markdown(result: DiagnosticResult, data_basis: dict | None = None) ->
     for label, value in rows:
         fk = key_for_label.get(label)
         fs = score_by_key.get(fk) if fk else None
-        assessment = f"{de(fs.score)}/100" if fs and fs.score is not None else "-"
+        if client:
+            from ..coach import rating
+            assessment = _RATING_DE.get(rating(fs.score) if fs else None, "-")
+        else:
+            assessment = f"{de(fs.score)}/100" if fs and fs.score is not None else "-"
         w(f"| {label} | {value} | {assessment} |")
     w("")
     w(
@@ -239,34 +247,54 @@ def render_markdown(result: DiagnosticResult, data_basis: dict | None = None) ->
     # ----------------------------------------------------------- weaknesses
     w("## 4. Was das Rating am staerksten belastet")
     w("")
-    w("Sortiert nach gewichtetem Punktverlust - oben steht, was am meisten kostet.")
+    w("Oben steht, was Ihr Ergebnis am meisten kostet.")
     w("")
-    w("| Rang | Faktor | Wert | Punkte (0-100) | Gewicht | Punktverlust |")
-    w("|---|---|---|---|---|---|")
-    for i, f in enumerate(s.ranked_weaknesses[:8], start=1):
-        w(
-            f"| {i} | {f.label} | {f.format_value()} | {de(f.score)} | "
-            f"{de(f.weight*100)}% | {de(f.points_lost, 1)} |"
-        )
+    if client:
+        w("| Rang | Faktor | Wert |")
+        w("|---|---|---|")
+        for i, f in enumerate(s.ranked_weaknesses[:8], start=1):
+            w(f"| {i} | {f.label} | {f.format_value()} |")
+    else:
+        w("| Rang | Faktor | Wert | Punkte (0-100) | Gewicht | Punktverlust |")
+        w("|---|---|---|---|---|---|")
+        for i, f in enumerate(s.ranked_weaknesses[:8], start=1):
+            w(
+                f"| {i} | {f.label} | {f.format_value()} | {de(f.score)} | "
+                f"{de(f.weight*100)}% | {de(f.points_lost, 1)} |"
+            )
     w("")
     imp = result.improvements
     if imp and imp.items:
         w("### Verbesserungspotenzial: der Weg zum Branchenueblichen")
         w("")
-        w("Ziel ist nicht der Hoechstwert, sondern der Wert eines typischen "
-          "Unternehmens derselben Branche (70 Punkte, Branchenmedian). Die Tabelle "
-          "zeigt, was das Erreichen dieses Werts zum Gesamtwert beitruege und wie "
-          "gross die Luecke in Euro ist -- jeweils bei sonst unveraenderten Zahlen.")
-        w("")
-        w("| Faktor | Heute | Branchenueblich | Plus Gesamtwert | Luecke |")
-        w("|---|---|---|---|---|")
+        if client:
+            w("Ziel ist nicht der Hoechstwert, sondern der Wert eines typischen "
+              "Unternehmens derselben Branche. Die Tabelle zeigt, wie gross die Luecke "
+              "in Euro ist -- jeweils bei sonst unveraenderten Zahlen.")
+            w("")
+            w("| Faktor | Heute | Branchenueblich | Luecke |")
+            w("|---|---|---|---|")
+        else:
+            w("Ziel ist nicht der Hoechstwert, sondern der Wert eines typischen "
+              "Unternehmens derselben Branche (70 Punkte, Branchenmedian). Die Tabelle "
+              "zeigt, was das Erreichen dieses Werts zum Gesamtwert beitruege und wie "
+              "gross die Luecke in Euro ist -- jeweils bei sonst unveraenderten Zahlen.")
+            w("")
+            w("| Faktor | Heute | Branchenueblich | Plus Gesamtwert | Luecke |")
+            w("|---|---|---|---|---|")
         for i in imp.items[:8]:
             gap = f"{_eur(round(i.euro_gap, -3))} {i.lever}" if i.euro_gap else i.lever
-            w(f"| {i.label} | {i.format(i.current)} | {i.format(i.target)} | "
-              f"+{de(i.points_gain, 1)} | {gap} |")
+            plus = "" if client else f"+{de(i.points_gain, 1)} | "
+            w(f"| {i.label} | {i.format(i.current)} | {i.format(i.target)} | {plus}{gap} |")
         w("")
         need = imp.points_to_next_band
-        if need is not None:
+        if need is not None and client:
+            path = imp.reaching_next_band()
+            if path:
+                w(f"**Am kuerzesten zu Band {imp.next_band[1].value}:** "
+                  f"{', '.join(i.label for i in path)}.")
+                w("")
+        elif need is not None:
             path = imp.reaching_next_band()
             nb = imp.next_band[1].value
             if path:

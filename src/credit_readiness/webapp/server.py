@@ -92,7 +92,11 @@ UPLOAD_SOURCES = {
     ROLE_UNTERNEHMEN: {"unternehmen", "steuerberater"},   # SMEs often forward their accountant's files
     ROLE_STEUERBERATER: {"steuerberater"},
 }
-REPORT_ARTIFACTS = {"diagnostik.html", "diagnostik.md", "summary.json"}
+# The company edition of the report; the advisor edition (diagnostik_intern.*) and
+# summary.json carry weights, points and the measuring basis and stay internal.
+REPORT_ARTIFACTS = {"diagnostik.html", "diagnostik.md"}
+# Summary fields that give away how the score is built.
+METHOD_FIELDS = ("score_generic", "band_generic", "scoring_basis", "weights", "factors")
 STB_ARTIFACTS = {"anforderung_steuerberater.html", "anforderung_steuerberater.md",
                  "abstimmung_steuerberater.html", "abstimmung_steuerberater.md"}
 
@@ -227,14 +231,26 @@ def original_path(raw: str) -> str:
     return path + ("?" + rest if rest else "")
 
 
+def _without_method(summary: Optional[dict]) -> Optional[dict]:
+    """A result as a company sees it: score, band and findings, not the method."""
+    if not summary:
+        return summary
+    s = {k: v for k, v in summary.items() if k not in METHOD_FIELDS}
+    if s.get("top_weaknesses"):
+        s["top_weaknesses"] = [{k: v for k, v in w.items() if k != "points_lost"} for w in s["top_weaknesses"]]
+    if s.get("improvements"):
+        s["improvements"] = [{k: v for k, v in i.items() if k != "points_gain"} for i in s["improvements"]]
+    return s
+
+
 def view_for(principal: Principal, ov: dict) -> dict:
     """Strip what a role must not see from a case overview."""
     if principal.is_berater:
         return {**ov, "unread": wf.unread_count(ov["meta"], ov.get("messages") or [], principal.email)}
     v = dict(ov)
     released = ov["report_released"]
-    if not released:
-        v["latest_summary"] = None
+    v["latest_summary"] = _without_method(ov.get("latest_summary")) if released else None
+    v["quick_check"] = _without_method(ov.get("quick_check"))
     v["assembly_notes"] = []
     v["blocking"] = []
     v["unread"] = wf.unread_count(ov["meta"], ov.get("messages") or [], principal.email)

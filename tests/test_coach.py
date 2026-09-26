@@ -41,16 +41,30 @@ def test_path_climbs_and_reaches_the_next_band(case):
     scores = [s["score"] for s in p["path"]]
     assert scores == sorted(scores) and scores[0] > p["score"]
     nb = p["next_band"]
-    assert nb["points_needed"] == pytest.approx(nb["threshold"] - p["score"], abs=0.05)
-    assert any(s["score"] >= nb["threshold"] for s in p["path"])
+    assert nb["band"] == "A" and nb["steps"] and p["path"][nb["steps"] - 1]["band"] == "A"
+    assert all(s["band"] != "A" for s in p["path"][:nb["steps"] - 1])
 
 
-def test_factor_breakdown_adds_up_to_the_score(case):
+METHOD = ("weight", "points_lost", "threshold", "points_needed", "basis", "contribution", "points_gain")
+
+
+def _keys(o):
+    if isinstance(o, dict):
+        for k, v in o.items():
+            yield k
+            yield from _keys(v)
+    elif isinstance(o, list):
+        for v in o:
+            yield from _keys(v)
+
+
+def test_the_method_stays_ours(case):
+    """The company sees ratings and effects, not weights, curves or band cut-offs."""
     p = coach.plan(case)
-    weights = sum(f["weight"] for f in p["factors"] if f["score"] is not None)
-    lost = sum(f["points_lost"] for f in p["factors"])
-    assert weights == pytest.approx(100, abs=0.5)
-    assert 100 - lost == pytest.approx(p["score"], abs=0.5)
+    assert not set(_keys(p)) & set(METHOD)
+    assert not set(_keys(coach.simulate(case, {"equity": 300_000}))) & set(METHOD + ("points",))
+    assert {f["rating"] for f in p["factors"]} <= {"strong", "average", "weak", None}
+    assert set(p["factors"][0]) == {"key", "label", "value", "rating", "missing"}
 
 
 def test_simulate_without_changes_is_the_base(case):
@@ -180,3 +194,27 @@ def test_every_rule_speaks_english():
     src = open(remediation.__file__, encoding="utf-8").read()
     for i in range(1, 11):
         assert f'rule_id="R{i:02d}",\n        en=dict(' in src, f"R{i:02d}"
+
+
+def test_company_view_hides_the_method(env):  # noqa: F811
+    store, _, base = env
+    c, cid = _register(base)
+    _ready(store, cid)
+    wf.place_order(store, cid, "report", "anna@test.de")
+    assert c.call("POST", f"/api/cases/{cid}/quickcheck")[0] == 200
+    wf.run_case_diagnostic(store, cid, today=TODAY)
+    wf.release_report(store, cid, True)
+    _, ov = c.call("GET", f"/api/cases/{cid}")
+    keys = set(_keys(ov))
+    assert not keys & {"weight", "points_lost", "points_gain", "score_generic", "scoring_basis", "band_generic"}, keys
+    assert "diagnostik_intern.html" not in ov["artifacts"] and "summary.json" not in ov["artifacts"]
+    assert c.call("GET", f"/api/cases/{cid}/artifacts/diagnostik_intern.html")[0] == 404
+    assert c.call("GET", f"/api/cases/{cid}/artifacts/summary.json")[0] == 404
+    status, html = c.call("GET", f"/api/cases/{cid}/artifacts/diagnostik.html")
+    assert status == 200
+    text = html.decode("utf-8") if isinstance(html, bytes) else str(html)
+    assert "Gewicht" not in text and "Punktverlust" not in text and "Bewertungsmassstab" not in text
+    assert "70 Punkte" not in text and "Bis Band" not in text
+    # The advisor keeps the full edition.
+    full = store.read_artifact(cid, "diagnostik_intern.md")
+    assert "Gewicht" in full and "Punktverlust" in full
