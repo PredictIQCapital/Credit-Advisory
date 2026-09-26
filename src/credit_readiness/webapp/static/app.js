@@ -110,6 +110,68 @@ const SOURCE = {
   berater: ["Holen wir ein", "We obtain this"],
 };
 
+// Texts the engine stores in German (ratio names, gap levers, history entries,
+// the disclaimer): English when English is chosen, with umlauts in German.
+const SYS_EN = {
+  "Eigenkapitalquote (wirtschaftlich)": "Equity ratio (economic)",
+  "Kapitaldienstfaehigkeit inkl. neuer Finanzierung (DSCR)": "Debt service cover incl. new loan (DSCR)",
+  "Dynamischer Verschuldungsgrad (Nettoverschuldung / EBITDA)": "Net debt / EBITDA",
+  "EBIT-Marge": "EBIT margin",
+  "Liquiditaet 2. Grades": "Quick ratio",
+  "Zinsdeckungsgrad (EBIT / Zinsaufwand)": "Interest cover (EBIT / interest)",
+  "Gesamtkapitalrentabilitaet (Jahresergebnis + Zinsaufwand)": "Return on total capital",
+  "Anlagendeckungsgrad II": "Fixed-asset cover II",
+  "Kreditorenlaufzeit": "Days payable outstanding",
+  "Kontokorrent-Auslastung": "Overdraft utilisation",
+  "Aktualitaet der BWA": "Age of management accounts (months)",
+  "Creditreform Bonitaetsindex": "Creditreform credit index",
+  "Zahlungsverhalten": "Payment behaviour",
+  "zusaetzliches wirtschaftliches Eigenkapital (z. B. Rangruecktritt, Einlage)": "additional economic equity (e.g. subordination, capital contribution)",
+  "zusaetzliches EBITDA p. a. -- oder entsprechend geringerer Kapitaldienst": "additional EBITDA per year – or correspondingly lower debt service",
+  "erst ein positives EBITDA macht die Verschuldung tragbar": "debt only becomes sustainable with a positive EBITDA",
+  "Abbau der Nettofinanzverschuldung": "reduce net financial debt",
+  "zusaetzliches EBIT p. a.": "additional EBIT per year",
+  "mehr liquide Mittel/Forderungen -- oder weniger kurzfristige Verbindlichkeiten": "more cash/receivables – or fewer short-term liabilities",
+  "zusaetzliches Ergebnis vor Zinsen p. a.": "additional earnings before interest per year",
+  "hoeheres EBIT oder geringerer Zinsaufwand": "higher EBIT or lower interest expense",
+  "Umschichtung kurzfristiger in langfristige Finanzierung": "move short-term into long-term financing",
+  "Abbau der Lieferantenverbindlichkeiten": "reduce supplier payables",
+  "geringere Inanspruchnahme des Kontokorrents": "draw less on the overdraft",
+  "aktuellere BWA vorlegen": "present more recent management accounts",
+  "Auskunft pruefen und Fehler korrigieren lassen": "check the credit report and have errors corrected",
+  "Zahlungsziele einhalten, Ruecklastschriften vermeiden": "pay on time, avoid returned direct debits",
+  "behebbar - Darstellung und Unterlagen": "fixable – presentation and documents",
+  "behebbar - Struktur, Produkt oder Besicherung": "fixable – structure, product or collateral",
+  "nicht behebbar - substanzielles Kreditrisiko": "not fixable – substantive credit risk",
+  "Bericht an das Unternehmen freigegeben": "Report released to the company",
+  "Vom Unternehmen eingereicht": "Submitted by the company",
+  "Anforderungsschreiben versandt": "Request letters sent",
+  "Frage zum Ergebnis": "Question about the result", "Unterlagen": "Documents", "Termin": "Appointment",
+  "Rechnung und Tarif": "Invoice and plan", "Sonstiges": "Other",
+  "Richtungsweisende Einschaetzung der Kreditfaehigkeit auf Basis oeffentlich bekannter Analysepraxis. KEIN Rating, keine Ausfallwahrscheinlichkeit, keine Zusage oder Prognose einer Kreditentscheidung. Jede Kreditentscheidung trifft ausschliesslich der jeweilige Kreditgeber nach eigenen Massstaeben.":
+    "An indicative assessment of creditworthiness based on publicly known analysis practice. NOT a rating, no probability of default, no promise or forecast of a credit decision. Every credit decision is made solely by the lender, on its own criteria.",
+};
+const SYS_UMLAUT = [["Kapitaldienstfaehigkeit", "Kapitaldienstfähigkeit"], ["Liquiditaet", "Liquidität"], ["rentabilitaet", "rentabilität"],
+  ["Aktualitaet", "Aktualität"], ["Bonitaetsindex", "Bonitätsindex"], ["zusaetzliches", "zusätzliches"], ["Rangruecktritt", "Rangrücktritt"],
+  ["hoeheres", "höheres"], ["pruefen", "prüfen"], ["Ruecklastschriften", "Rücklastschriften"], ["Einschaetzung", "Einschätzung"],
+  ["Kreditfaehigkeit", "Kreditfähigkeit"], ["oeffentlich", "öffentlich"], ["ausschliesslich", "ausschließlich"], ["Massstaeben", "Maßstäben"]];
+
+function sysText(s) {
+  if (!s) return s;
+  if (lang() === "en") {
+    if (SYS_EN[s]) return SYS_EN[s];
+    let m;
+    if ((m = s.match(/^Band ([A-E]), (.+)$/))) return `Band ${m[1]}, ${SYS_EN[m[2]] || m[2]}`;
+    if ((m = s.match(/^Eingeladen: (.+)$/))) return `Invited: ${m[1]}`;
+    if ((m = s.match(/^Ergebnis: (.+)$/))) return `Outcome: ${m[1]}`;
+    return s;
+  }
+  return SYS_UMLAUT.reduce((acc, [a, b]) => acc.split(a).join(b), s);
+}
+
+/** A figure the engine formatted the German way ("10,1%"), for English readers ("10.1%"). */
+const sysFig = (s) => (s && lang() === "en" ? s.replace(/[.,]/g, (c) => (c === "," ? "." : ",")) : s);
+
 // Plain-language explanations of the engine's findings, for clients and investors.
 const FINDING = {
   R01: { de: ["Gesellschafterdarlehen zählt als Schulden", "Das Darlehen der Gesellschafter wird mangels Rangrücktritt als Fremdkapital gewertet. Mit einer Rangrücktrittserklärung zählt es für fast alle Banken als Eigenkapital – ohne frisches Geld."],
@@ -934,7 +996,7 @@ function resultView(s, cid, advisor) {
     el("div", { class: "actions", style: "margin-top:18px" },
       el("a", { class: "btn btn-dark", href: `/api/cases/${cid}/artifacts/diagnostik.html`, target: "_blank", rel: "noopener", text: t("Vollständigen Bericht öffnen", "Open full report") }),
       el("span", { class: "small muted", style: "align-self:center", text: t("Im Bericht: Drucken → „Als PDF speichern“.", "In the report: Print → 'Save as PDF'. The report is in German, the language of the lender.") })),
-    el("p", { class: "disclaimer", text: s.disclaimer }));
+    el("p", { class: "disclaimer", text: sysText(s.disclaimer) }));
 }
 
 function improvementPanel(items) {
@@ -950,9 +1012,9 @@ function improvementPanel(items) {
         el("th", { text: t("Branchenüblich", "Sector-typical") }), el("th", { text: t("Punkte", "Points") }),
         el("th", { text: t("Lücke", "Gap") }))),
       el("tbody", {}, items.slice(0, 4).map((i) => el("tr", {},
-        el("td", { text: i.factor }), el("td", { text: i.current }), el("td", { text: i.target }),
+        el("td", { text: sysText(i.factor) }), el("td", { text: sysFig(i.current) }), el("td", { text: sysFig(i.target) }),
         el("td", { text: `+${nf(i.points_gain, 1)}` }),
-        el("td", { text: i.euro_gap ? `${eur(Math.round(i.euro_gap / 1000) * 1000)} · ${i.lever}` : i.lever })))))));
+        el("td", { text: i.euro_gap ? `${eur(Math.round(i.euro_gap / 1000) * 1000)} · ${sysText(i.lever)}` : sysText(i.lever) })))))));
 }
 
 function projectionPanel(p) {

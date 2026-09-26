@@ -188,7 +188,7 @@ function wsShell(ov, page, content, headAction) {
   const head = el("header", { class: "ws-head" },
     menuBtn,
     el("div", {}, el("div", { class: "crumbs", text: `${ov.meta.company_name} · ${cid}` }), el("h1", { text: t(title.de, title.en) })),
-    headAction || null);
+    el("div", { class: "ws-head-tools" }, headAction || null, langToggle()));
   const main = el("main", { class: "ws-main" },
     S.meta.demo ? el("div", { class: "demo-ribbon", text: t("Demo-Umgebung – alle Unternehmen und Zahlen sind fiktiv.", "Demo environment – all companies and figures are fictional.") }) : null,
     el("div", { class: "ws-body" }, head, content, accountFooter()));
@@ -311,8 +311,8 @@ function leversBlock(items) {
     el("div", { class: "eyebrow", text: t("Größte Hebel", "Biggest levers") }),
     items.slice(0, 3).map((i) => el("div", { class: "lever" },
       el("span", { class: "gain", text: `+${nf(i.points_gain, 1)}` }),
-      el("div", {}, el("b", { text: i.factor }),
-        el("small", { text: `${i.current} → ${i.target}` + (i.euro_gap ? ` · ${eur(Math.round(i.euro_gap / 1000) * 1000)}` : "") })))));
+      el("div", {}, el("b", { text: sysText(i.factor) }),
+        el("small", { text: `${sysFig(i.current)} → ${sysFig(i.target)}` + (i.euro_gap ? ` · ${eur(Math.round(i.euro_gap / 1000) * 1000)}` : "") })))));
 }
 
 function todoBlock(todos) {
@@ -436,7 +436,7 @@ function historyText(e) {
   const doc = e.doc_type && S.meta.documents.find((d) => d.id === e.doc_type);
   switch (e.kind) {
     case "created": return [t("Fall angelegt", "Case created"), ""];
-    case "stage": return [stageLabel(e.stage), e.text];
+    case "stage": return [stageLabel(e.stage), sysText(e.text)];
     case "upload": return [doc ? qtext(doc, "title") : t("Unterlage", "Document"), e.text];
     case "order": return [t(`Bestellt: ${planName(e.product)}`, `Ordered: ${planName(e.product)}`), e.text];
     case "quick_check": return [t("Schnell-Check berechnet", "Quick check calculated"), ""];
@@ -802,7 +802,7 @@ function wsResultPage(ov) {
     improvementPanel(q.improvements),
     projectionPanel(q.projection),
     explainBox(cid, "quick"),
-    el("p", { class: "disclaimer", text: q.disclaimer })), action];
+    el("p", { class: "disclaimer", text: sysText(q.disclaimer) })), action];
 }
 
 // ------------------------------------------------------------------ plan
@@ -969,10 +969,10 @@ function messagesView(ov, onChange) {
   const stamp = (iso) => new Date(iso).toLocaleString(lang() === "en" ? "en-GB" : "de-DE", { dateStyle: "short", timeStyle: "short" });
   const list = el("div", { class: "thread" }, msgs.length ? msgs.map((m) => el("div", { class: "msg" + (m.by === S.me.email ? " mine" : "") + (m.role === "berater" ? " team" : "") },
     el("div", { class: "msg-head" }, el("b", { text: m.role === "berater" ? t(`${m.name} · Beraterteam`, `${m.name} · advisory team`) : m.name }),
-      m.topic ? el("span", { class: "pill", text: m.topic }) : null, el("time", { text: stamp(m.at) })),
+      m.topic ? el("span", { class: "pill", text: sysText(m.topic) }) : null, el("time", { text: stamp(m.at) })),
     el("div", { class: "msg-text", text: m.text })))
     : el("p", { class: "muted", text: t("Noch keine Nachrichten. Schreiben Sie uns – die Antwort erscheint hier.", "No messages yet. Write to us – the answer appears here.") }));
-  const topic = el("select", {}, el("option", { value: "", text: t("Thema (optional)", "Topic (optional)") }), S.meta.message_topics.map((x) => el("option", { value: x, text: x })));
+  const topic = el("select", {}, el("option", { value: "", text: t("Thema (optional)", "Topic (optional)") }), S.meta.message_topics.map((x) => el("option", { value: x, text: sysText(x) })));
   const text = el("textarea", { placeholder: t("Ihre Nachricht …", "Your message …"), maxlength: 4000 });
   const send = el("button", { class: "btn btn-primary", text: t("Senden", "Send") });
   send.addEventListener("click", () => guarded(send, async () => {
@@ -1114,14 +1114,15 @@ const pts = (v) => (v > 0 ? "+" : "") + nf(v, 1);
 function wsImprove(ov) {
   const cid = ov.meta.case_id;
   const box = el("div", { class: "coach" }, el("div", { class: "card muted", text: t("Ihr Plan wird berechnet …", "Calculating your plan …") }));
-  const cached = S.coach && S.coach.cid === cid ? S.coach.data : null;
+  const cached = S.coach && S.coach.cid === cid && S.coach.lang === lang() ? S.coach.data : null;
   const draw = (data) => box.replaceChildren(...(data.locked ? coachLocked(ov, data) : coachFull(ov, data)));
   if (cached) draw(cached);
   const slow = setTimeout(() => {
     const note = box.querySelector(".card.muted");
     if (note) note.textContent = t("Das dauert gerade etwas länger – Ihr Plan kommt gleich …", "This is taking a little longer – your plan is on its way …");
   }, 6000);
-  api("GET", `/api/cases/${cid}/coach`).finally(() => clearTimeout(slow)).then((data) => { S.coach = { cid, data }; draw(data); })
+  const asked = lang();
+  api("GET", `/api/cases/${cid}/coach?lang=${asked}`).finally(() => clearTimeout(slow)).then((data) => { S.coach = { cid, lang: asked, data }; draw(data); })
     .catch((e) => box.replaceChildren(el("div", { class: "card" },
       nextBanner("warn", t("Noch kein Plan möglich", "No plan possible yet"), e.message,
         el("a", { class: "btn btn-ghost btn-sm", href: `#case/${cid}/overview`, text: t("Zur Übersicht", "To the overview") })))));
@@ -1235,7 +1236,7 @@ function coachSimulator(ov, data) {
       }
       result.classList.add("busy");
       try {
-        const r = await api("POST", `/api/cases/${cid}/coach/simulate`, { adjustments });
+        const r = await api("POST", `/api/cases/${cid}/coach/simulate`, { adjustments, lang: lang() });
         result.replaceChildren(...[
           el("div", { class: "sim-scores" },
             el("div", {}, el("small", { text: t("Heute", "Today") }), el("b", { text: nf(r.base.score, 1) }), el("span", { class: `band-chip band-${r.base.band}`, text: r.base.band })),

@@ -837,11 +837,15 @@ class Handler(BaseHTTPRequestHandler):
         self._send(200, res["html"].encode("utf-8"), "text/html; charset=utf-8")
 
     # ------------------------------------------------------ score coach
+    def _lang(self) -> str:
+        """The page's language, from ?lang=; German unless English is asked for."""
+        return "en" if parse_qs(urlparse(self.path).query).get("lang", [""])[0] == "en" else "de"
+
     def h_coach(self, principal, cid: str) -> None:
         self._case(principal, cid)
         self._require(principal, ROLE_BERATER, ROLE_UNTERNEHMEN)
         try:
-            view = wf.coach_view(self.store, cid, principal.role, today=self.today)
+            view = wf.coach_view(self.store, cid, principal.role, today=self.today, lang=self._lang())
         except CaseStoreError as e:
             raise ApiError(HTTPStatus.CONFLICT, str(e)) from None
         self._json(200, view)
@@ -858,7 +862,7 @@ class Handler(BaseHTTPRequestHandler):
         except CaseStoreError as e:
             raise ApiError(HTTPStatus.CONFLICT, str(e)) from None
         body = self._obj()
-        self._json(200, coach.simulate(case, body.get("adjustments") or {}))
+        self._json(200, coach.simulate(case, body.get("adjustments") or {}, "en" if body.get("lang") == "en" else "de"))
 
     def h_coach_status(self, principal, cid: str) -> None:
         self._case(principal, cid)

@@ -41,7 +41,9 @@
 .ws-main { margin-left: var(--rail); min-height: 100vh; }
 .ws-body { max-width: 1240px; margin: 0 auto; padding: 26px 32px 60px; }
 .ws-head { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
-.ws-head > div { flex: 1; min-width: 200px; }
+.ws-head > div:not(.ws-head-tools) { flex: 1; min-width: 200px; }
+.ws-head-tools { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.ws-head-tools .lang-toggle { background: #fff; }
 .ws-head h1 { font-size: 28px; margin: 2px 0 0; }
 .ws-head .crumbs { font-size: 13px; color: var(--muted); }
 .ws-head .btn { display: inline-flex; align-items: center; gap: 8px; }

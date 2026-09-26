@@ -146,3 +146,37 @@ def test_other_companies_cannot_see_the_coach(env):  # noqa: F811
     other, _ = _register(base, company="Andere GmbH", email="bob@test.de", name="Bob Meier")
     assert other.call("GET", f"/api/cases/{cid}/coach")[0] == 404
     assert Client(base).call("GET", f"/api/cases/{cid}/coach")[0] == 401
+
+
+# ------------------------------------------------------------------ languages
+
+
+def test_english_plan_has_no_german(case):
+    import re
+    p = coach.plan(case, "en")
+    blob = json.dumps({k: v for k, v in p.items() if k != "levers"}
+                      | {"measures": [{k: v for k, v in m.items() if k != "title"} for m in p["measures"]]},
+                      ensure_ascii=False)
+    german = re.findall(r"\b(?:der|die|das|und|nicht|oder|Umsatz|Kennzahl|Branchen?|Gewerbe|Abbau|zusaetz\w*)\b", blob)
+    assert german == [], german
+    assert p["sector"] == "Manufacturing"
+    assert all(re.fullmatch(r"[\d,]+(\.\d+)?(%|x| days)?", f["value"]) for f in p["factors"] if f["value"]), \
+        [f["value"] for f in p["factors"]]
+    r01 = next(m for m in p["measures"] if m["rule"] == "R01")
+    assert "subordination" in r01["remediation"] and "lawyer" in r01["caveat"]
+
+
+def test_german_plan_stays_german_and_figures_match(case):
+    de_, en_ = coach.plan(case, "de"), coach.plan(case, "en")
+    assert de_["score"] == en_["score"] and [m["points"] for m in de_["measures"]] == [m["points"] for m in en_["measures"]]
+    assert de_["factors"][0]["value"] == "10,1%" and en_["factors"][0]["value"] == "10.1%"
+    assert "Rangrücktritt" in json.dumps(de_["gaps"], ensure_ascii=False)
+    sim = coach.simulate(case, {"rangruecktritt": 1}, "en")
+    assert sim["changes"][0]["label"] in coach.FACTOR_EN.values()
+
+
+def test_every_rule_speaks_english():
+    from credit_readiness import remediation
+    src = open(remediation.__file__, encoding="utf-8").read()
+    for i in range(1, 11):
+        assert f'rule_id="R{i:02d}",\n        en=dict(' in src, f"R{i:02d}"

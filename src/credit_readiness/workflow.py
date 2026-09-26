@@ -314,12 +314,13 @@ def coach_case(store: CaseStore, case_id: str, today: Optional[date] = None):
     return load_case(asm.payload)
 
 
-def coach_view(store: CaseStore, case_id: str, role: str, today: Optional[date] = None) -> dict:
+def coach_view(store: CaseStore, case_id: str, role: str, today: Optional[date] = None,
+               lang: str = "de") -> dict:
     """The coach page: full for the report and advisory plans, a preview otherwise."""
     from . import coach
 
     meta = store.get_meta(case_id)
-    p = coach.plan(coach_case(store, case_id, today))
+    p = coach.plan(coach_case(store, case_id, today), lang)
     status = meta.get("action_status") or {}
     for m in p["measures"]:
         m["status"] = status.get(m["rule"], "offen")
@@ -327,7 +328,7 @@ def coach_view(store: CaseStore, case_id: str, role: str, today: Optional[date] 
         return {"locked": False, **p}
     preview = [{k: m[k] for k in ("rule", "title", "points", "weeks")} for m in p["measures"][:3]]
     return {"locked": True, "score": p["score"], "band": p["band"], "next_band": p["next_band"],
-            "preview": preview, "more": max(0, len(p["measures"]) - 3)}
+            "sector": p["sector"], "preview": preview, "more": max(0, len(p["measures"]) - 3)}
 
 
 def set_action_status(store: CaseStore, case_id: str, rule: str, state: str) -> dict:

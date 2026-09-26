@@ -27,7 +27,7 @@ from typing import Callable, Optional
 from .models import ClientCase
 from .ratios import RatioSet, compute_ratios
 from .scorecard import ScorecardResult, evaluate
-from .formatting import de
+from .formatting import de, en
 
 
 class FixCategory(str, Enum):
@@ -64,6 +64,8 @@ class Finding:
     requires_steuerberater: bool = False
     requires_legal: bool = False
     caveat: str = ""
+    # The same observation, remediation and caveat in English, with the same figures.
+    en: dict = field(default_factory=dict, compare=False)
     simulate: Optional[Callable[[ClientCase], None]] = field(
         default=None, repr=False, compare=False
     )
@@ -92,6 +94,20 @@ def _rule_rangruecktritt(case: ClientCase, r: RatioSet, s: ScorecardResult) -> O
 
     return Finding(
         rule_id="R01",
+        en=dict(
+            observation=(
+                f"The shareholder loan of EUR {en(bs.gesellschafterdarlehen)} counts as debt because it "
+                f"has no subordination agreement. Economic equity is therefore "
+                f"{en((r.eigenkapitalquote or 0)*100, 1)}% instead of about "
+                f"{en(((r.eigenkapitalquote or 0) + uplift)*100, 1)}%."),
+            remediation=(
+                "Agree a qualified subordination (Rangruecktritt) in writing and show it to the bank. "
+                "Almost every German lender then treats the loan as economic equity -- without a "
+                "single euro of fresh capital."),
+            caveat=(
+                "A qualified subordination has insolvency and tax consequences and must be checked by "
+                "the tax advisor and a lawyer. Never recommend it on its own."),
+        ),
         title="Gesellschafterdarlehen ohne Rangruecktritt",
         category=FixCategory.PRESENTATION,
         severity="kritisch" if (r.eigenkapitalquote or 0) < 0.10 else "wesentlich",
@@ -121,6 +137,9 @@ def _rule_rangruecktritt(case: ClientCase, r: RatioSet, s: ScorecardResult) -> O
     )
 
 
+_FREQ_EN = {"monatlich": "monthly", "quartalsweise": "quarterly", "jaehrlich": "yearly"}
+
+
 def _rule_stale_bwa(case: ClientCase, r: RatioSet, s: ScorecardResult) -> Optional[Finding]:
     b = case.behavior
     if b.bwa_age_months <= 3:
@@ -132,6 +151,16 @@ def _rule_stale_bwa(case: ClientCase, r: RatioSet, s: ScorecardResult) -> Option
 
     return Finding(
         rule_id="R02",
+        en=dict(
+            observation=(
+                f"The latest management accounts (BWA) are {en(b.bwa_age_months)} months old "
+                f"(frequency: {_FREQ_EN.get(b.bwa_frequency, b.bwa_frequency)}). Lenders regularly read old accounts as a sign of weak "
+                "internal reporting and then assume the worst."),
+            remediation=(
+                "Agree monthly management accounts with the tax advisor and present accounts no older "
+                "than two months before applying. The cheapest single measure in the whole catalogue."),
+            caveat="",
+        ),
         title="BWA nicht aktuell",
         category=FixCategory.DOCUMENTATION,
         severity="wesentlich" if b.bwa_age_months > 6 else "gering",
@@ -162,6 +191,17 @@ def _rule_missing_forecast(case: ClientCase, r: RatioSet, s: ScorecardResult) ->
 
     return Finding(
         rule_id="R03",
+        en=dict(
+            observation=(
+                f"There is no financial plan for a loan of EUR {en(case.request.amount)}. Without a "
+                "planned P&L, cash-flow and balance-sheet plan, the lender can only judge repayment "
+                "capacity by looking backwards."),
+            remediation=(
+                "Prepare an integrated 24-month plan (P&L, cash flow, balance sheet), including a "
+                "scenario with the new loan repayments. No effect on the ratios, but often decisive "
+                "in practice."),
+            caveat="Improves no ratio -- it works through the qualitative assessment.",
+        ),
         title="Keine integrierte Planrechnung",
         category=FixCategory.DOCUMENTATION,
         severity="wesentlich",
@@ -206,6 +246,21 @@ def _rule_kontokorrent_dauerinanspruchnahme(
 
     return Finding(
         rule_id="R04",
+        en=dict(
+            observation=(
+                f"The overdraft is {en(util*100)}% used (EUR {en(drawn)} of "
+                f"EUR {en(bs.kontokorrent_limit)}) and was at the limit on "
+                f"{case.behavior.overdraft_days_at_limit_12m} days of the last 12 months. It is in "
+                "effect funding fixed assets or permanent working capital -- the most expensive "
+                "instrument for that, and a warning sign for the bank."),
+            remediation=(
+                f"Move about EUR {en(term_out)} of the permanent overdraft into a term loan with a "
+                "suitable tenor. That lowers the interest, restores the credit line as a real reserve "
+                "and removes the warning sign without raising total debt."),
+            caveat=(
+                "Assumes repayment capacity can carry the extra principal. With a DSCR below 1.1, "
+                "look at R05/R06 first."),
+        ),
         title="Dauerinanspruchnahme des Kontokorrents",
         category=FixCategory.PRODUCT_FIT,
         severity="kritisch" if util > 0.95 else "wesentlich",
@@ -259,6 +314,19 @@ def _rule_factoring(case: ClientCase, r: RatioSet, s: ScorecardResult) -> Option
 
     return Finding(
         rule_id="R05",
+        en=dict(
+            observation=(
+                f"Customers take {en(dso)} days to pay, on receivables of EUR "
+                f"{en(bs.forderungen_ll)}. The company is financing its customers with its own "
+                "credit line."),
+            remediation=(
+                f"Consider factoring: about EUR {en(released)} could be turned into cash quickly and "
+                "used to pay down short-term bank debt. It lowers the credit need instead of "
+                "financing it."),
+            caveat=(
+                "Factoring really costs 1-3% of revenue and needs B2B receivables from creditworthy "
+                "customers. Often not possible with a few large customers or assignment bans."),
+        ),
         title="Hohe Debitorenlaufzeit - Factoring statt Kreditlinie",
         category=FixCategory.PRODUCT_FIT,
         severity="wesentlich",
@@ -302,6 +370,15 @@ def _rule_fristenkongruenz(case: ClientCase, r: RatioSet, s: ScorecardResult) ->
 
     return Finding(
         rule_id="R06",
+        en=dict(
+            observation=(
+                f"Fixed-asset cover II is {en(adg*100)}%. About EUR {en(gap)} of fixed assets is "
+                "financed short-term. That creates structural refinancing pressure the bank can see."),
+            remediation=(
+                "Refinance short-term bank debt into loans whose terms match the useful life of the "
+                "assets financed. Combine with a KfW investment loan where it fits."),
+            caveat="",
+        ),
         title="Verletzung der Fristenkongruenz (goldene Bilanzregel)",
         category=FixCategory.PRODUCT_FIT,
         severity="wesentlich",
@@ -336,6 +413,20 @@ def _rule_collateral_gap(case: ClientCase, r: RatioSet, s: ScorecardResult) -> O
 
     return Finding(
         rule_id="R07",
+        en=dict(
+            observation=(
+                f"Repayment capacity is sound at {en(dscr, 2)}x, but the collateral available covers "
+                f"only {en(coverage*100)}% of the EUR {en(req.amount)} requested. A rejection here "
+                "would be a collateral decision, not a credit-quality one."),
+            remediation=(
+                "Take the promotional route instead of a standard loan: a KfW programme with liability "
+                "release (typically 50-80% risk relief for the bank) or a guarantee from the regional "
+                "guarantee bank. The application runs through the house bank -- ask for it actively, "
+                "it is rarely offered."),
+            caveat=(
+                "Programme terms and liability-release rates change; check the current KfW sheet "
+                "before recommending. No ratio effect -- it works through the structure."),
+        ),
         title="Besicherungsluecke bei tragfaehigem Kapitaldienst",
         category=FixCategory.COLLATERAL,
         severity="wesentlich",
@@ -366,26 +457,42 @@ def _rule_collateral_gap(case: ClientCase, r: RatioSet, s: ScorecardResult) -> O
 def _rule_genuine_weakness(case: ClientCase, r: RatioSet, s: ScorecardResult) -> Optional[Finding]:
     """The honest-decline rule. Deliberately blunt."""
     reasons: list[str] = []
+    reasons_en: list[str] = []
     if r.ebitda <= 0:
         reasons.append(f"EBITDA negativ ({de(r.ebitda)} EUR)")
+        reasons_en.append(f"negative EBITDA (EUR {en(r.ebitda)})")
     if (r.eigenkapitalquote or 0) < 0:
         reasons.append(
             f"bilanzielle Ueberschuldung (wirtschaftliches EK "
             f"{de(r.wirtschaftliches_eigenkapital)} EUR)"
         )
+        reasons_en.append(f"over-indebted on the balance sheet (economic equity EUR {en(r.wirtschaftliches_eigenkapital)})")
     if r.umsatzwachstum is not None and r.umsatzwachstum < -0.15 and (r.ebit_marge or 0) < 0:
         reasons.append(
             f"Umsatzrueckgang {de(r.umsatzwachstum*100)}% bei negativer EBIT-Marge"
         )
+        reasons_en.append(f"revenue down {en(r.umsatzwachstum*100)}% with a negative EBIT margin")
     dv = r.dynamischer_verschuldungsgrad
     if dv is not None and dv > 8.0:
         reasons.append(f"dynamischer Verschuldungsgrad {de(dv, 1)}x")
+        reasons_en.append(f"net debt / EBITDA of {en(dv, 1)}x")
 
     if not reasons:
         return None
 
     return Finding(
         rule_id="R08",
+        en=dict(
+            observation="These findings are not presentation problems: " + "; ".join(reasons_en) + ".",
+            remediation=(
+                "No presentation measure addresses these findings. Honest options: operational "
+                "restructuring before any application, fresh equity from the shareholders, or a "
+                "deliberate decision not to apply now. Applying in this state creates a documented "
+                "rejection that weighs on later applications."),
+            caveat=(
+                "This finding should lead to declining the engagement if the client expects a quick "
+                "approval. This is the case where saying no is the product."),
+        ),
         title="Substanzielle Bonitaetsschwaeche - nicht durch Aufbereitung loesbar",
         category=FixCategory.GENUINE_RISK,
         severity="kritisch",
@@ -421,6 +528,17 @@ def _rule_tax_arrears(case: ClientCase, r: RatioSet, s: ScorecardResult) -> Opti
 
     return Finding(
         rule_id="R09",
+        en=dict(
+            observation=(
+                "There are tax arrears. For almost every lender that is a knock-out criterion, "
+                "whatever the other ratios say."),
+            remediation=(
+                "Must be settled before any application: pay the arrears or present a firm written "
+                "deferral agreement with the tax office. Only then apply."),
+            caveat=(
+                "Rated a genuine risk because no lender signs while it is open -- once settlement is "
+                "proven, the finding goes away."),
+        ),
         title="Steuerrueckstaende",
         category=FixCategory.GENUINE_RISK,
         severity="kritisch",
@@ -464,6 +582,15 @@ def _rule_inventory(case: ClientCase, r: RatioSet, s: ScorecardResult) -> Option
 
     return Finding(
         rule_id="R10",
+        en=dict(
+            observation=(
+                f"Stock lasts {en(reach)} days (EUR {en(bs.vorraete)}). Part of the credit need "
+                "arises in the warehouse, not in the business model."),
+            remediation=(
+                f"Reducing stock by about EUR {en(release)} (slow movers, minimum order quantities, "
+                "consignment stock) lowers the financing need directly."),
+            caveat="With supply-chain risks a high stock level can be deliberate.",
+        ),
         title="Hohe Vorratsreichweite bindet Working Capital",
         category=FixCategory.PRODUCT_FIT,
         severity="gering",

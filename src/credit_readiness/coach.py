@@ -29,7 +29,9 @@ from . import improvement
 from .models import ClientCase, LoanFacility
 from .ratios import compute_ratios
 from .remediation import FixCategory, diagnose
-from .scorecard import BAND_THRESHOLDS, evaluate
+from .formatting import de_to_en
+from .model_export import SECTOR_EN
+from .scorecard import BAND_THRESHOLDS, GENERIC_BASIS, evaluate
 
 # ---------------------------------------------------------------- levers
 
@@ -111,14 +113,14 @@ def _bwa(c: ClientCase, on: float) -> None:
 
 
 LEVERS: tuple[Lever, ...] = (
-    Lever("rangruecktritt", "toggle", "Rangruecktritt fuer das Gesellschafterdarlehen",
+    Lever("rangruecktritt", "toggle", "Rangrücktritt für das Gesellschafterdarlehen",
           "Subordination of the shareholder loan",
-          "Das Darlehen zaehlt dann als wirtschaftliches Eigenkapital.",
+          "Das Darlehen zählt dann als wirtschaftliches Eigenkapital.",
           "The loan then counts as economic equity.",
           lambda c: c.balance_sheet.gesellschafterdarlehen > 0 and not c.balance_sheet.gesellschafterdarlehen_rangruecktritt,
           lambda c: (0, 1, 1), lambda c: 0, _rangruecktritt),
     Lever("equity", "eur", "Einlage der Gesellschafter", "Fresh equity from shareholders",
-          "Neues Eigenkapital, das als Liquiditaet im Unternehmen bleibt.",
+          "Neues Eigenkapital, das als Liquidität im Unternehmen bleibt.",
           "New equity that stays in the company as cash.",
           lambda c: True,
           lambda c: (0, max(50_000, round(c.balance_sheet.bilanzsumme * 0.3, -4)),
@@ -152,11 +154,11 @@ LEVERS: tuple[Lever, ...] = (
           lambda c: (0, max(100_000, round(c.request.amount * 2, -4)), _eur_step(c.request.amount * 2)),
           lambda c: c.request.amount, _loan_amount),
     Lever("tenor", "years", "Laufzeit des neuen Kredits", "Term of the new loan",
-          "Eine laengere Laufzeit senkt die jaehrliche Rate.", "A longer term lowers the annual instalment.",
+          "Eine längere Laufzeit senkt die jährliche Rate.", "A longer term lowers the annual instalment.",
           lambda c: c.request is not None and c.request.amount > 0,
           lambda c: (1, 15, 1), lambda c: c.request.tenor_years, _tenor),
     Lever("bwa", "toggle", "Monatliche, aktuelle BWA", "Monthly, current management accounts",
-          "Banken lesen das Alter der BWA als Qualitaet des Reportings.",
+          "Banken lesen das Alter der BWA als Qualität des Reportings.",
           "Banks read the age of the BWA as the quality of reporting.",
           lambda c: c.behavior.bwa_age_months > 1.5,
           lambda c: (0, 1, 1), lambda c: 0, _bwa),
@@ -180,18 +182,116 @@ def _next_band(score: float) -> Optional[tuple[str, float]]:
     return b.value, t
 
 
-def _factor_rows(card) -> list[dict]:
-    return [{"key": f.key, "label": f.label, "value": f.format_value() if f.value is not None else None,
+# ---------------------------------------------------------------- English
+
+FACTOR_EN = {
+    "eigenkapitalquote": "Equity ratio (economic)",
+    "kapitaldienstfaehigkeit_inkl_neu": "Debt service cover incl. new loan (DSCR)",
+    "dynamischer_verschuldungsgrad": "Net debt / EBITDA",
+    "ebit_marge": "EBIT margin",
+    "liquiditaet_2_grades": "Quick ratio",
+    "zinsdeckungsgrad": "Interest cover (EBIT / interest)",
+    "gesamtkapitalrentabilitaet_bbk": "Return on total capital",
+    "anlagendeckungsgrad_ii": "Fixed-asset cover II",
+    "kreditorenlaufzeit_tage": "Days payable outstanding",
+    "kontokorrent_auslastung": "Overdraft utilisation",
+    "bwa_age_months": "Age of management accounts (months)",
+    "creditreform_bonitaetsindex": "Creditreform credit index",
+    "zahlungsverhalten": "Payment behaviour",
+}
+MISSING_EN = {
+    "EBITDA <= 0, Kennzahl nicht aussagekraeftig": "EBITDA <= 0, ratio not meaningful",
+    "Kein Kapitaldienst bekannt": "No debt service known",
+    "Kein Zinsaufwand ausgewiesen": "No interest expense reported",
+    "Kein Anlagevermoegen ausgewiesen": "No fixed assets reported",
+    "Kein Materialaufwand ausgewiesen": "No material costs reported",
+    "Bilanzsumme oder Jahresergebnis fehlt": "Total assets or net income missing",
+    "Nicht berechenbar aus den vorliegenden Daten": "Cannot be calculated from the data provided",
+}
+GAP_LEVER_EN = {
+    "zusaetzliches wirtschaftliches Eigenkapital (z. B. Rangruecktritt, Einlage)":
+        "additional economic equity (e.g. subordination, capital contribution)",
+    "zusaetzliches EBITDA p. a. -- oder entsprechend geringerer Kapitaldienst":
+        "additional EBITDA per year -- or correspondingly lower debt service",
+    "erst ein positives EBITDA macht die Verschuldung tragbar": "debt only becomes sustainable with a positive EBITDA",
+    "Abbau der Nettofinanzverschuldung": "reduce net financial debt",
+    "zusaetzliches EBIT p. a.": "additional EBIT per year",
+    "mehr liquide Mittel/Forderungen -- oder weniger kurzfristige Verbindlichkeiten":
+        "more cash/receivables -- or fewer short-term liabilities",
+    "zusaetzliches Ergebnis vor Zinsen p. a.": "additional earnings before interest per year",
+    "hoeheres EBIT oder geringerer Zinsaufwand": "higher EBIT or lower interest expense",
+    "Umschichtung kurzfristiger in langfristige Finanzierung": "move short-term into long-term financing",
+    "Abbau der Lieferantenverbindlichkeiten": "reduce supplier payables",
+    "geringere Inanspruchnahme des Kontokorrents": "draw less on the overdraft",
+    "aktuellere BWA vorlegen": "present more recent management accounts",
+    "Auskunft pruefen und Fehler korrigieren lassen": "check the credit report and have errors corrected",
+    "Zahlungsziele einhalten, Ruecklastschriften vermeiden": "pay on time, avoid returned direct debits",
+}
+
+
+def _lang(lang: str) -> str:
+    return "en" if lang == "en" else "de"
+
+
+def _factor_label(key: str, label: str, lang: str) -> str:
+    return FACTOR_EN.get(key, label) if lang == "en" else _pretty_de(label)
+
+
+def _figure(text: Optional[str], lang: str) -> Optional[str]:
+    if text is None or lang != "en":
+        return text
+    return de_to_en(text).replace(" Tage", " days")
+
+
+def _basis(text: str, lang: str) -> str:
+    if lang != "en":
+        return _pretty_de(text)
+    if text == GENERIC_BASIS:
+        return "All sectors (standard curve)"
+    sector, _, size = text.partition(", ")
+    size_en = {
+        "Umsatz unter 2 Mio. EUR": "revenue under EUR 2m", "Umsatz 2-10 Mio. EUR": "revenue EUR 2-10m",
+        "Umsatz 10-50 Mio. EUR": "revenue EUR 10-50m", "Umsatz ab 50 Mio. EUR": "revenue EUR 50m+",
+        "alle Groessenklassen": "all sizes",
+    }.get(size, size)
+    return f"{SECTOR_EN.get(sector, sector)}, {size_en}" if size else SECTOR_EN.get(sector, sector)
+
+
+# German text stored in ASCII (the engine's rule and ratio names) shown with umlauts.
+_UMLAUT_WORDS = {
+    "Kapitaldienstfaehigkeit": "Kapitaldienstfähigkeit", "Liquiditaet": "Liquidität",
+    "Gesamtkapitalrentabilitaet": "Gesamtkapitalrentabilität", "Aktualitaet": "Aktualität",
+    "Bonitaetsindex": "Bonitätsindex", "Groessenklassen": "Größenklassen",
+    "zusaetzliches": "zusätzliches", "Rangruecktritt": "Rangrücktritt",
+    "aussagekraeftig": "aussagekräftig", "Anlagevermoegen": "Anlagevermögen",
+    "pruefen": "prüfen", "Ruecklastschriften": "Rücklastschriften", "hoeheres": "höheres",
+}
+
+
+def _pretty_de(text: Optional[str]) -> Optional[str]:
+    if not text:
+        return text
+    for a, b in _UMLAUT_WORDS.items():
+        text = text.replace(a, b)
+    return text
+
+
+def _factor_rows(card, lang: str = "de") -> list[dict]:
+    return [{"key": f.key, "label": _factor_label(f.key, f.label, lang),
+             "value": _figure(f.format_value(), lang) if f.value is not None else None,
              "score": None if f.score is None else round(f.score, 1),
              "weight": round(f.weight * 100, 1), "points_lost": round(f.points_lost, 2),
-             "basis": f.basis, "missing": f.missing_reason or None} for f in card.factors]
+             "basis": _basis(f.basis, lang),
+             "missing": (MISSING_EN.get(f.missing_reason, f.missing_reason) if lang == "en"
+                         else _pretty_de(f.missing_reason)) or None} for f in card.factors]
 
 
 # ---------------------------------------------------------------- the plan
 
 
-def plan(case: ClientCase) -> dict:
+def plan(case: ClientCase, lang: str = "de") -> dict:
     """Measures with their own effect, the path through them, levers, breakdown."""
+    lang = _lang(lang)
     ratios = compute_ratios(case)
     card = evaluate(case, ratios)
     base = card.total_score
@@ -208,9 +308,12 @@ def plan(case: ClientCase) -> dict:
             delta = round(after - base, 1)
         measures.append({
             "rule": f.rule_id, "title": f.title, "category": f.category.value, "severity": f.severity,
-            "fixable": f.category.is_fixable, "observation": f.observation, "remediation": f.remediation,
+            "fixable": f.category.is_fixable,
+            "observation": f.en.get("observation", f.observation) if lang == "en" else f.observation,
+            "remediation": f.en.get("remediation", f.remediation) if lang == "en" else f.remediation,
+            "caveat": f.en.get("caveat", f.caveat) if lang == "en" else f.caveat,
             "weeks": f.weeks_to_effect, "requires_steuerberater": f.requires_steuerberater,
-            "requires_legal": f.requires_legal, "caveat": f.caveat,
+            "requires_legal": f.requires_legal,
             "points": delta, "score_after": after, "band_after": band_after, "_finding": f,
         })
     measures.sort(key=lambda m: (m["points"] is None, -(m["points"] or 0)))
@@ -233,19 +336,24 @@ def plan(case: ClientCase) -> dict:
 
     nb = _next_band(base)
     return {
-        "score": base, "band": card.band.value, "sector": case.profile.sector.value,
+        "score": base, "band": card.band.value,
+        "sector": SECTOR_EN.get(case.profile.sector.value, case.profile.sector.value) if lang == "en"
+        else case.profile.sector.value,
         "next_band": {"band": nb[0], "threshold": nb[1], "points_needed": round(nb[1] - base, 1)} if nb else None,
         "measures": measures, "path": path,
-        "gaps": [{"factor": i.label, "current": i.format(i.current), "target": i.format(i.target),
+        "gaps": [{"factor": _factor_label(i.key, i.label, lang),
+                  "current": _figure(i.format(i.current), lang), "target": _figure(i.format(i.target), lang),
                   "points": round(i.points_gain, 1), "euro_gap": round(i.euro_gap, -3) if i.euro_gap else None,
-                  "lever": i.lever} for i in improvement.plan(case, ratios, card).items],
-        "factors": _factor_rows(card),
+                  "lever": GAP_LEVER_EN.get(i.lever, i.lever) if lang == "en" else _pretty_de(i.lever)}
+                 for i in improvement.plan(case, ratios, card).items],
+        "factors": _factor_rows(card, lang),
         "levers": levers,
     }
 
 
-def simulate(case: ClientCase, adjustments: dict) -> dict:
+def simulate(case: ClientCase, adjustments: dict, lang: str = "de") -> dict:
     """Re-score the company with the chosen levers applied."""
+    lang = _lang(lang)
     base, base_band, base_card = _score(case)
     trial = copy.deepcopy(case)
     applied = {}
@@ -267,9 +375,9 @@ def simulate(case: ClientCase, adjustments: dict) -> dict:
         applied[key] = value
     score, band, card = _score(trial)
     before = {f.key: f for f in base_card.factors}
-    changes = [{"key": f.key, "label": f.label,
-                "before": before[f.key].format_value() if before[f.key].value is not None else None,
-                "after": f.format_value() if f.value is not None else None,
+    changes = [{"key": f.key, "label": _factor_label(f.key, f.label, lang),
+                "before": _figure(before[f.key].format_value(), lang) if before[f.key].value is not None else None,
+                "after": _figure(f.format_value(), lang) if f.value is not None else None,
                 "points": round((f.contribution - before[f.key].contribution), 2)}
                for f in card.factors
                if f.score is not None and before[f.key].score is not None
