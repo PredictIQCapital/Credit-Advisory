@@ -29,6 +29,7 @@ const ICON_PATHS = {
   key: ["M15 7a4 4 0 1 1-3.9 4.9L3 20v-3h3v-3h3l1.1-1.1A4 4 0 0 1 15 7z", "M16 10h.01"],
   chat: ["M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"],
   download: ["M12 4v11", "M7 10l5 5 5-5", "M4 20h16"],
+  trend: ["M3 17l6-6 4 4 8-8", "M14 7h7v7"],
 };
 
 function icon(name, size) {
@@ -56,6 +57,7 @@ const WS_NAV = [
   { id: "documents", icon: "file", de: "Unterlagen", en: "Documents" },
   { id: "figures", icon: "check", de: "Zahlen prüfen", en: "Check figures" },
   { id: "result", icon: "chart", de: "Ergebnis", en: "Result" },
+  { id: "improve", icon: "trend", de: "Score verbessern", en: "Improve your score" },
   { id: "bankpack", icon: "download", de: "Bankmappe (PDF)", en: "Bank pack (PDF)" },
   { id: "messages", icon: "chat", de: "Nachrichten", en: "Messages" },
   { id: "plan", icon: "card", de: "Tarif", en: "Plan" },
@@ -205,7 +207,7 @@ function renderSmeCase(ov, part) {
   const pages = {
     overview: wsOverview, company: (o) => wsForm(o, "company"), financing: (o) => wsForm(o, "financing"),
     documents: wsDocuments, figures: wsFigures, result: wsResultPage, plan: wsPlanPage, history: wsHistory,
-    bankpack: wsBankpack, messages: wsMessages, agreements: wsAgreements,
+    bankpack: wsBankpack, messages: wsMessages, agreements: wsAgreements, improve: wsImprove,
   };
   const [content, action] = pages[page](ov);
   const root = document.getElementById("root");
@@ -297,6 +299,7 @@ function scoreBlock(ov, res) {
       after ? el("div", { class: "after" }, t("Nach den Maßnahmen: ", "After the measures: "), el("span", { class: `band-chip band-${r.band_after_remediation}`, text: r.band_after_remediation }), ` ${nf(r.score_after_remediation, 1)} / 100`) : null,
       el("div", { class: "score-links" },
         el("a", { class: "link-arrow", href: `#case/${cid}/result` }, t("Details ansehen", "See details"), icon("arrow", 14)),
+        el("a", { class: "link-arrow", href: `#case/${cid}/improve` }, icon("trend", 14), t("Score verbessern", "Improve your score")),
         el("a", { class: "link-arrow", href: `#case/${cid}/bankpack` }, icon("download", 14), t("Bankmappe als PDF", "Bank pack as PDF")))),
     leversBlock(r.improvements));
 }
@@ -1098,4 +1101,210 @@ function wsBankpack(ov) {
       el("p", { class: "small muted", text: t("Jede Seite trägt den Hinweis, dass das Readiness-Band kein Rating und keine Kreditzusage ist. Bitte entfernen Sie ihn nicht.", "Every page carries the note that the readiness band is not a rating and not a loan promise. Please do not remove it.") })),
     log.length ? el("div", { class: "card" }, el("h3", { text: t("Zuletzt erstellt", "Recently created") }),
       el("ul", { class: "list-plain small" }, log.map((b) => el("li", { text: `${fdate(b.at)} · ${t("Band", "band")} ${b.band} · ${b.sections.length} ${t("Abschnitte", "sections")}` })))) : null), null];
+}
+
+// ------------------------------------------------------------------ score coach
+// "Improve your score": measures with their own effect in points, the path to
+// the next band, a simulator on the company's own figures, and how the score
+// is built. All numbers come from the server's scoring engine.
+
+const ACTION_STATES = [["offen", "Offen", "Open"], ["in_arbeit", "In Arbeit", "In progress"], ["erledigt", "Erledigt", "Done"]];
+const pts = (v) => (v > 0 ? "+" : "") + nf(v, 1);
+
+function wsImprove(ov) {
+  const cid = ov.meta.case_id;
+  const box = el("div", { class: "coach" }, el("div", { class: "card muted", text: t("Ihr Plan wird berechnet …", "Calculating your plan …") }));
+  const cached = S.coach && S.coach.cid === cid ? S.coach.data : null;
+  const draw = (data) => box.replaceChildren(...(data.locked ? coachLocked(ov, data) : coachFull(ov, data)));
+  if (cached) draw(cached);
+  api("GET", `/api/cases/${cid}/coach`).then((data) => { S.coach = { cid, data }; draw(data); })
+    .catch((e) => box.replaceChildren(el("div", { class: "card" },
+      nextBanner("warn", t("Noch kein Plan möglich", "No plan possible yet"), e.message,
+        el("a", { class: "btn btn-ghost btn-sm", href: `#case/${cid}/overview`, text: t("Zur Übersicht", "To the overview") })))));
+  return [box, null];
+}
+
+function coachHero(data) {
+  const nb = data.next_band;
+  const last = data.path && data.path.length ? data.path[data.path.length - 1] : null;
+  const reach = nb && data.path ? data.path.findIndex((p) => p.score >= nb.threshold) : -1;
+  return el("section", { class: "card coach-hero" },
+    el("div", { class: "score" },
+      gauge({ band: data.band, score: data.score }),
+      el("div", { class: "score-txt" },
+        el("div", { class: "eyebrow", text: t("Ihr Ausgangspunkt", "Where you start") }),
+        el("div", { class: "score-num" }, el("span", { class: "big", text: nf(data.score, 1) }), el("span", { class: "of", text: " / 100" })),
+        nb ? el("p", { class: "score-band", text: t(`Bis Band ${nb.band} fehlen ${nf(nb.points_needed, 1)} Punkte.`, `${nf(nb.points_needed, 1)} points to band ${nb.band}.`) })
+          : el("p", { class: "score-band", text: t("Sie sind bereits im besten Band.", "You are already in the best band.") }),
+        reach >= 0 ? el("p", { class: "small", text: t(`Mit den ersten ${reach + 1} Maßnahmen unten erreichen Sie Band ${data.path[reach].band} (${nf(data.path[reach].score, 1)} Punkte).`,
+          `With the first ${reach + 1} measures below you reach band ${data.path[reach].band} (${nf(data.path[reach].score, 1)} points).`) })
+          : last ? el("p", { class: "small", text: t(`Alle Maßnahmen zusammen: ${nf(last.score, 1)} Punkte (Band ${last.band}).`, `All measures together: ${nf(last.score, 1)} points (band ${last.band}).`) }) : null)),
+    data.path && data.path.length ? coachPath(data) : null);
+}
+
+/** The measures applied one after another: the climb from today's score. */
+function coachPath(data) {
+  const steps = [{ label: t("Heute", "Today"), score: data.score, band: data.band }]
+    .concat(data.path.map((p) => ({ label: p.rule, score: p.score, band: p.band })));
+  const lo = Math.max(0, Math.min(...steps.map((s) => s.score)) - 5);
+  const hi = Math.min(100, Math.max(...steps.map((s) => s.score), data.next_band ? data.next_band.threshold : 0) + 5);
+  const frac = (v) => 1 - (v - lo) / (hi - lo);
+  const y = (v) => `${frac(v) * 100}%`;
+  return el("div", { class: "path" },
+    el("div", { class: "eyebrow", text: t("Ihr Weg, Schritt für Schritt", "Your path, step by step") }),
+    el("div", { class: "path-chart" },
+      data.next_band ? el("div", { class: "path-line", style: `top:calc(22px + ${frac(data.next_band.threshold) * 130}px)` }, el("span", { text: t(`Band ${data.next_band.band} ab ${nf(data.next_band.threshold, 0)}`, `Band ${data.next_band.band} from ${nf(data.next_band.threshold, 0)}`) })) : null,
+      steps.map((s, i) => el("div", { class: "path-step", title: `${s.label}: ${nf(s.score, 1)} (${s.band})` },
+        el("div", { class: "path-col" }, el("span", { class: `path-dot band-${s.band}`, style: `top:${y(s.score)}` }, s.band)),
+        el("div", { class: "path-lbl" }, el("b", { text: nf(s.score, 1) }), el("small", { text: i === 0 ? s.label : (FINDING[s.label] ? FINDING[s.label][lang()][0] : s.label) }))))));
+}
+
+function measureCard(m, i, cid, editable) {
+  const txt = FINDING[m.rule] ? FINDING[m.rule][lang()] : [m.title, ""];
+  const status = el("div", { class: "seg small-seg" }, ACTION_STATES.map(([id, de, en]) => {
+    const b = el("button", { type: "button", class: m.status === id ? "on" : "", text: t(de, en), disabled: !editable });
+    b.addEventListener("click", () => guarded(b, async () => {
+      await api("PUT", `/api/cases/${cid}/coach/status`, { rule: m.rule, status: id });
+      m.status = id;
+      status.querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b));
+      card.classList.toggle("done", id === "erledigt");
+    }));
+    return b;
+  }));
+  const card = el("div", { class: "measure" + (m.status === "erledigt" ? " done" : "") },
+    el("div", { class: "m-num", text: String(i + 1) }),
+    el("div", { class: "m-body" },
+      el("div", { class: "m-head" },
+        el("h4", { text: txt[0] }),
+        m.points != null && m.points > 0 ? el("span", { class: "m-points", text: t(`${pts(m.points)} Punkte`, `${pts(m.points)} points`) })
+          : el("span", { class: "pill", text: t("kein Punkteeffekt – Banken erwarten es", "no points – banks expect it") })),
+      el("p", { class: "muted", text: txt[1] }),
+      el("div", { class: "meta" },
+        el("span", { class: "pill info", text: t(`ca. ${m.weeks} Wochen`, `approx. ${m.weeks} weeks`) }),
+        m.requires_steuerberater ? el("span", { class: "pill warn", text: t("mit Steuerberater", "with tax advisor") }) : null,
+        m.requires_legal ? el("span", { class: "pill warn", text: t("juristisch prüfen", "legal check") }) : null,
+        m.band_after && m.points > 0 ? el("span", { class: "pill", text: t(`allein: ${nf(m.score_after, 1)} · Band ${m.band_after}`, `on its own: ${nf(m.score_after, 1)} · band ${m.band_after}`) }) : null),
+      el("details", {}, el("summary", { class: "small", text: t("Was genau zu tun ist", "What exactly to do") }),
+        el("p", { class: "small", text: m.remediation }),
+        el("p", { class: "small muted", text: m.observation }),
+        m.caveat ? el("p", { class: "small", style: "color:var(--amber)", text: m.caveat }) : null),
+      status));
+  return card;
+}
+
+function coachFull(ov, data) {
+  const cid = ov.meta.case_id;
+  const editable = S.me.role === "unternehmen" || S.me.role === "berater";
+  return [
+    coachHero(data),
+    el("section", { class: "card" },
+      el("div", { class: "card-head" }, el("h3", { text: t("Ihr Maßnahmenplan", "Your action plan") }),
+        el("span", { class: "small muted", text: t("Sortiert nach Wirkung · jede Zahl bei sonst unveränderten Werten", "Sorted by effect · each figure with everything else unchanged") })),
+      data.measures.length ? data.measures.map((m, i) => measureCard(m, i, cid, editable))
+        : el("p", { class: "muted", text: t("Keine Maßnahmen nötig – Ihre Zahlen tragen bereits.", "No measures needed – your figures already hold.") })),
+    coachSimulator(ov, data),
+    data.gaps && data.gaps.length ? el("section", { class: "card" },
+      el("div", { class: "card-head" }, el("h3", { text: t("Abstand zum Branchenüblichen", "Gap to what is typical in your sector") })),
+      el("div", { class: "table-wrap" }, el("table", { class: "data" },
+        el("thead", {}, el("tr", {}, el("th", { text: t("Kennzahl", "Ratio") }), el("th", { text: t("Heute", "Today") }),
+          el("th", { text: t("Branchenüblich", "Sector-typical") }), el("th", { text: t("Punkte", "Points") }), el("th", { text: t("Lücke", "Gap") }))),
+        el("tbody", {}, data.gaps.map((g) => el("tr", {}, el("td", { text: g.factor }), el("td", { text: g.current }), el("td", { text: g.target }),
+          el("td", { text: pts(g.points) }), el("td", { text: g.euro_gap ? `${eur(g.euro_gap)} · ${g.lever}` : g.lever }))))))) : null,
+    coachBreakdown(data),
+    el("p", { class: "disclaimer", text: t("Alle Werte sind Berechnungen nach unseren Bewertungsregeln auf Basis Ihrer Zahlen – keine Prognose und keine Zusage, wie ein Kreditgeber entscheidet.",
+      "All values are calculations under our scoring rules on your own figures – not a forecast and no promise of how a lender decides.") }),
+  ];
+}
+
+function coachSimulator(ov, data) {
+  const cid = ov.meta.case_id;
+  const inputs = {};
+  const result = el("div", { class: "sim-result" });
+  let timer = null;
+  const run = () => {
+    clearTimeout(timer);
+    timer = setTimeout(async () => {
+      const adjustments = {};
+      for (const [id, get] of Object.entries(inputs)) {
+        const v = get();
+        if (v !== null) adjustments[id] = v;
+      }
+      result.classList.add("busy");
+      try {
+        const r = await api("POST", `/api/cases/${cid}/coach/simulate`, { adjustments });
+        result.replaceChildren(...[
+          el("div", { class: "sim-scores" },
+            el("div", {}, el("small", { text: t("Heute", "Today") }), el("b", { text: nf(r.base.score, 1) }), el("span", { class: `band-chip band-${r.base.band}`, text: r.base.band })),
+            el("div", { class: "sim-arrow", text: "→" }),
+            el("div", {}, el("small", { text: t("Mit Ihren Änderungen", "With your changes") }), el("b", { text: nf(r.score, 1) }), el("span", { class: `band-chip band-${r.band}`, text: r.band }))),
+          el("p", { class: "sim-delta " + (r.delta > 0 ? "up" : r.delta < 0 ? "down" : ""), text: r.delta ? t(`${pts(r.delta)} Punkte`, `${pts(r.delta)} points`) : t("Noch keine Änderung", "No change yet") }),
+          r.next_band ? el("p", { class: "small muted", text: t(`Bis Band ${r.next_band.band}: noch ${nf(r.next_band.points_needed, 1)} Punkte`, `To band ${r.next_band.band}: ${nf(r.next_band.points_needed, 1)} points to go`) }) : el("p", { class: "small", text: t("Bestes Band erreicht.", "Best band reached.") }),
+          r.changes.length ? el("ul", { class: "sim-changes" }, r.changes.slice(0, 6).map((c) => el("li", {},
+            el("span", { text: c.label }), el("span", { class: "muted", text: `${c.before || "–"} → ${c.after || "–"}` }), el("b", { class: c.points > 0 ? "up" : "down", text: pts(c.points) })))) : null].filter(Boolean));
+      } catch (e) { toast(e.message, true); } finally { result.classList.remove("busy"); }
+    }, 350);
+  };
+  const rows = data.levers.map((lv) => {
+    if (lv.kind === "toggle") {
+      const cb = el("input", { type: "checkbox", onchange: run });
+      inputs[lv.id] = () => (cb.checked ? 1 : null);
+      return el("label", { class: "lever-row toggle" }, cb, el("span", {}, el("b", { text: t(lv.label_de, lv.label_en) }), el("small", { text: t(lv.help_de, lv.help_en) })));
+    }
+    const range = el("input", { type: "range", min: lv.min, max: lv.max, step: lv.step, value: lv.current });
+    const shown = el("output", { text: lv.kind === "years" ? `${lv.current} ${t("Jahre", "years")}` : eur(lv.current) });
+    range.addEventListener("input", () => {
+      shown.textContent = lv.kind === "years" ? `${range.value} ${t("Jahre", "years")}` : eur(Number(range.value));
+      run();
+    });
+    inputs[lv.id] = () => (Number(range.value) === Number(lv.current) ? null : Number(range.value));
+    return el("div", { class: "lever-row" },
+      el("div", { class: "lever-top" }, el("b", { text: t(lv.label_de, lv.label_en) }), shown),
+      range, el("small", { text: t(lv.help_de, lv.help_en) }));
+  });
+  const reset = el("button", { class: "btn btn-ghost btn-sm", type: "button", text: t("Zurücksetzen", "Reset") });
+  const panel = el("section", { class: "card" },
+    el("div", { class: "card-head" }, el("h3", { text: t("Simulator: Was wäre, wenn …?", "Simulator: what if …?") }), reset),
+    el("p", { class: "small muted", text: t("Verändern Sie Ihre Zahlen und sehen Sie sofort, wie sich Ihr Score und Ihr Band bewegen – gerechnet mit denselben Regeln wie Ihr Ergebnis.", "Change your figures and see at once how your score and band move – calculated with the same rules as your result.") }),
+    el("div", { class: "sim" }, el("div", { class: "levers-list" }, rows), result));
+  reset.addEventListener("click", () => { renderSmeCase(S.ov, "improve"); });
+  run();
+  return panel;
+}
+
+function coachBreakdown(data) {
+  return el("section", { class: "card" },
+    el("div", { class: "card-head" }, el("h3", { text: t("So entsteht Ihr Score", "How your score is built") }),
+      el("span", { class: "small muted", text: t("Gewichtete Summe der Faktoren · jede Punktzahl 0–100", "Weighted sum of the factors · each scored 0–100") })),
+    el("div", { class: "table-wrap" }, el("table", { class: "data breakdown" },
+      el("thead", {}, el("tr", {}, el("th", { text: t("Faktor", "Factor") }), el("th", { text: t("Ihr Wert", "Your value") }),
+        el("th", { text: t("Punkte", "Points") }), el("th", { text: t("Gewicht", "Weight") }), el("th", { text: t("Verlust", "Lost") }), el("th", { text: t("Maßstab", "Measured against") }))),
+      el("tbody", {}, data.factors.map((f) => el("tr", { class: f.score == null ? "na" : "" },
+        el("td", { text: f.label }),
+        el("td", { text: f.value || "–" }),
+        el("td", {}, f.score == null ? el("span", { class: "small muted", text: f.missing || "–" })
+          : el("div", { class: "bd-bar" }, el("span", { style: `width:${f.score}%`, class: f.score >= 70 ? "good" : f.score >= 52 ? "warn" : "bad" }), el("b", { text: nf(f.score, 0) }))),
+        el("td", { text: `${nf(f.weight, 1)} %` }),
+        el("td", { text: f.points_lost ? `−${nf(f.points_lost, 1)}` : "0" }),
+        el("td", { class: "small muted", text: f.basis })))))));
+}
+
+function coachLocked(ov, data) {
+  const cid = ov.meta.case_id;
+  return [
+    coachHero(data),
+    el("section", { class: "card coach-lock" },
+      el("div", { class: "card-head" }, el("h3", { text: t("Ihre wirksamsten Maßnahmen", "Your most effective measures") })),
+      data.preview.map((m, i) => el("div", { class: "measure" },
+        el("div", { class: "m-num", text: String(i + 1) }),
+        el("div", { class: "m-body" }, el("div", { class: "m-head" },
+          el("h4", { text: FINDING[m.rule] ? FINDING[m.rule][lang()][0] : m.title }),
+          m.points > 0 ? el("span", { class: "m-points", text: t(`${pts(m.points)} Punkte`, `${pts(m.points)} points`) }) : null)))),
+      el("div", { class: "lock-offer" },
+        el("b", { text: t("Der vollständige Plan gehört zum Bericht für 390 €", "The full plan comes with the report for €390") }),
+        el("ul", { class: "feature-list small" },
+          el("li", { text: t(`Alle Maßnahmen${data.more ? ` (+${data.more} weitere)` : ""} mit Anleitung, Zeitbedarf und Wirkung`, `All measures${data.more ? ` (+${data.more} more)` : ""} with instructions, time and effect`) }),
+          el("li", { text: t("Simulator: Ihre Zahlen verändern, Score live sehen", "Simulator: change your figures, see the score live") }),
+          el("li", { text: t("Ihr Weg zum nächsten Band, Schritt für Schritt", "Your path to the next band, step by step") })),
+        el("a", { class: "btn btn-primary", href: `#case/${cid}/plan`, text: t("Bericht bestellen", "Order the report") }))),
+  ];
 }

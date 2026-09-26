@@ -11,6 +11,7 @@ testable without HTTP and behaves identically from the command line.
 from __future__ import annotations
 
 import json
+import re
 from datetime import date
 from typing import Any, Optional
 
@@ -298,6 +299,43 @@ def build_bank_pack(store: CaseStore, case_id: str, sections: list[str], actor: 
                 "score": result.scorecard.total_score})
     store.update_meta(case_id, bankpack_downloads=log)
     return {"ok": True, "html": html, "company": case.profile.name}
+
+
+# ------------------------------------------------------------ score coach
+
+ACTION_STATES = ("offen", "in_arbeit", "erledigt")
+
+
+def coach_case(store: CaseStore, case_id: str, today: Optional[date] = None):
+    """The company's case as the coach scores it; CaseStoreError with the reasons if not ready."""
+    asm = assemble_case(store, case_id, today=today)
+    if not asm.ready:
+        raise CaseStoreError("Noch nicht moeglich: " + " · ".join(asm.blocking))
+    return load_case(asm.payload)
+
+
+def coach_view(store: CaseStore, case_id: str, role: str, today: Optional[date] = None) -> dict:
+    """The coach page: full for the report and advisory plans, a preview otherwise."""
+    from . import coach
+
+    meta = store.get_meta(case_id)
+    p = coach.plan(coach_case(store, case_id, today))
+    status = meta.get("action_status") or {}
+    for m in p["measures"]:
+        m["status"] = status.get(m["rule"], "offen")
+    if coach.entitled(meta, role):
+        return {"locked": False, **p}
+    preview = [{k: m[k] for k in ("rule", "title", "points", "weeks")} for m in p["measures"][:3]]
+    return {"locked": True, "score": p["score"], "band": p["band"], "next_band": p["next_band"],
+            "preview": preview, "more": max(0, len(p["measures"]) - 3)}
+
+
+def set_action_status(store: CaseStore, case_id: str, rule: str, state: str) -> dict:
+    if state not in ACTION_STATES or not re.fullmatch(r"R\d{2}", rule or ""):
+        raise CaseStoreError("Unbekannter Status")
+    status = dict(store.get_meta(case_id).get("action_status") or {})
+    status[rule] = state
+    return store.update_meta(case_id, action_status=status)
 
 
 def case_overview(store: CaseStore, case_id: str, today: Optional[date] = None) -> dict:

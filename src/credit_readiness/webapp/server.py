@@ -126,6 +126,9 @@ _ROUTE_TABLE = [
     ("PUT", rf"/api/cases/{_CASE}/logo", "logo_put"),
     ("DELETE", rf"/api/cases/{_CASE}/logo", "logo_delete"),
     ("GET", rf"/api/cases/{_CASE}/bankpack", "bankpack"),
+    ("GET", rf"/api/cases/{_CASE}/coach", "coach"),
+    ("POST", rf"/api/cases/{_CASE}/coach/simulate", "coach_simulate"),
+    ("PUT", rf"/api/cases/{_CASE}/coach/status", "coach_status"),
     ("PUT", rf"/api/cases/{_CASE}/documents/(?P<doc>[a-f0-9]{{12}})/meta", "doc_meta"),
     ("POST", rf"/api/cases/{_CASE}/invite", "invite"),
     ("POST", rf"/api/cases/{_CASE}/submit", "submit"),
@@ -154,7 +157,7 @@ MAX_NOTE_CHARS = 500
 # (agreements.py). Reading, messaging us and signing stay open.
 AGREEMENT_GATED = {
     "save_answers", "upload", "doc_note", "doc_matrix", "doc_meta", "extract", "figures",
-    "quickcheck", "invite", "order", "submit", "logo_put", "logo_delete", "bankpack",
+    "quickcheck", "invite", "order", "submit", "logo_put", "logo_delete", "bankpack", "coach_status",
 }
 #: Months a BWA covers, cumulated from the start of the fiscal year.
 BWA_PERIODS = ("1", "1-3", "1-6", "1-12")
@@ -832,6 +835,38 @@ class Handler(BaseHTTPRequestHandler):
                                   {"Content-Disposition": f'attachment; filename="{name}.pdf"'})
         # No PDF renderer on this machine: the same document as HTML, to print.
         self._send(200, res["html"].encode("utf-8"), "text/html; charset=utf-8")
+
+    # ------------------------------------------------------ score coach
+    def h_coach(self, principal, cid: str) -> None:
+        self._case(principal, cid)
+        self._require(principal, ROLE_BERATER, ROLE_UNTERNEHMEN)
+        try:
+            view = wf.coach_view(self.store, cid, principal.role, today=self.today)
+        except CaseStoreError as e:
+            raise ApiError(HTTPStatus.CONFLICT, str(e)) from None
+        self._json(200, view)
+
+    def h_coach_simulate(self, principal, cid: str) -> None:
+        from .. import coach
+
+        meta = self._case(principal, cid)
+        self._require(principal, ROLE_BERATER, ROLE_UNTERNEHMEN)
+        if not coach.entitled(meta, principal.role):
+            raise ApiError(HTTPStatus.PAYMENT_REQUIRED, "Der Simulator gehoert zum vollstaendigen Bericht.")
+        try:
+            case = wf.coach_case(self.store, cid, today=self.today)
+        except CaseStoreError as e:
+            raise ApiError(HTTPStatus.CONFLICT, str(e)) from None
+        body = self._obj()
+        self._json(200, coach.simulate(case, body.get("adjustments") or {}))
+
+    def h_coach_status(self, principal, cid: str) -> None:
+        self._case(principal, cid)
+        self._require(principal, ROLE_BERATER, ROLE_UNTERNEHMEN)
+        body = self._obj()
+        with self.lock:
+            wf.set_action_status(self.store, cid, str(body.get("rule", "")), str(body.get("status", "")))
+        self._json(200, {"ok": True})
 
     # ------------------------------------------------------ advisor only
     def h_stage(self, principal, cid: str) -> None:
