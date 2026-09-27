@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from datetime import date
 from typing import Optional
 
-from . import benchmarks
+from . import benchmarks, peers
 from .models import ClientCase
 from .ratios import RatioSet, compute_ratios
 from .remediation import (
@@ -57,6 +57,9 @@ class DiagnosticResult:
     #: sector" -- lenders price the latter separately (ADR-005).
     scorecard_generic: Optional[ScorecardResult] = None
     sector_trends: list[benchmarks.SectorTrend] = field(default_factory=list)
+    #: BACH peers of the same country, WZ division, size and year. Context
+    #: only; None without the (licensed, not versioned) extract. See peers.py.
+    peer_comparison: Optional[peers.PeerComparison] = None
     projection: Optional[Projection] = None
     improvements: Optional[ImprovementPlan] = None
     generated_on: date = field(default_factory=date.today)
@@ -129,6 +132,7 @@ def run_diagnostic(case: ClientCase, strict: bool = True) -> DiagnosticResult:
         validation_issues=issues,
         scorecard_generic=evaluate(case, ratios, sector_specific=False),
         sector_trends=benchmarks.sector_trends(case.profile.sector, ratios),
+        peer_comparison=peers.compare(case, ratios),
         projection=project(case),
         improvements=plan_improvements(case, ratios, scorecard),
     )

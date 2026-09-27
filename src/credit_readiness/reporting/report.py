@@ -445,6 +445,43 @@ def render_markdown(result: DiagnosticResult, data_basis: dict | None = None, cl
     w(f"*{CAVEAT}*")
     w("")
 
+    peers_ = result.peer_comparison
+    if peers_ and peers_.metrics:
+        w(f"### Vergleich mit Unternehmen wie Ihrem ({peers_.year})")
+        w("")
+        w("Dieselben Kennzahlen gegen Unternehmen aus demselben Land, demselben "
+          "Wirtschaftszweig und derselben Umsatzklasse, im Jahr Ihres Abschlusses "
+          "und so fein, wie die Daten es hergeben. Zur Einordnung - die Bewertung "
+          "oben beruht auf der Bundesbank-Statistik.")
+        w("")
+        if peers_.year_note:
+            w(f"*{peers_.year_note}*")
+            w("")
+        common = peers_.common_basis
+        head = "| Kennzahl | Unternehmen | Unteres Viertel | Median | Oberes Viertel | Perzentil | Firmen |"
+        rule = "|---|---|---|---|---|---|---|"
+        if not common:
+            head += " Vergleichsgruppe |"
+            rule += "---|"
+        w(head)
+        w(rule)
+        for m in peers_.metrics:
+            fmt = _days if m.label == "Debitorenlaufzeit" else _pct
+            rank = f"{de(m.percentile, 0)}." if m.percentile is not None else "-"
+            row = (f"| {m.label} | {fmt(m.company_value)} | {fmt(m.quartiles[0])} | "
+                   f"{fmt(m.quartiles[1])} | {fmt(m.quartiles[2])} | {rank} | {m.firms} |")
+            w(row + (f" {m.basis} |" if not common else ""))
+        w("")
+        if common:
+            w(f"*Vergleichsgruppe: {common}. Perzentil: Anteil der Unternehmen, die "
+              f"schlechter abschneiden (bei der Debitorenlaufzeit: laenger warten).*")
+        else:
+            w("*Perzentil: Anteil der Unternehmen, die schlechter abschneiden "
+              "(bei der Debitorenlaufzeit: laenger warten).*")
+        w("")
+        w(f"*Quelle: {peers_.citation}.*")
+        w("")
+
     if result.sector_trends:
         years = result.sector_trends[0].years
         w(f"### Branchenmedian im Zeitverlauf ({years[0]}-{years[-1]})")
