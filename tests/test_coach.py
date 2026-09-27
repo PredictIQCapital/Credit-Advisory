@@ -36,10 +36,20 @@ def test_plan_ranks_measures_by_their_own_effect(case):
             assert m["score_after"] == pytest.approx(p["score"] + m["points"], abs=0.05)
 
 
-def test_path_climbs_and_reaches_the_next_band(case):
+def test_path_climbs_and_says_honestly_that_the_next_band_is_out_of_reach(case):
+    # Mueller's measures end at 77.7, just under the A line: the plan must say
+    # so rather than name a step that never gets there.
     p = coach.plan(case)
     scores = [s["score"] for s in p["path"]]
     assert scores == sorted(scores) and scores[0] > p["score"]
+    assert p["next_band"] == {"band": "A", "steps": None}
+    assert all(s["band"] != "A" for s in p["path"])
+
+
+def test_path_names_the_step_that_reaches_the_next_band():
+    raw = json.loads(SAMPLE.read_text(encoding="utf-8"))
+    raw["income_statement"]["sonstige_betriebliche_aufwendungen"] = 720_000
+    p = coach.plan(load_case(raw))
     nb = p["next_band"]
     assert nb["band"] == "A" and nb["steps"] and p["path"][nb["steps"] - 1]["band"] == "A"
     assert all(s["band"] != "A" for s in p["path"][:nb["steps"] - 1])

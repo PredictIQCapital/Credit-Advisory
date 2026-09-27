@@ -294,14 +294,16 @@ def test_weak_tail_stays_absolute():
         assert interpolate(0.0, curve_for(fd, sector, 5_000_000).breakpoints) == generic
 
 
-def test_median_retailer_is_typical_not_borderline():
-    """The case that motivated ADR-005: a retailer at the retail median equity
-    ratio scores at the median anchor on the sector curve."""
+def test_median_builder_is_typical_not_borderline():
+    """The argument of ADR-005: a company at its sector's median equity ratio
+    scores at the median anchor on the sector curve. ADR-005 used retail; with
+    the corrected import (ADR-006) retail sits close to the all-sector median,
+    and construction is the sector where the generic curve reads borderline."""
     fd = FACTORS_BY_KEY["eigenkapitalquote"]
-    cell, _ = benchmarks.sector_cell("eigenmittel_pct_bilanzsumme", Sector.RETAIL, 5_000_000)
+    cell, _ = benchmarks.sector_cell("eigenmittel_pct_bilanzsumme", Sector.CONSTRUCTION, 5_000_000)
     median = cell["q50"] / 100
     assert interpolate(median, fd.breakpoints) < 65.0            # generic: borderline-ish
-    assert interpolate(median, curve_for(fd, Sector.RETAIL, 5_000_000).breakpoints) == \
+    assert interpolate(median, curve_for(fd, Sector.CONSTRUCTION, 5_000_000).breakpoints) == \
         pytest.approx(70.0)
 
 

@@ -27,3 +27,6 @@ previous-claude-chat.md
 .vercel/
 
 .vercel
+
+# BACH extract: the terms of use prohibit redistribution (scripts/import_bach.py).
+data/reference/bach/

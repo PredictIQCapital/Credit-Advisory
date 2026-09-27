@@ -100,7 +100,9 @@ holds real placements.
 Re-run `python scripts/import_bundesbank_ratios.py <pdf-folder>` after each new
 Bundesbank edition, then check tests/test_scorecard.py::test_bundesbank_anchors,
 which re-derives the anchors from the shipped dataset and fails if the
-breakpoints and the data have drifted apart.
+breakpoints and the data have drifted apart. tests/test_bach_crosscheck.py
+then compares the import with BACH, an independent table of the same
+Bundesbank data (ADR-006), when scripts/import_bach.py has been run.
 
 SECTOR-SPECIFIC CURVES
 ======================
@@ -221,11 +223,11 @@ FACTORS: tuple[FactorDefinition, ...] = (
         unit="percent",
         breakpoints=(
             (-0.20, 0.0), (0.0, 25.0), (0.05, 38.0),
-            (0.148, 58.0), (0.351, 70.0), (0.569, 82.0),
+            (0.1295, 58.0), (0.332, 70.0), (0.566, 82.0),
             (0.80, 95.0), (1.00, 100.0),
         ),
         note="Wirtschaftliches EK inkl. nachrangiger Gesellschafterdarlehen. "
-             "Stuetzstellen 14,8/35,1/56,9% = Quartile der Bundesbank-Statistik.",
+             "Stuetzstellen 13,0/33,2/56,6% = Quartile der Bundesbank-Statistik.",
     ),
     FactorDefinition(
         key="kapitaldienstfaehigkeit_inkl_neu",
@@ -255,10 +257,10 @@ FACTORS: tuple[FactorDefinition, ...] = (
         unit="percent",
         breakpoints=(
             (-0.10, 0.0), (-0.05, 12.0), (-0.02, 28.0), (0.0, 45.0),
-            (0.0135, 58.0), (0.0475, 70.0), (0.0995, 82.0),
+            (0.014, 58.0), (0.045, 70.0), (0.0965, 82.0),
             (0.18, 95.0), (0.25, 100.0),
         ),
-        note="Stuetzstellen 1,35/4,75/9,95% = Bundesbank-Quartile des "
+        note="Stuetzstellen 1,4/4,5/9,65% = Bundesbank-Quartile des "
              "Ergebnisses vor Steuern, um 0,5 Punkte auf EBIT-Basis angehoben.",
     ),
     FactorDefinition(
@@ -268,10 +270,10 @@ FACTORS: tuple[FactorDefinition, ...] = (
         unit="percent",
         breakpoints=(
             (0.0, 0.0), (0.20, 25.0), (0.30, 40.0),
-            (0.458, 58.0), (0.917, 70.0), (2.163, 82.0),
+            (0.5315, 58.0), (1.153, 70.0), (2.543, 82.0),
             (4.00, 95.0), (6.00, 100.0),
         ),
-        note="Stuetzstellen 45,8/91,7/216,3% = Quartile der Bundesbank-Statistik.",
+        note="Stuetzstellen 53,2/115,3/254,3% = Quartile der Bundesbank-Statistik.",
     ),
     FactorDefinition(
         key="zinsdeckungsgrad",
@@ -290,11 +292,11 @@ FACTORS: tuple[FactorDefinition, ...] = (
         unit="percent",
         breakpoints=(
             (-0.05, 0.0), (0.0, 30.0),
-            (0.024, 58.0), (0.0685, 70.0), (0.1335, 82.0),
+            (0.023, 58.0), (0.0665, 70.0), (0.1405, 82.0),
             (0.22, 95.0), (0.30, 100.0),
         ),
         note="EBA-Leitlinien Anhang 3 Nr. 18 (Return on assets). Stuetzstellen "
-             "2,4/6,85/13,35% = Bundesbank-Quartile, Definition uebernommen.",
+             "2,3/6,65/14,05% = Bundesbank-Quartile, Definition uebernommen.",
     ),
     FactorDefinition(
         key="anlagendeckungsgrad_ii",
@@ -303,11 +305,11 @@ FACTORS: tuple[FactorDefinition, ...] = (
         unit="percent",
         breakpoints=(
             (0.5, 0.0), (0.8, 12.0), (1.0, 30.0),
-            (1.2205, 58.0), (2.182, 70.0), (4.6445, 82.0),
+            (1.012, 58.0), (1.9515, 70.0), (5.337, 82.0),
             (8.0, 95.0), (12.0, 100.0),
         ),
         note="Langfristiges Kapital / Anlagevermoegen. Unter 100% ist die "
-             "goldene Bilanzregel verletzt. Stuetzstellen 122,1/218,2/464,5% "
+             "goldene Bilanzregel verletzt. Stuetzstellen 101,2/195,2/533,7% "
              "= Bundesbank-Quartile.",
     ),
     FactorDefinition(
@@ -316,13 +318,13 @@ FACTORS: tuple[FactorDefinition, ...] = (
         weight=0.04,
         unit="days",
         breakpoints=(
-            (0.0, 82.0), (15.1, 82.0), (27.2, 70.0), (49.5, 58.0),
+            (0.0, 82.0), (15.33, 82.0), (31.57, 70.0), (59.5, 58.0),
             (75.0, 38.0), (100.0, 20.0), (120.0, 0.0),
         ),
         note="Verb. aus LuL / Materialaufwand x 365. Zusatzkennzahl des "
              "Bundesbank-Bonitaetsanalysesystems. Gedeckelt bei 82 Punkten: "
              "schnelles Zahlen ist kein Bonitaetsbeleg, nur das Fehlen eines "
-             "Warnsignals. Stuetzstellen 15,1/27,2/49,5 Tage = Quartile.",
+             "Warnsignals. Stuetzstellen 15,3/31,6/59,5 Tage = Quartile.",
     ),
     FactorDefinition(
         key="kontokorrent_auslastung",

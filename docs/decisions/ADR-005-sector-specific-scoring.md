@@ -3,6 +3,7 @@
 **Status:** Accepted
 **Date:** 2026-09-24
 **Builds on:** [ADR-002](ADR-002-bundesbank-calibration.md), [ADR-003](ADR-003-eba-marisk-alignment.md).
+**Figures corrected by:** [ADR-006](ADR-006-bundesbank-import-fix-and-bach-crosscheck.md). The import behind this ADR's numbers read the wrong PDF pages; the decision stands, the values quoted here do not.
 
 ## Context
 

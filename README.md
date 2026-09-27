@@ -99,10 +99,10 @@ Sample output:
 
 ```
 Fall       Unternehmen                  Band   Score  ->   Score Band  Einordnung
-CASE-01    Mueller Praezisionstechnik   B       65.6  ->    78.4 A     behebbar - Struktur
-CASE-02    Nordlicht Handel GmbH & Co.  C       52.3  ->    63.6 C     behebbar - Struktur
-CASE-03    Gastro Rheinblick GmbH       E        4.5  ->     8.4 E     substanzielles Kreditrisiko
-CASE-06    Hoffmann Medizintechnik      A       90.8  ->    90.8 A     bereits finanzierbar
+CASE-01    Mueller Praezisionstechnik   B       65.2  ->    77.7 B     behebbar - Struktur
+CASE-02    Nordlicht Handel GmbH & Co.  D       50.0  ->    61.3 C     behebbar - Struktur
+CASE-03    Gastro Rheinblick GmbH       E        9.0  ->    12.8 E     substanzielles Kreditrisiko
+CASE-06    Hoffmann Medizintechnik      A       90.5  ->    90.5 A     bereits finanzierbar
 ```
 
 ## Products

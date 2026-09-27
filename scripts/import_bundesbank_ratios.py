@@ -126,14 +126,28 @@ def parse_quartile_page(text: str) -> dict | None:
     if "Quartil" not in text:
         return None
 
+    # Only part I is by sector. Parts II-IV (legal forms, federal states)
+    # restart the section numbering, so "noch: 10." there is Nordrhein-
+    # Westfalen, not Gastgewerbe -- and those pages come later in the PDF, so
+    # letting them through overwrites the sector tables.
+    if not re.search(r"^\s*I\. Unternehmen nach Wirtschaftszweigen", text, re.M):
+        return None
+
     section = re.search(r"noch: (\d+[a-z]?[.)]) ", text)
     if not section:
         return None
     sec = section.group(1)
 
-    form = "alle_rechtsformen"
-    if "Kapitalgesellschaften" in text:
-        form = "nichtkapitalgesellschaften" if "Nichtkapitalgesellschaften" in text else "kapitalgesellschaften"
+    # Read the legal form from its own header line. A substring test fails
+    # here: "Nichtkapitalgesellschaften" does not contain "Kapitalgesellschaften"
+    # (lower-case k), so those pages were taken for all legal forms.
+    form_line = re.search(
+        r"^\s*(?:noch: )?(Alle Rechtsformen|Kapitalgesellschaften|Nichtkapitalgesellschaften)\s*$",
+        text, re.M)
+    form = {"Alle Rechtsformen": "alle_rechtsformen",
+            "Kapitalgesellschaften": "kapitalgesellschaften",
+            "Nichtkapitalgesellschaften": "nichtkapitalgesellschaften",
+            }[form_line.group(1)] if form_line else "alle_rechtsformen"
 
     years = re.findall(r"Vergleichbarer Kreis (\d{4})/(\d{4})", text)
     if not years:

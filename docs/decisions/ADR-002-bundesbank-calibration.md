@@ -3,6 +3,7 @@
 **Status:** Accepted
 **Date:** 2026-09-20
 **Supersedes nothing. Constrained by:** [ADR-001](ADR-001-rules-not-machine-learning.md)
+**Figures corrected by:** [ADR-006](ADR-006-bundesbank-import-fix-and-bach-crosscheck.md). The import behind this ADR's numbers read the wrong PDF pages; the decision stands, the values quoted here do not.
 
 ## Context
 
